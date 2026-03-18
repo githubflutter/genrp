@@ -11,7 +11,33 @@ class AIStudioApp extends StatelessWidget {
       title: 'AIStudio',
       home: Scaffold(
         appBar: AppBar(title: const Text('AIStudio')),
-        body: const Center(child: Text('AIStudio Home')),
+        body: Row(
+          children: [
+            Expanded(
+              flex: 2,
+              child: Container(
+                color: Colors.grey.shade100,
+                child: const Center(child: Text('Model Navigation')),
+              ),
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(
+              flex: 5,
+              child: Container(
+                color: Colors.white,
+                child: const Center(child: Text('Master/Main Editor')),
+              ),
+            ),
+            const VerticalDivider(width: 1, thickness: 1),
+            Expanded(
+              flex: 2,
+              child: Container(
+                color: Colors.grey.shade100,
+                child: const Center(child: Text('Property Editor')),
+              ),
+            ),
+          ],
+        ),
         floatingActionButton: FloatingActionButton(onPressed: () {}, child: const Icon(Icons.edit)),
         bottomNavigationBar: BottomAppBar(
           child: Container(
