@@ -5,11 +5,11 @@
 
 **Overview**
 
-This document describes the current app entry points:
+This document describes the current app entry widgets:
 
-- `AIBook` — [lib/app/aibook.dart](lib/app/aibook.dart)
-- `AICodex` — [lib/app/aicodex.dart](lib/app/aicodex.dart)
-- `AIStudio` — [lib/app/aistudio.dart](lib/app/aistudio.dart)
+- `AIBook` — [lib/app/aibook/aibook.dart](lib/app/aibook/aibook.dart)
+- `AICodex` — [lib/app/aicodex/aicodex.dart](lib/app/aicodex/aicodex.dart)
+- `AIStudio` — [lib/app/aistudio/aistudio.dart](lib/app/aistudio/aistudio.dart)
 
 Main constitution
 - Performance and efficiency come first.
@@ -120,7 +120,7 @@ Current vocabulary direction
 Each app:
 
 - Is a minimal `MaterialApp` with `debugShowCheckedModeBanner: false`.
-- Exposes a top-level widget (`AIBookApp`, `AICodexApp`, `AIStudioApp`) — no `main()` inside these files.
+- Exposes a top-level widget (`AIBookApp`, `AICodexApp`, `AIStudioApp`) under its own app directory — no `main()` inside these files.
 - Shows a `FloatingActionButton` (FAB) for a sample action.
 - Shows a right-aligned bottom status bar in the `BottomAppBar` containing:
 
@@ -130,10 +130,10 @@ Each app:
 
 **How to run each app**
 
-Start any app directly with Flutter by targeting its file. Example:
+App widgets now live under app-specific directories. The current `lib/main.dart` launches a small one-way selector app that can open `AIBook`, `AICodex`, or `AIStudio`. Example:
 
 ```bash
-flutter run -t lib/app/aibook.dart
+flutter run -t lib/main.dart
 ```
 
 **Where to change the values**

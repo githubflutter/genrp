@@ -1,9 +1,7 @@
-
-
 import 'package:flutter/material.dart';
 
 import 'package:genrp/meta.dart';
-import 'package:genrp/app/autopilotgo.dart';
+import 'package:genrp/app/aibook/autopilotgo.dart';
 import 'package:genrp/core/agent/mock_transport.dart';
 import 'package:genrp/core/generator/boilerplate_generator.dart';
 import 'package:provider/provider.dart';
@@ -15,7 +13,11 @@ class AIBookApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<AutopilotGo>(
       create: (_) => AutopilotGo(),
-      child: MaterialApp(debugShowCheckedModeBanner: false, title: 'AIBook', home: const _AIBookHome()),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'AIBook',
+        home: const _AIBookHome(),
+      ),
     );
   }
 }
@@ -61,7 +63,9 @@ class _AIBookHomeState extends State<_AIBookHome> {
             }
 
             if (!snapshot.hasData) {
-              return const Scaffold(body: Center(child: CircularProgressIndicator()));
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
             }
 
             final spec = snapshot.data!;
@@ -80,18 +84,34 @@ class _AIBookHomeState extends State<_AIBookHome> {
               );
             }
 
-            final toolbar = Map<String, dynamic>.from(spec['toolbar'] as Map? ?? const {});
-            final status = autopilot.resolve('ux.status')?.toString() ?? 'Ready';
+            final toolbar = Map<String, dynamic>.from(
+              spec['toolbar'] as Map? ?? const {},
+            );
+            final status =
+                autopilot.resolve('ux.status')?.toString() ?? 'Ready';
 
             return Scaffold(
-              appBar: AppBar(title: Text(toolbar['title']?.toString() ?? 'AIBook')),
+              appBar: AppBar(
+                title: Text(toolbar['title']?.toString() ?? 'AIBook'),
+              ),
               body: DynamicSpecBody(spec: spec, autopilot: autopilot),
-              floatingActionButton: FloatingActionButton(onPressed: () => autopilot.triggerAction('showPreview'), child: const Icon(Icons.book)),
+              floatingActionButton: FloatingActionButton(
+                onPressed: () => autopilot.triggerAction('showPreview'),
+                child: const Icon(Icons.book),
+              ),
               bottomNavigationBar: BottomAppBar(
                 child: Container(
                   height: 48,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(children: [Text('Status: $status'), const Spacer(), Text('AIBook:${AppMeta.aibook}/${AppMeta.f}/${AppMeta.v}')]),
+                  child: Row(
+                    children: [
+                      Text('Status: $status'),
+                      const Spacer(),
+                      Text(
+                        'AIBook:${AppMeta.aibook}/${AppMeta.f}/${AppMeta.v}',
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );

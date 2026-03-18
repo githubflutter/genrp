@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genrp/app/autopilotgo.dart';
+import 'package:genrp/app/aibook/autopilotgo.dart';
 
 void main() {
   test('AutopilotGo detects duplicate ids in registry', () {
@@ -9,13 +9,16 @@ void main() {
       'id': 'test-1',
       'bodiesRegistry': [
         {'id': 1, 'name': 'editor'},
-        {'id': 1, 'name': 'preview'}
-      ]
+        {'id': 1, 'name': 'preview'},
+      ],
     };
 
     autopilot.configureSpec(specWithDuplicates);
     expect(autopilot.specError, isNotNull);
-    expect(autopilot.specError, contains('Duplicate id 1 found in bodiesRegistry'));
+    expect(
+      autopilot.specError,
+      contains('Duplicate id 1 found in bodiesRegistry'),
+    );
   });
 
   test('AutopilotGo does not set specError on valid spec', () {
@@ -25,8 +28,8 @@ void main() {
       'id': 'test-2',
       'bodiesRegistry': [
         {'id': 1, 'name': 'editor'},
-        {'id': 2, 'name': 'preview'}
-      ]
+        {'id': 2, 'name': 'preview'},
+      ],
     };
 
     autopilot.configureSpec(specValid);

@@ -38,12 +38,20 @@ class AICodexApp extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(onPressed: () {}, child: const Icon(Icons.add)),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {},
+          child: const Icon(Icons.add),
+        ),
         bottomNavigationBar: BottomAppBar(
           child: Container(
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(children: [const Spacer(), Text('AICodex:${AppMeta.aicode}/${AppMeta.f}/${AppMeta.v}')]),
+            child: Row(
+              children: [
+                const Spacer(),
+                Text('AICodex:${AppMeta.aicode}/${AppMeta.f}/${AppMeta.v}'),
+              ],
+            ),
           ),
         ),
       ),

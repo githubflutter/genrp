@@ -37,8 +37,9 @@ Current implemented state:
   - `widgets`
   - `fieldBindings`
   - `actions`
-- `AIBook` loads both JSON files and merges them in `lib/app/aibook.dart`.
-- `AutopilotGo` loads `fieldBindings` from merged spec data instead of hardcoding them.
+- `fieldBindings` now support `slot` metadata for business-bound bindings.
+- `AIBook` currently loads spec through `MockTransport` and shows load/validation errors in `lib/app/aibook/aibook.dart`.
+- `AutopilotGo` loads `fieldBindings` from merged spec data, converts initial `x_row` JSON into base `X`, performs basic validation, and handles current mock save behavior.
 - Numeric support exists with string fallback for:
   - `actionId`
   - `src + fieldId`
@@ -53,12 +54,18 @@ Current implemented state:
 - `CheckboxFormTemplate` uses `XCheckBox`.
 - `X*` controls use stable keys scoped by `hostId + bodyId + widgetId`.
 - Optional preview selection/highlighting infrastructure exists using `hostId + bodyId + widgetId`.
+- Wrapped controls can set selection in debug mode via long-press.
+- `Autopilot` now resolves and updates business-bound values by `X.v[index]` first when slot metadata exists.
+- Current mock transport can fetch merged spec and clone-save a base `X` row.
+- A generic local SQLite foundation now exists in `lib/core/db/sqlite_store.dart`.
 
 Relevant files:
-- `lib/app/aibook.dart`
-- `lib/app/autopilotgo.dart`
+- `lib/app/aibook/aibook.dart`
+- `lib/app/aibook/autopilotgo.dart`
 - `lib/core/agent/autopilot.dart`
 - `lib/core/agent/action_set.dart`
+- `lib/core/agent/mock_transport.dart`
+- `lib/core/db/sqlite_store.dart`
 - `lib/core/generator/boilerplate_generator.dart`
 - `lib/core/runtime/template_runtime.dart`
 - `lib/core/model/ux/ux_registry.dart`
@@ -74,29 +81,32 @@ Relevant files:
 - `assets/json/aibook_registry.json`
 - `docs/aibook_beta_handover.md`
 - `docs/lib_app_readme.md`
+- `test/autopilot_slot_test.dart`
+- `test/validation_test.dart`
+- `test/mock_transport_test.dart`
 
 Current quality status:
-- Last known `flutter analyze` passed.
-- Last known `flutter test` passed.
+- `flutter analyze` passes.
+- `flutter test` passes.
 
 Current gap to beta:
 - Body routing is still partly string-driven at runtime.
-- Binding resolution is still path-first, not `X.v[index]`-first.
-- No real web transport/load/save loop for business data yet.
-- No full spec/registry validation layer yet.
-- Selection highlight exists, but no main producer flow sets it in real use.
+- Binding now supports slot-first `X.v[index]`, but the runtime is still hybrid because path fallback remains active.
+- Transport/load/save is still mock-only, not a real web/API path yet.
+- SQLite support exists, but it is not yet wired into the `AIBook` runtime path for cache or offline behavior.
+- Validation exists, but only in a basic form.
+- Selection highlight exists and can be triggered in debug mode, but it is not yet a polished production preview flow.
 
 Immediate next recommended step:
-- Implement `X`-backed slot/index binding in `Autopilot` and registry first.
+- Finish numeric-only body routing in `lib/core/generator/boilerplate_generator.dart`.
 
 Ordered next steps:
-1. Add `slot` or `index` metadata to `fieldBindings` in `assets/json/aibook_registry.json`.
-2. Extend `Autopilot` so `resolveFieldBinding()` and `updateFieldBinding()` prefer `X.v[index]` and fall back to path lookup only when needed.
-3. Add base `X` row storage on the data side.
-4. Finish numeric-only body routing and reduce string body lookup to fallback only.
-5. Add spec and registry validation before runtime render.
-6. Add the real transport/load/save loop for composition JSON and base `X` business data.
-7. Harden failure states and focused beta-path tests.
+1. Finish numeric-only body routing and reduce string body lookup to fallback only.
+2. Expand validation beyond duplicate ids into reference validation and body/template consistency checks.
+3. Replace `MockTransport` with the real transport/load/save loop for composition JSON and base `X` business data.
+4. Decide whether local SQLite cache should be wired into `AIBook` for spec or base `X` cache behavior.
+5. Decide whether preview selection remains debug-only or becomes a real preview feature.
+6. Harden failure states and focused beta-path tests.
 
 Constraints:
 - Do not redesign architecture.

@@ -33,14 +33,15 @@ class AutopilotGo extends Autopilot {
     clearSelectedUxIdentity(notify: false);
     _configureFieldBindings(spec);
 
-    final initialData = Map<String, dynamic>.from(spec['initialData'] as Map? ?? const {});
-    if (initialData.containsKey('x_row') && initialData['x_row'] is Map) {
-      initialData['x_row'] = X.fromJson(Map<String, dynamic>.from(initialData['x_row']));
-    }
-    copilotData.patch(
-      initialData,
-      notify: false,
+    final initialData = Map<String, dynamic>.from(
+      spec['initialData'] as Map? ?? const {},
     );
+    if (initialData.containsKey('x_row') && initialData['x_row'] is Map) {
+      initialData['x_row'] = X.fromJson(
+        Map<String, dynamic>.from(initialData['x_row']),
+      );
+    }
+    copilotData.patch(initialData, notify: false);
     copilotUX.patch(
       Map<String, dynamic>.from(spec['initialState'] as Map? ?? const {}),
       notify: false,

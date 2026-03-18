@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genrp/app/autopilotgo.dart';
+import 'package:genrp/app/aibook/autopilotgo.dart';
 import 'package:genrp/core/base/x.dart';
 
 void main() {

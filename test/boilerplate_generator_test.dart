@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genrp/app/autopilotgo.dart';
+import 'package:genrp/app/aibook/autopilotgo.dart';
 import 'package:genrp/core/generator/boilerplate_generator.dart';
 import 'package:genrp/core/template/checkbox_form_template.dart';
 import 'package:genrp/core/template/collection_template.dart';
@@ -16,11 +16,7 @@ void main() {
       final spec = {
         'initialBody': 'test',
         'bodies': {
-          'test': {
-            'template': 'form',
-            'type': 'text',
-            'text': 'Form Body',
-          },
+          'test': {'template': 'form', 'type': 'text', 'text': 'Form Body'},
         },
       };
 
@@ -51,10 +47,7 @@ void main() {
         'bodies': {
           'test': {
             'template': 'checkboxForm',
-            'checkbox': {
-              'label': 'Saved',
-              'bind': 'data.book.saved',
-            },
+            'checkbox': {'label': 'Saved', 'bind': 'data.book.saved'},
             'type': 'text',
             'text': 'Checkbox Body',
           },
@@ -82,17 +75,16 @@ void main() {
       expect(find.text('Checkbox Body'), findsOneWidget);
     });
 
-    testWidgets('checkbox form template updates bound value on tap', (tester) async {
+    testWidgets('checkbox form template updates bound value on tap', (
+      tester,
+    ) async {
       final spec = {
         'initialBody': 'test',
         'initialData': {'book.saved': false},
         'bodies': {
           'test': {
             'template': 'checkboxForm',
-            'checkbox': {
-              'label': 'Saved',
-              'bind': 'data.book.saved',
-            },
+            'checkbox': {'label': 'Saved', 'bind': 'data.book.saved'},
             'type': 'text',
             'prefix': 'Saved Flag: ',
             'bind': 'data.book.saved',
@@ -128,11 +120,7 @@ void main() {
       final spec = {
         'initialBody': 'test',
         'bodies': {
-          'test': {
-            'template': 'detail',
-            'type': 'text',
-            'text': 'Detail Body',
-          },
+          'test': {'template': 'detail', 'type': 'text', 'text': 'Detail Body'},
         },
       };
 
@@ -251,7 +239,11 @@ void main() {
         'initialBody': 'test',
         'initialData': {'test.value': 'Bound Value'},
         'bodies': {
-          'test': {'type': 'text', 'prefix': 'Value: ', 'bind': 'data.test.value'},
+          'test': {
+            'type': 'text',
+            'prefix': 'Value: ',
+            'bind': 'data.test.value',
+          },
         },
       };
 
@@ -319,7 +311,13 @@ void main() {
             'id': 101,
             'name': 'testAction',
             'todos': [
-              {'id': 'todo-set-flag', 'type': 'data', 'operation': 'set', 'path': 'action.triggered', 'value': true},
+              {
+                'id': 'todo-set-flag',
+                'type': 'data',
+                'operation': 'set',
+                'path': 'action.triggered',
+                'value': true,
+              },
             ],
           },
         ],
@@ -364,7 +362,11 @@ void main() {
           'test': {
             'type': 'column',
             'children': [
-              {'type': 'textField', 'label': 'Input', 'bind': 'data.form.input'},
+              {
+                'type': 'textField',
+                'label': 'Input',
+                'bind': 'data.form.input',
+              },
             ],
           },
         },

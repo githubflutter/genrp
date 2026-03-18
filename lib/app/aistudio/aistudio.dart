@@ -77,12 +77,20 @@ class AIStudioApp extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(onPressed: () {}, child: const Icon(Icons.edit)),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {},
+          child: const Icon(Icons.edit),
+        ),
         bottomNavigationBar: BottomAppBar(
           child: Container(
             height: 48,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(children: [const Spacer(), Text('AIStudio:${AppMeta.aistudio}/${AppMeta.f}/${AppMeta.v}')]),
+            child: Row(
+              children: [
+                const Spacer(),
+                Text('AIStudio:${AppMeta.aistudio}/${AppMeta.f}/${AppMeta.v}'),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genrp/app/autopilotgo.dart';
+import 'package:genrp/app/aibook/autopilotgo.dart';
 import 'package:genrp/core/runtime/template_runtime.dart';
 
 void main() {
   group('TemplateRuntime', () {
-    testWidgets('renders the current small widget set from nodes', (tester) async {
+    testWidgets('renders the current small widget set from nodes', (
+      tester,
+    ) async {
       const runtime = TemplateRuntime();
       final autopilot = AutopilotGo();
       final node = {
@@ -18,11 +20,7 @@ void main() {
       };
 
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: runtime.render(node, autopilot),
-          ),
-        ),
+        MaterialApp(home: Scaffold(body: runtime.render(node, autopilot))),
       );
 
       expect(find.byType(Column), findsOneWidget);

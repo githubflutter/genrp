@@ -8,8 +8,11 @@ Continue in `/Users/Shared/dev/git/genrp`.
 You are working on `AIStudio`.
 
 Current app state:
-- `AIStudio` is still a placeholder app in `lib/app/aistudio.dart`.
-- It is currently a minimal `MaterialApp` with a single `Scaffold`, placeholder body text, FAB, and bottom status bar.
+- `AIStudio` now has an initial three-panel shell in `lib/app/aistudio/aistudio.dart`.
+- The left panel already has `Data` and `UX/Spec` tabs.
+- The middle and right panels are still placeholders.
+- The left-panel catalog lists are only partial right now.
+- A reusable local SQLite foundation now exists in `lib/core/db/sqlite_store.dart`.
 
 Role of AIStudio:
 - `AIStudio` is the model-row editing surface.
@@ -50,6 +53,27 @@ Left panel tab contents:
   - `UX Action`
   - `Body Spec Node`
 
+Current implemented shell state:
+- Left panel exists with:
+  - `Data` tab
+  - `UX/Spec` tab
+- Current `Data` list is only:
+  - `Entity`
+  - `Field`
+  - `Relation`
+  - `Action`
+  - `Function`
+- Current `UX/Spec` list is only:
+  - `Host`
+  - `Body`
+  - `Template`
+  - `Type`
+  - `Widget`
+- Middle panel is currently placeholder text.
+- Right panel is currently placeholder text.
+- No dedicated `AIStudio` state model or selection flow exists yet.
+- No actual `AIStudio` wiring to the SQLite store exists yet.
+
 Architecture direction:
 - Keep the UI simple and efficient.
 - Do not introduce route navigation for this.
@@ -73,18 +97,17 @@ Recommended panel responsibilities:
   - optional raw JSON preview for debugging
 
 Recommended build order:
-1. Replace the placeholder center body in `lib/app/aistudio.dart` with a three-panel `Row`.
-2. Add local `AIStudio` state for:
+1. Keep the existing three-panel shell and add local `AIStudio` state for:
    - active left tab
    - selected catalog type
    - selected row id
    - optional search/filter text
-3. Build the left panel first with the `Data` and `UX/Spec` tabs.
-4. Build the middle panel second with sample rows and selection.
-5. Build the right panel third with a generic editor for the common `i/a/d/e/t/n/s` shape.
-6. Start with in-memory sample data only.
-7. After shell interaction feels right, add the `UX/Spec` catalog set.
-8. Only after that, add real load/save transport.
+2. Finish the left panel catalog lists so they cover the intended data and UX/spec units.
+3. Build the middle panel next with SQLite-backed rows, current-catalog header, search, and selection.
+4. Build the right panel next with a generic editor for the common `i/a/d/e/t/n/s` shape and save back to SQLite.
+5. After shell interaction feels right, add the missing `UX/Spec` catalog set and row-level editing shapes.
+6. Add dedicated `AIStudio` tests for panel and SQLite CRUD behavior.
+7. Only after that, add real remote load/save transport.
 
 Important constraints:
 - Do not redesign `AIBook`.
@@ -95,14 +118,15 @@ Important constraints:
 - Keep analyzer clean after each step.
 
 Immediate next recommended step:
-- Implement Phase 1 only:
-  - three-panel shell
-  - left panel with `Data` and `UX/Spec` tabs
-  - middle panel placeholder list
-  - right panel placeholder editor
+- Implement Phase 2:
+  - local `AIStudio` selection state
+  - complete left-panel catalog lists
+  - middle panel that changes based on selected catalog and reads rows from SQLite
+  - keep right panel simple placeholder if needed for this step
 
 Relevant files:
-- `lib/app/aistudio.dart`
+- `lib/app/aistudio/aistudio.dart`
+- `lib/core/db/sqlite_store.dart`
 - `lib/core/model/data/entity_model.dart`
 - `lib/core/model/data/field_model.dart`
 - `lib/core/model/data/action_model.dart`

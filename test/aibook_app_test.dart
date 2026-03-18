@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genrp/app/aibook.dart';
+import 'package:genrp/app/aibook/aibook.dart';
 import 'package:genrp/core/widgets/x_checkbox.dart';
 
 void main() {
-  testWidgets('AIBook renders spec-driven editor and preview flow', (tester) async {
+  testWidgets('AIBook renders spec-driven editor and preview flow', (
+    tester,
+  ) async {
     await tester.pumpWidget(const AIBookApp());
     await tester.pumpAndSettle();
 
