@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/model/ux/ux_registry.dart';
 import 'package:genrp/core/template/checkbox_form_template.dart';
 import 'package:genrp/core/template/collection_template.dart';
 import 'package:genrp/core/template/detail_template.dart';
@@ -14,24 +15,36 @@ class DynamicSpecBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initialBody = spec['initialBody']?.toString() ?? 'editor';
-    final currentBody = autopilot.resolve('ux.currentBody')?.toString() ?? initialBody;
+    final registry = UxRegistry.fromSpec(spec);
+    final initialBodyValue = spec['initialBody'];
+    final currentBodyValue = autopilot.resolve('ux.currentBody') ?? initialBodyValue;
+    final initialBody = initialBodyValue is num
+        ? registry.bodyName(initialBodyValue.toInt()) ?? 'editor'
+        : initialBodyValue?.toString() ?? 'editor';
+    final currentBody = currentBodyValue is num
+        ? registry.bodyName(currentBodyValue.toInt()) ?? initialBody
+        : currentBodyValue?.toString() ?? initialBody;
     final bodies = Map<String, dynamic>.from(spec['bodies'] as Map? ?? const {});
     final bodySpec = Map<String, dynamic>.from(bodies[currentBody] as Map? ?? const {});
-    final template = bodySpec['template']?.toString() ?? 'basic';
+    final resolvedBodySpec = <String, dynamic>{
+      ...spec,
+      ...bodySpec,
+    };
+    final templateId = (bodySpec['templateId'] as num?)?.toInt();
+    final template = registry.templateName(templateId) ?? bodySpec['template']?.toString() ?? 'basic';
 
     switch (template) {
       case 'checkboxForm':
-        return CheckboxFormTemplate(bodySpec: bodySpec, autopilot: autopilot);
+        return CheckboxFormTemplate(bodySpec: resolvedBodySpec, autopilot: autopilot);
       case 'collection':
-        return CollectionTemplate(bodySpec: bodySpec, autopilot: autopilot);
+        return CollectionTemplate(bodySpec: resolvedBodySpec, autopilot: autopilot);
       case 'detail':
-        return DetailTemplate(bodySpec: bodySpec, autopilot: autopilot);
+        return DetailTemplate(bodySpec: resolvedBodySpec, autopilot: autopilot);
       case 'form':
-        return FormTemplate(bodySpec: bodySpec, autopilot: autopilot);
+        return FormTemplate(bodySpec: resolvedBodySpec, autopilot: autopilot);
       case 'basic':
       default:
-        return FormTemplate(bodySpec: bodySpec, autopilot: autopilot);
+        return FormTemplate(bodySpec: resolvedBodySpec, autopilot: autopilot);
     }
   }
 }

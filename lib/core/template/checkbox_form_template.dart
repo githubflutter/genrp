@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/model/ux/ux_registry.dart';
 import 'package:genrp/core/model/ux/ux_spec_mapper.dart';
 import 'package:genrp/core/runtime/template_runtime.dart';
 import 'package:genrp/core/widgets/x_checkbox.dart';
@@ -18,8 +19,13 @@ class CheckboxFormTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     const runtime = TemplateRuntime();
     const mapper = UxSpecMapper();
+    final registry = UxRegistry.fromSpec(bodySpec);
+    final hostId = (bodySpec['hostId'] as num?)?.toInt() ?? 0;
+    final bodyId = (bodySpec['bodyId'] as num?)?.toInt() ?? 0;
     final checkboxSpec = Map<String, dynamic>.from(bodySpec['checkbox'] as Map? ?? const {});
-    final checkboxModel = checkboxSpec.isEmpty ? null : mapper.checkBoxFromNode(checkboxSpec);
+    final checkboxModel = checkboxSpec.isEmpty
+        ? null
+        : mapper.checkBoxFromNode(checkboxSpec, hostId: hostId, bodyId: bodyId);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -35,7 +41,7 @@ class CheckboxFormTemplate extends StatelessWidget {
                   model: checkboxModel,
                   autopilot: autopilot,
                 ),
-              runtime.render(bodySpec, autopilot),
+              runtime.render(bodySpec, autopilot, registry: registry, hostId: hostId, bodyId: bodyId),
             ],
           ),
         ),

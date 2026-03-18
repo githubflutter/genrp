@@ -8,27 +8,51 @@ class AutopilotGo extends Autopilot {
   String? _loadedSpecId;
 
   void configureSpec(Map<String, dynamic> spec) {
-    final nextSpecId = (spec['id'] ?? spec['name'] ?? spec['toolbar']?['title'] ?? 'aibook').toString();
+    final nextSpecId =
+        (spec['id'] ?? spec['name'] ?? spec['toolbar']?['title'] ?? 'aibook')
+            .toString();
     if (_loadedSpecId == nextSpecId) return;
 
     _loadedSpecId = nextSpecId;
     actionSet.clear();
     dataSet.clear();
     stateSet.clear();
-    registerFieldPath(0, 1, 'state.currentBody');
-    registerFieldPath(0, 2, 'state.status');
-    registerFieldPath(1, 101, 'data.book.title');
-    registerFieldPath(1, 102, 'data.book.saved');
-    registerFieldPath(2, 101, 'data.book.title');
-    registerFieldPath(2, 102, 'data.book.saved');
+    clearFieldPaths();
+    clearSelectedUxIdentity(notify: false);
+    _configureFieldBindings(spec);
 
-    copilotData.patch(Map<String, dynamic>.from(spec['initialData'] as Map? ?? const {}), notify: false);
-    copilotUX.patch(Map<String, dynamic>.from(spec['initialState'] as Map? ?? const {}), notify: false);
+    copilotData.patch(
+      Map<String, dynamic>.from(spec['initialData'] as Map? ?? const {}),
+      notify: false,
+    );
+    copilotUX.patch(
+      Map<String, dynamic>.from(spec['initialState'] as Map? ?? const {}),
+      notify: false,
+    );
 
     final actions = Action.fromList(spec['actions']);
     for (final action in actions) {
       if (action.name.isEmpty) continue;
-      actionSet.register(action.name, (payload) => _runAction(action, payload), action);
+      actionSet.register(
+        action.name,
+        (payload) => _runAction(action, payload),
+        action,
+      );
+    }
+  }
+
+  void _configureFieldBindings(Map<String, dynamic> spec) {
+    final bindings = List<Object?>.from(
+      spec['fieldBindings'] as List? ?? const [],
+    );
+    for (final item in bindings.whereType<Map>()) {
+      final map = Map<String, dynamic>.from(item);
+      final src = (map['src'] as num?)?.toInt();
+      final fieldId =
+          (map['fieldId'] as num?)?.toInt() ?? (map['f'] as num?)?.toInt();
+      final path = map['path']?.toString() ?? '';
+      if (src == null || fieldId == null || path.isEmpty) continue;
+      registerFieldPath(src, fieldId, path);
     }
   }
 

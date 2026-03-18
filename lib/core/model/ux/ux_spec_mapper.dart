@@ -5,14 +5,16 @@ import 'package:genrp/core/model/ux/ux_text_box_model.dart';
 class UxSpecMapper {
   const UxSpecMapper();
 
-  UxButtonModel buttonFromNode(Map<String, dynamic> node) {
+  UxButtonModel buttonFromNode(Map<String, dynamic> node, {int hostId = 0, int bodyId = 0}) {
     final actionValue = node['action'];
     return UxButtonModel(
-      i: (node['i'] as num?)?.toInt() ?? 0,
+      i: (node['widgetId'] as num?)?.toInt() ?? (node['i'] as num?)?.toInt() ?? 0,
       a: node['a'] as bool? ?? true,
       d: (node['d'] as num?)?.toInt() ?? 0,
       e: (node['e'] as num?)?.toInt() ?? 0,
       t: (node['t'] as num?)?.toInt() ?? 0,
+      hostId: (node['hostId'] as num?)?.toInt() ?? hostId,
+      bodyId: (node['bodyId'] as num?)?.toInt() ?? bodyId,
       n: node['text']?.toString() ?? node['n']?.toString() ?? '',
       s: node['s']?.toString() ?? '',
       actionId: (node['actionId'] as num?)?.toInt() ?? (actionValue is num ? actionValue.toInt() : 0),
@@ -20,13 +22,15 @@ class UxSpecMapper {
     );
   }
 
-  UxTextBoxModel textBoxFromNode(Map<String, dynamic> node) {
+  UxTextBoxModel textBoxFromNode(Map<String, dynamic> node, {int hostId = 0, int bodyId = 0}) {
     return UxTextBoxModel(
-      i: (node['i'] as num?)?.toInt() ?? 0,
+      i: (node['widgetId'] as num?)?.toInt() ?? (node['i'] as num?)?.toInt() ?? 0,
       a: node['a'] as bool? ?? true,
       d: (node['d'] as num?)?.toInt() ?? 0,
       e: (node['e'] as num?)?.toInt() ?? 0,
       t: (node['t'] as num?)?.toInt() ?? 0,
+      hostId: (node['hostId'] as num?)?.toInt() ?? hostId,
+      bodyId: (node['bodyId'] as num?)?.toInt() ?? bodyId,
       n: node['label']?.toString() ?? node['n']?.toString() ?? '',
       s: node['s']?.toString() ?? '',
       bind: node['bind']?.toString() ?? '',
@@ -35,13 +39,15 @@ class UxSpecMapper {
     );
   }
 
-  UxCheckBoxModel checkBoxFromNode(Map<String, dynamic> node) {
+  UxCheckBoxModel checkBoxFromNode(Map<String, dynamic> node, {int hostId = 0, int bodyId = 0}) {
     return UxCheckBoxModel(
-      i: (node['i'] as num?)?.toInt() ?? 0,
+      i: (node['widgetId'] as num?)?.toInt() ?? (node['i'] as num?)?.toInt() ?? 0,
       a: node['a'] as bool? ?? true,
       d: (node['d'] as num?)?.toInt() ?? 0,
       e: (node['e'] as num?)?.toInt() ?? 0,
       t: (node['t'] as num?)?.toInt() ?? 0,
+      hostId: (node['hostId'] as num?)?.toInt() ?? hostId,
+      bodyId: (node['bodyId'] as num?)?.toInt() ?? bodyId,
       n: node['label']?.toString() ?? node['n']?.toString() ?? '',
       s: node['s']?.toString() ?? '',
       bind: node['bind']?.toString() ?? '',

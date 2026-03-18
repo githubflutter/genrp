@@ -4,6 +4,8 @@ class UxTextBoxModel {
   final int d;
   final int e;
   final int t;
+  final int hostId;
+  final int bodyId;
   final String n;
   final String s;
   final String bind;
@@ -16,6 +18,8 @@ class UxTextBoxModel {
     required this.d,
     required this.e,
     required this.t,
+    required this.hostId,
+    required this.bodyId,
     required this.n,
     required this.s,
     required this.bind,
@@ -29,6 +33,8 @@ class UxTextBoxModel {
     d: json['d'] as int? ?? 0,
     e: json['e'] as int? ?? 0,
     t: json['t'] as int? ?? 0,
+    hostId: json['hostId'] as int? ?? 0,
+    bodyId: json['bodyId'] as int? ?? 0,
     n: json['n'] as String? ?? '',
     s: json['s'] as String? ?? '',
     bind: json['bind'] as String? ?? '',
@@ -42,6 +48,8 @@ class UxTextBoxModel {
     'd': d,
     'e': e,
     't': t,
+    'hostId': hostId,
+    'bodyId': bodyId,
     'n': n,
     's': s,
     'bind': bind,
@@ -55,6 +63,8 @@ class UxTextBoxModel {
     int? d,
     int? e,
     int? t,
+    int? hostId,
+    int? bodyId,
     String? n,
     String? s,
     String? bind,
@@ -66,6 +76,8 @@ class UxTextBoxModel {
     d: d ?? this.d,
     e: e ?? this.e,
     t: t ?? this.t,
+    hostId: hostId ?? this.hostId,
+    bodyId: bodyId ?? this.bodyId,
     n: n ?? this.n,
     s: s ?? this.s,
     bind: bind ?? this.bind,
@@ -82,6 +94,8 @@ class UxTextBoxModel {
           other.d == d &&
           other.e == e &&
           other.t == t &&
+          other.hostId == hostId &&
+          other.bodyId == bodyId &&
           other.n == n &&
           other.s == s &&
           other.bind == bind &&
@@ -89,5 +103,5 @@ class UxTextBoxModel {
           other.fieldId == fieldId);
 
   @override
-  int get hashCode => Object.hash(i, a, d, e, t, n, s, bind, src, fieldId);
+  int get hashCode => Object.hash(i, a, d, e, t, hostId, bodyId, n, s, bind, src, fieldId);
 }

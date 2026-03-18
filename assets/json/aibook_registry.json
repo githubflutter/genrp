@@ -1,0 +1,194 @@
+{
+  "hosts": [
+    {
+      "id": 0,
+      "name": "main"
+    },
+    {
+      "id": 1,
+      "name": "left"
+    },
+    {
+      "id": 2,
+      "name": "right"
+    }
+  ],
+  "bodies": [
+    {
+      "id": 1,
+      "name": "editor"
+    },
+    {
+      "id": 2,
+      "name": "preview"
+    }
+  ],
+  "templates": [
+    {
+      "id": 1,
+      "name": "checkboxForm"
+    },
+    {
+      "id": 2,
+      "name": "collection"
+    },
+    {
+      "id": 3,
+      "name": "detail"
+    },
+    {
+      "id": 4,
+      "name": "form"
+    }
+  ],
+  "types": [
+    {
+      "id": 1,
+      "name": "column"
+    },
+    {
+      "id": 2,
+      "name": "spacer"
+    },
+    {
+      "id": 3,
+      "name": "textField"
+    },
+    {
+      "id": 4,
+      "name": "button"
+    },
+    {
+      "id": 5,
+      "name": "text"
+    }
+  ],
+  "widgets": [
+    {
+      "id": 101,
+      "name": "editor.savedCheckbox"
+    },
+    {
+      "id": 102,
+      "name": "editor.titleField"
+    },
+    {
+      "id": 103,
+      "name": "editor.saveButton"
+    },
+    {
+      "id": 104,
+      "name": "editor.previewButton"
+    },
+    {
+      "id": 201,
+      "name": "preview.titleText"
+    },
+    {
+      "id": 202,
+      "name": "preview.currentTitleText"
+    },
+    {
+      "id": 203,
+      "name": "preview.savedFlagText"
+    },
+    {
+      "id": 204,
+      "name": "preview.backButton"
+    }
+  ],
+  "fieldBindings": [
+    {
+      "src": 0,
+      "fieldId": 1,
+      "path": "state.currentBody"
+    },
+    {
+      "src": 0,
+      "fieldId": 2,
+      "path": "state.status"
+    },
+    {
+      "src": 1,
+      "fieldId": 101,
+      "path": "data.book.title"
+    },
+    {
+      "src": 1,
+      "fieldId": 102,
+      "path": "data.book.saved"
+    },
+    {
+      "src": 2,
+      "fieldId": 101,
+      "path": "data.book.title"
+    },
+    {
+      "src": 2,
+      "fieldId": 102,
+      "path": "data.book.saved"
+    }
+  ],
+  "actions": [
+    {
+      "id": 1,
+      "name": "saveBook",
+      "todos": [
+        {
+          "id": "todo-mark-saved",
+          "type": "data",
+          "operation": "set",
+          "path": "book.saved",
+          "value": true
+        },
+        {
+          "id": "todo-set-status",
+          "type": "ux",
+          "operation": "set",
+          "path": "status",
+          "value": "Saved"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "showPreview",
+      "todos": [
+        {
+          "id": "todo-open-preview",
+          "type": "ux",
+          "operation": "set",
+          "path": "currentBody",
+          "value": 2
+        },
+        {
+          "id": "todo-preview-status",
+          "type": "ux",
+          "operation": "set",
+          "path": "status",
+          "value": "Preview"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "showEditor",
+      "todos": [
+        {
+          "id": "todo-open-editor",
+          "type": "ux",
+          "operation": "set",
+          "path": "currentBody",
+          "value": 1
+        },
+        {
+          "id": "todo-editor-status",
+          "type": "ux",
+          "operation": "set",
+          "path": "status",
+          "value": "Editing"
+        }
+      ]
+    }
+  ]
+}

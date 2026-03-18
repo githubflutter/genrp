@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/model/ux/ux_registry.dart';
 import 'package:genrp/core/model/ux/ux_spec_mapper.dart';
 import 'package:genrp/core/widgets/x_button.dart';
 import 'package:genrp/core/widgets/x_text_box.dart';
@@ -36,10 +37,26 @@ class TemplateRuntime {
         ),
   };
 
-  Widget render(Map<String, dynamic> node, Autopilot autopilot) {
-    final type = node['type']?.toString() ?? 'text';
+  Widget render(
+    Map<String, dynamic> node,
+    Autopilot autopilot, {
+    UxRegistry? registry,
+    int hostId = 0,
+    int bodyId = 0,
+  }) {
+    final typeId = (node['typeId'] as num?)?.toInt();
+    final type = registry?.typeName(typeId) ?? node['type']?.toString() ?? 'text';
     final builder = _builders[type] ?? _builders['text']!;
-    return builder(node, autopilot, (childNode) => render(childNode, autopilot));
+    final scopedNode = <String, dynamic>{
+      ...node,
+      'hostId': (node['hostId'] as num?)?.toInt() ?? hostId,
+      'bodyId': (node['bodyId'] as num?)?.toInt() ?? bodyId,
+    };
+    return builder(
+      scopedNode,
+      autopilot,
+      (childNode) => render(childNode, autopilot, registry: registry, hostId: hostId, bodyId: bodyId),
+    );
   }
 }
 
@@ -89,7 +106,11 @@ class _RuntimeTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return XTextBox(
-      model: TemplateRuntime._mapper.textBoxFromNode(node),
+      model: TemplateRuntime._mapper.textBoxFromNode(
+        node,
+        hostId: (node['hostId'] as num?)?.toInt() ?? 0,
+        bodyId: (node['bodyId'] as num?)?.toInt() ?? 0,
+      ),
       autopilot: autopilot,
     );
   }
@@ -107,7 +128,11 @@ class _RuntimeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return XButton(
-      model: TemplateRuntime._mapper.buttonFromNode(node),
+      model: TemplateRuntime._mapper.buttonFromNode(
+        node,
+        hostId: (node['hostId'] as num?)?.toInt() ?? 0,
+        bodyId: (node['bodyId'] as num?)?.toInt() ?? 0,
+      ),
       autopilot: autopilot,
     );
   }
@@ -125,9 +150,16 @@ class _RuntimeText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bind = node['bind']?.toString();
+    final src = (node['src'] as num?)?.toInt();
+    final fieldId = (node['fieldId'] as num?)?.toInt() ?? (node['f'] as num?)?.toInt();
+    final resolvedValue = autopilot.resolveFieldBinding(
+      src: src,
+      fieldId: fieldId,
+      fallbackPath: bind,
+    );
     final text = bind == null || bind.isEmpty
         ? node['text']?.toString() ?? ''
-        : '${node['prefix'] ?? ''}${autopilot.resolve(bind) ?? ''}${node['suffix'] ?? ''}';
+        : '${node['prefix'] ?? ''}${resolvedValue ?? ''}${node['suffix'] ?? ''}';
     final style = node['style'] == 'headline'
         ? const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
         : null;

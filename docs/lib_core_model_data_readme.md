@@ -11,6 +11,7 @@ Role by app
 - In `AICodex`, these classes are consumed as schema-generation input for create/drop/alter work.
 - In `AIBook`, these classes are not the primary authoring surface; `AIBook` uses the resulting row-level CRUD structures produced from them.
 - This means the class shape is shared, but the semantic role depends on the app.
+- In `AIBook`, current business-bound runtime transport is expected to prefer the base `X` variants from `lib/core/base/x.dart` rather than human-readable object maps.
 
 Examples
 - In `AIStudio`, `EntityModel` and `FieldModel` are edited as stored model rows.
@@ -25,6 +26,7 @@ Boundary notes
 - A shared model class does not imply one fixed meaning across all apps.
 - `TableModel` and `ColumnModel` represent lower-level physical schema structure.
 - `EntityModel` and `FieldModel` represent the higher-level app-facing schema surface used by the dynamic parts of the system.
+- For `AIBook`, those model classes help define runtime meaning, but business payload transport should stay compact and index-oriented when possible.
 
 Files
 - `table_model.dart` — `TableModel` (fields: `int i`, `bool a`, `int d`, `int e`, `int t`, `String n`, `String s`).

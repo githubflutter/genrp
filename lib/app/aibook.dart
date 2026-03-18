@@ -36,8 +36,18 @@ class _AIBookHomeState extends State<_AIBookHome> {
   }
 
   Future<Map<String, dynamic>> _loadSpec() async {
-    final raw = await rootBundle.loadString('assets/json/aibook_spec.json');
-    return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    final specRaw = await rootBundle.loadString('assets/json/aibook_spec.json');
+    final registryRaw = await rootBundle.loadString('assets/json/aibook_registry.json');
+    final spec = Map<String, dynamic>.from(jsonDecode(specRaw) as Map);
+    final registry = Map<String, dynamic>.from(jsonDecode(registryRaw) as Map);
+    final mergedRegistry = <String, dynamic>{
+      ...registry,
+      'bodiesRegistry': registry['bodies'],
+    }..remove('bodies');
+    return {
+      ...spec,
+      ...mergedRegistry,
+    };
   }
 
   @override

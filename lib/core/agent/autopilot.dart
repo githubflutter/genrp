@@ -22,9 +22,68 @@ abstract class Autopilot extends ChangeNotifier {
   final Map<int, String> _stateFieldPaths = {};
   final Map<int, String> _dataSourceFieldPaths = {};
   final Map<int, String> _dataSetFieldPaths = {};
+  int? _selectedHostId;
+  int? _selectedBodyId;
+  int? _selectedWidgetId;
+
+  int? get selectedHostId => _selectedHostId;
+  int? get selectedBodyId => _selectedBodyId;
+  int? get selectedWidgetId => _selectedWidgetId;
+
+  void clearSelectedUxIdentity({bool notify = true}) {
+    if (_selectedHostId == null &&
+        _selectedBodyId == null &&
+        _selectedWidgetId == null) {
+      return;
+    }
+    _selectedHostId = null;
+    _selectedBodyId = null;
+    _selectedWidgetId = null;
+    if (notify) publishChange();
+  }
+
+  void selectUxIdentity({
+    required int hostId,
+    required int bodyId,
+    required int widgetId,
+    bool notify = true,
+  }) {
+    if (_selectedHostId == hostId &&
+        _selectedBodyId == bodyId &&
+        _selectedWidgetId == widgetId) {
+      return;
+    }
+    _selectedHostId = hostId;
+    _selectedBodyId = bodyId;
+    _selectedWidgetId = widgetId;
+    if (notify) publishChange();
+  }
+
+  bool isSelectedUxIdentity({
+    required int hostId,
+    required int bodyId,
+    required int widgetId,
+  }) {
+    if (_selectedHostId == null ||
+        _selectedBodyId == null ||
+        _selectedWidgetId == null) {
+      return false;
+    }
+    return _selectedHostId == hostId &&
+        _selectedBodyId == bodyId &&
+        _selectedWidgetId == widgetId;
+  }
+
+  void clearFieldPaths() {
+    _stateFieldPaths.clear();
+    _dataSourceFieldPaths.clear();
+    _dataSetFieldPaths.clear();
+  }
 
   dynamic resolve(String path) {
-    if (path.startsWith('data.')) return copilotData.getValue(path.substring(5));
+    if (path.startsWith('data.')) {
+      return copilotData.getValue(path.substring(5));
+    }
     if (path.startsWith('ux.')) return copilotUX.getValue(path.substring(3));
     if (path.startsWith('state.')) return copilotUX.getValue(path.substring(6));
     return copilotData.getValue(path);
@@ -42,12 +101,12 @@ abstract class Autopilot extends ChangeNotifier {
     }
   }
 
-  dynamic resolveFieldBinding({
-    int? src,
-    int? fieldId,
-    String? fallbackPath,
-  }) {
-    final resolvedPath = _resolveFieldPath(src: src, fieldId: fieldId, fallbackPath: fallbackPath);
+  dynamic resolveFieldBinding({int? src, int? fieldId, String? fallbackPath}) {
+    final resolvedPath = _resolveFieldPath(
+      src: src,
+      fieldId: fieldId,
+      fallbackPath: fallbackPath,
+    );
     if (resolvedPath == null || resolvedPath.isEmpty) return null;
     return resolve(resolvedPath);
   }
@@ -74,16 +133,16 @@ abstract class Autopilot extends ChangeNotifier {
     String? fallbackPath,
     required dynamic value,
   }) {
-    final resolvedPath = _resolveFieldPath(src: src, fieldId: fieldId, fallbackPath: fallbackPath);
+    final resolvedPath = _resolveFieldPath(
+      src: src,
+      fieldId: fieldId,
+      fallbackPath: fallbackPath,
+    );
     if (resolvedPath == null || resolvedPath.isEmpty) return;
     updateBinding(resolvedPath, value);
   }
 
-  String? _resolveFieldPath({
-    int? src,
-    int? fieldId,
-    String? fallbackPath,
-  }) {
+  String? _resolveFieldPath({int? src, int? fieldId, String? fallbackPath}) {
     if (src != null && fieldId != null) {
       final path = switch (src) {
         0 => _stateFieldPaths[fieldId],
@@ -98,7 +157,9 @@ abstract class Autopilot extends ChangeNotifier {
 
   void publishChange() => notifyListeners();
 
-  Future<void> triggerAction(String name, [dynamic payload]) => actionSet.invoke(name, payload);
+  Future<void> triggerAction(String name, [dynamic payload]) =>
+      actionSet.invoke(name, payload);
 
-  Future<void> triggerActionById(int id, [dynamic payload]) => actionSet.invokeById(id, payload);
+  Future<void> triggerActionById(int id, [dynamic payload]) =>
+      actionSet.invokeById(id, payload);
 }
