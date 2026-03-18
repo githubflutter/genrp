@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/model/ux/ux_button_model.dart';
@@ -38,7 +39,16 @@ class XButton extends StatelessWidget {
         ),
         child: Padding(
           padding: _isSelected ? const EdgeInsets.all(2) : EdgeInsets.zero,
-          child: button,
+          child: GestureDetector(
+            onLongPress: kDebugMode
+                ? () => autopilot.selectUxIdentity(
+                      hostId: model.hostId,
+                      bodyId: model.bodyId,
+                      widgetId: model.i,
+                    )
+                : null,
+            child: button,
+          ),
         ),
       ),
     );

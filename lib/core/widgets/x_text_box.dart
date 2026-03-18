@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/model/ux/ux_text_box_model.dart';
@@ -70,14 +71,23 @@ class _XTextBoxState extends State<XTextBox> {
       ),
       child: Padding(
         padding: _isSelected ? const EdgeInsets.all(2) : EdgeInsets.zero,
-        child: TextField(
-          controller: _controller,
-          decoration: InputDecoration(labelText: widget.model.n),
-          onChanged: (value) => widget.autopilot.updateFieldBinding(
-            src: widget.model.src,
-            fieldId: widget.model.fieldId,
-            fallbackPath: widget.model.bind,
-            value: value,
+        child: GestureDetector(
+          onLongPress: kDebugMode
+              ? () => widget.autopilot.selectUxIdentity(
+                    hostId: widget.model.hostId,
+                    bodyId: widget.model.bodyId,
+                    widgetId: widget.model.i,
+                  )
+              : null,
+          child: TextField(
+            controller: _controller,
+            decoration: InputDecoration(labelText: widget.model.n),
+            onChanged: (value) => widget.autopilot.updateFieldBinding(
+              src: widget.model.src,
+              fieldId: widget.model.fieldId,
+              fallbackPath: widget.model.bind,
+              value: value,
+            ),
           ),
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:genrp/core/agent/copilot_ux.dart';
 import 'package:genrp/core/agent/data_set.dart';
 import 'package:genrp/core/agent/state_set.dart';
 import 'package:genrp/core/agent/action_set.dart';
+import 'package:genrp/core/base/x.dart';
 
 abstract class Autopilot extends ChangeNotifier {
   Autopilot() {
@@ -22,6 +23,10 @@ abstract class Autopilot extends ChangeNotifier {
   final Map<int, String> _stateFieldPaths = {};
   final Map<int, String> _dataSourceFieldPaths = {};
   final Map<int, String> _dataSetFieldPaths = {};
+
+  final Map<int, int> _dataSourceFieldSlots = {};
+  final Map<int, int> _dataSetFieldSlots = {};
+
   int? _selectedHostId;
   int? _selectedBodyId;
   int? _selectedWidgetId;
@@ -78,6 +83,8 @@ abstract class Autopilot extends ChangeNotifier {
     _stateFieldPaths.clear();
     _dataSourceFieldPaths.clear();
     _dataSetFieldPaths.clear();
+    _dataSourceFieldSlots.clear();
+    _dataSetFieldSlots.clear();
   }
 
   dynamic resolve(String path) {
@@ -101,7 +108,38 @@ abstract class Autopilot extends ChangeNotifier {
     }
   }
 
+  void registerFieldSlot(int src, int fieldId, int slot) {
+    switch (src) {
+      case 1:
+        _dataSourceFieldSlots[fieldId] = slot;
+      case 2:
+        _dataSetFieldSlots[fieldId] = slot;
+    }
+  }
+
+  int? _resolveFieldSlot(int? src, int? fieldId) {
+    if (src != null && fieldId != null) {
+      return switch (src) {
+        1 => _dataSourceFieldSlots[fieldId],
+        2 => _dataSetFieldSlots[fieldId],
+        _ => null,
+      };
+    }
+    return null;
+  }
+
   dynamic resolveFieldBinding({int? src, int? fieldId, String? fallbackPath}) {
+    final slot = _resolveFieldSlot(src, fieldId);
+    if (slot != null && (src == 1 || src == 2)) {
+      final value = copilotData.getValue('x_row');
+      if (value is X) {
+        if (slot >= 0 && slot < value.v.length) {
+          return value.v[slot];
+        }
+        return null;
+      }
+    }
+
     final resolvedPath = _resolveFieldPath(
       src: src,
       fieldId: fieldId,
@@ -133,6 +171,24 @@ abstract class Autopilot extends ChangeNotifier {
     String? fallbackPath,
     required dynamic value,
   }) {
+    final slot = _resolveFieldSlot(src, fieldId);
+    if (slot != null && (src == 1 || src == 2)) {
+      final xRow = copilotData.getValue('x_row');
+      if (xRow is X) {
+        if (slot >= 0 && slot < xRow.v.length) {
+          xRow.v[slot] = value;
+        } else {
+          // If the list is too short, we pad it with nulls
+          while (xRow.v.length <= slot) {
+            xRow.v.add(null);
+          }
+          xRow.v[slot] = value;
+        }
+        publishChange();
+        return;
+      }
+    }
+
     final resolvedPath = _resolveFieldPath(
       src: src,
       fieldId: fieldId,

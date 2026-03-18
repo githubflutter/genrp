@@ -10,7 +10,10 @@
   },
   "initialData": {
     "book.title": "Welcome to AIBook",
-    "book.saved": false
+    "book.saved": false,
+    "x_row": {
+      "v": ["Welcome to AIBook", false]
+    }
   },
   "bodies": {
     "editor": {

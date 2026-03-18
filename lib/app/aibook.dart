@@ -1,9 +1,10 @@
-import 'dart:convert';
+
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:genrp/meta.dart';
 import 'package:genrp/app/autopilotgo.dart';
+import 'package:genrp/core/agent/mock_transport.dart';
 import 'package:genrp/core/generator/boilerplate_generator.dart';
 import 'package:provider/provider.dart';
 
@@ -36,18 +37,7 @@ class _AIBookHomeState extends State<_AIBookHome> {
   }
 
   Future<Map<String, dynamic>> _loadSpec() async {
-    final specRaw = await rootBundle.loadString('assets/json/aibook_spec.json');
-    final registryRaw = await rootBundle.loadString('assets/json/aibook_registry.json');
-    final spec = Map<String, dynamic>.from(jsonDecode(specRaw) as Map);
-    final registry = Map<String, dynamic>.from(jsonDecode(registryRaw) as Map);
-    final mergedRegistry = <String, dynamic>{
-      ...registry,
-      'bodiesRegistry': registry['bodies'],
-    }..remove('bodies');
-    return {
-      ...spec,
-      ...mergedRegistry,
-    };
+    return MockTransport.fetchSpec();
   }
 
   @override
@@ -57,12 +47,39 @@ class _AIBookHomeState extends State<_AIBookHome> {
         return FutureBuilder<Map<String, dynamic>>(
           future: _specFuture,
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Error')),
+                body: Center(
+                  child: Text(
+                    'Failed to load spec:\n${snapshot.error}',
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+
             if (!snapshot.hasData) {
               return const Scaffold(body: Center(child: CircularProgressIndicator()));
             }
 
             final spec = snapshot.data!;
             autopilot.configureSpec(spec);
+
+            if (autopilot.specError != null) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('Validation Error')),
+                body: Center(
+                  child: Text(
+                    autopilot.specError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+
             final toolbar = Map<String, dynamic>.from(spec['toolbar'] as Map? ?? const {});
             final status = autopilot.resolve('ux.status')?.toString() ?? 'Ready';
 

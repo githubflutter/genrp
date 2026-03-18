@@ -21,11 +21,25 @@ class DynamicSpecBody extends StatelessWidget {
     final initialBody = initialBodyValue is num
         ? registry.bodyName(initialBodyValue.toInt()) ?? 'editor'
         : initialBodyValue?.toString() ?? 'editor';
-    final currentBody = currentBodyValue is num
+    final currentBodyStr = currentBodyValue is num
         ? registry.bodyName(currentBodyValue.toInt()) ?? initialBody
         : currentBodyValue?.toString() ?? initialBody;
     final bodies = Map<String, dynamic>.from(spec['bodies'] as Map? ?? const {});
-    final bodySpec = Map<String, dynamic>.from(bodies[currentBody] as Map? ?? const {});
+
+    Map<String, dynamic> bodySpec = {};
+    if (currentBodyValue is num) {
+      final targetId = currentBodyValue.toInt();
+      for (final value in bodies.values) {
+        if (value is Map && value['bodyId'] == targetId) {
+          bodySpec = Map<String, dynamic>.from(value);
+          break;
+        }
+      }
+    }
+
+    if (bodySpec.isEmpty) {
+      bodySpec = Map<String, dynamic>.from(bodies[currentBodyStr] as Map? ?? const {});
+    }
     final resolvedBodySpec = <String, dynamic>{
       ...spec,
       ...bodySpec,
