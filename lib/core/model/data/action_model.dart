@@ -1,4 +1,4 @@
-class FunctionModel {
+class ActionModel {
   final int i;
   final bool a;
   final int d;
@@ -7,7 +7,7 @@ class FunctionModel {
   final String n;
   final String s;
 
-  const FunctionModel({
+  const ActionModel({
     required this.i,
     required this.a,
     required this.d,
@@ -17,7 +17,7 @@ class FunctionModel {
     required this.s,
   });
 
-  factory FunctionModel.fromJson(Map<String, dynamic> json) => FunctionModel(
+  factory ActionModel.fromJson(Map<String, dynamic> json) => ActionModel(
     i: json['i'] as int? ?? 0,
     a: json['a'] as bool? ?? false,
     d: json['d'] as int? ?? 0,
@@ -37,7 +37,7 @@ class FunctionModel {
     's': s,
   };
 
-  FunctionModel copyWith({
+  ActionModel copyWith({
     int? i,
     bool? a,
     int? d,
@@ -45,7 +45,7 @@ class FunctionModel {
     int? t,
     String? n,
     String? s,
-  }) => FunctionModel(
+  }) => ActionModel(
     i: i ?? this.i,
     a: a ?? this.a,
     d: d ?? this.d,
@@ -58,7 +58,7 @@ class FunctionModel {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is FunctionModel &&
+      (other is ActionModel &&
           other.i == i &&
           other.a == a &&
           other.d == d &&

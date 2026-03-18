@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:genrp/meta.dart';
 
 class AICodexApp extends StatelessWidget {
-  const AICodexApp({Key? key}) : super(key: key);
+  const AICodexApp({super.key});
 
   @override
   Widget build(BuildContext context) {

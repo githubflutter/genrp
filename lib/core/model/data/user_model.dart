@@ -1,8 +1,8 @@
 class UserModel {
   final int i;
   final bool a;
-  final bool d;
-  final bool e;
+  final int d;
+  final int e;
   final int t;
   final String n;
   final String s;
@@ -20,8 +20,8 @@ class UserModel {
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
     i: json['i'] as int? ?? 0,
     a: json['a'] as bool? ?? false,
-    d: json['d'] as bool? ?? false,
-    e: json['e'] as bool? ?? false,
+    d: json['d'] as int? ?? 0,
+    e: json['e'] as int? ?? 0,
     t: json['t'] as int? ?? 0,
     n: json['n'] as String? ?? '',
     s: json['s'] as String? ?? '',
@@ -40,8 +40,8 @@ class UserModel {
   UserModel copyWith({
     int? i,
     bool? a,
-    bool? d,
-    bool? e,
+    int? d,
+    int? e,
     int? t,
     String? n,
     String? s,

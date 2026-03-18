@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:genrp/client/aibook.dart';
+import 'package:genrp/app/aibook.dart';
 
 void main() {
   runApp(const AIBookApp());

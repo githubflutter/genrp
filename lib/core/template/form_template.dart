@@ -1,0 +1,29 @@
+import 'package:flutter/material.dart';
+import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/runtime/template_runtime.dart';
+
+class FormTemplate extends StatelessWidget {
+  const FormTemplate({
+    required this.bodySpec,
+    required this.autopilot,
+    super.key,
+  });
+
+  final Map<String, dynamic> bodySpec;
+  final Autopilot autopilot;
+
+  @override
+  Widget build(BuildContext context) {
+    const runtime = TemplateRuntime();
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Align(
+        alignment: Alignment.topLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640),
+          child: runtime.render(bodySpec, autopilot),
+        ),
+      ),
+    );
+  }
+}

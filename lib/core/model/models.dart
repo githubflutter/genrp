@@ -1,5 +1,6 @@
 export 'data/table_model.dart';
 export 'data/column_model.dart';
+export 'data/action_model.dart';
 export 'data/function_model.dart';
 export 'data/parameter_model.dart';
 export 'data/entity_model.dart';

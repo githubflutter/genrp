@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:genrp/meta.dart';
 
 class AIStudioApp extends StatelessWidget {
-  const AIStudioApp({Key? key}) : super(key: key);
+  const AIStudioApp({super.key});
 
   @override
   Widget build(BuildContext context) {

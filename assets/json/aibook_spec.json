@@ -1,0 +1,143 @@
+{
+  "id": "aibook-small-scale",
+  "toolbar": {
+    "title": "AIBook Test"
+  },
+  "initialBody": "editor",
+  "initialState": {
+    "currentBody": "editor",
+    "status": "Ready"
+  },
+  "initialData": {
+    "book.title": "Welcome to AIBook",
+    "book.saved": false
+  },
+  "actions": [
+    {
+      "id": 1,
+      "name": "saveBook",
+      "todos": [
+        {
+          "id": "todo-mark-saved",
+          "type": "data",
+          "operation": "set",
+          "path": "book.saved",
+          "value": true
+        },
+        {
+          "id": "todo-set-status",
+          "type": "ux",
+          "operation": "set",
+          "path": "status",
+          "value": "Saved"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "showPreview",
+      "todos": [
+        {
+          "id": "todo-open-preview",
+          "type": "ux",
+          "operation": "set",
+          "path": "currentBody",
+          "value": "preview"
+        },
+        {
+          "id": "todo-preview-status",
+          "type": "ux",
+          "operation": "set",
+          "path": "status",
+          "value": "Preview"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "showEditor",
+      "todos": [
+        {
+          "id": "todo-open-editor",
+          "type": "ux",
+          "operation": "set",
+          "path": "currentBody",
+          "value": "editor"
+        },
+        {
+          "id": "todo-editor-status",
+          "type": "ux",
+          "operation": "set",
+          "path": "status",
+          "value": "Editing"
+        }
+      ]
+    }
+  ],
+  "bodies": {
+    "editor": {
+      "template": "checkboxForm",
+      "checkbox": {
+        "label": "Saved",
+        "bind": "data.book.saved"
+      },
+      "type": "column",
+      "children": [
+        {
+          "type": "text",
+          "text": "Book Editor",
+          "style": "headline"
+        },
+        {
+          "type": "text",
+          "text": "Edit the bound title field, then save or preview."
+        },
+        {
+          "type": "spacer",
+          "height": 12
+        },
+        {
+          "type": "textField",
+          "label": "Book Title",
+          "bind": "data.book.title"
+        },
+        {
+          "type": "button",
+          "text": "Save",
+          "action": "saveBook"
+        },
+        {
+          "type": "button",
+          "text": "Show Preview",
+          "action": "showPreview"
+        }
+      ]
+    },
+    "preview": {
+      "template": "detail",
+      "type": "column",
+      "children": [
+        {
+          "type": "text",
+          "text": "Preview",
+          "style": "headline"
+        },
+        {
+          "type": "text",
+          "prefix": "Current Title: ",
+          "bind": "data.book.title"
+        },
+        {
+          "type": "text",
+          "prefix": "Saved Flag: ",
+          "bind": "data.book.saved"
+        },
+        {
+          "type": "button",
+          "text": "Back to Editor",
+          "action": "showEditor"
+        }
+      ]
+    }
+  }
+}
