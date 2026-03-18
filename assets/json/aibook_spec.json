@@ -79,7 +79,9 @@
       "template": "checkboxForm",
       "checkbox": {
         "label": "Saved",
-        "bind": "data.book.saved"
+        "bind": "data.book.saved",
+        "src": 1,
+        "f": 102
       },
       "type": "column",
       "children": [
@@ -99,17 +101,21 @@
         {
           "type": "textField",
           "label": "Book Title",
-          "bind": "data.book.title"
+          "bind": "data.book.title",
+          "src": 1,
+          "f": 101
         },
         {
           "type": "button",
           "text": "Save",
-          "action": "saveBook"
+          "action": "saveBook",
+          "actionId": 1
         },
         {
           "type": "button",
           "text": "Show Preview",
-          "action": "showPreview"
+          "action": "showPreview",
+          "actionId": 2
         }
       ]
     },
@@ -125,17 +131,22 @@
         {
           "type": "text",
           "prefix": "Current Title: ",
-          "bind": "data.book.title"
+          "bind": "data.book.title",
+          "src": 1,
+          "f": 101
         },
         {
           "type": "text",
           "prefix": "Saved Flag: ",
-          "bind": "data.book.saved"
+          "bind": "data.book.saved",
+          "src": 1,
+          "f": 102
         },
         {
           "type": "button",
           "text": "Back to Editor",
-          "action": "showEditor"
+          "action": "showEditor",
+          "actionId": 3
         }
       ]
     }

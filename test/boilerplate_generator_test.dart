@@ -6,8 +6,8 @@ import 'package:genrp/core/template/checkbox_form_template.dart';
 import 'package:genrp/core/template/collection_template.dart';
 import 'package:genrp/core/template/detail_template.dart';
 import 'package:genrp/core/template/form_template.dart';
-import 'package:genrp/core/ux/bound_checkbox.dart';
-import 'package:genrp/core/ux/bound_text_field.dart';
+import 'package:genrp/core/widgets/x_checkbox.dart';
+import 'package:genrp/core/widgets/x_text_box.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -78,7 +78,7 @@ void main() {
       );
 
       expect(find.byType(CheckboxFormTemplate), findsOneWidget);
-      expect(find.byType(BoundCheckbox), findsOneWidget);
+      expect(find.byType(XCheckBox), findsOneWidget);
       expect(find.text('Checkbox Body'), findsOneWidget);
     });
 
@@ -386,7 +386,7 @@ void main() {
         ),
       );
 
-      expect(find.byType(BoundTextField), findsOneWidget);
+      expect(find.byType(XTextBox), findsOneWidget);
       expect(find.text('Input'), findsOneWidget);
     });
   });

@@ -15,6 +15,12 @@ class AutopilotGo extends Autopilot {
     actionSet.clear();
     dataSet.clear();
     stateSet.clear();
+    registerFieldPath(0, 1, 'state.currentBody');
+    registerFieldPath(0, 2, 'state.status');
+    registerFieldPath(1, 101, 'data.book.title');
+    registerFieldPath(1, 102, 'data.book.saved');
+    registerFieldPath(2, 101, 'data.book.title');
+    registerFieldPath(2, 102, 'data.book.saved');
 
     copilotData.patch(Map<String, dynamic>.from(spec['initialData'] as Map? ?? const {}), notify: false);
     copilotUX.patch(Map<String, dynamic>.from(spec['initialState'] as Map? ?? const {}), notify: false);

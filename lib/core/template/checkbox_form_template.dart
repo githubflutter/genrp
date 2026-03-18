@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/model/ux/ux_spec_mapper.dart';
 import 'package:genrp/core/runtime/template_runtime.dart';
-import 'package:genrp/core/ux/bound_checkbox.dart';
+import 'package:genrp/core/widgets/x_checkbox.dart';
 
 class CheckboxFormTemplate extends StatelessWidget {
   const CheckboxFormTemplate({
@@ -16,7 +17,9 @@ class CheckboxFormTemplate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const runtime = TemplateRuntime();
+    const mapper = UxSpecMapper();
     final checkboxSpec = Map<String, dynamic>.from(bodySpec['checkbox'] as Map? ?? const {});
+    final checkboxModel = checkboxSpec.isEmpty ? null : mapper.checkBoxFromNode(checkboxSpec);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -27,11 +30,10 @@ class CheckboxFormTemplate extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (checkboxSpec.isNotEmpty)
-                BoundCheckbox(
+              if (checkboxModel != null)
+                XCheckBox(
+                  model: checkboxModel,
                   autopilot: autopilot,
-                  bind: checkboxSpec['bind']?.toString() ?? '',
-                  label: checkboxSpec['label']?.toString() ?? 'Enabled',
                 ),
               runtime.render(bodySpec, autopilot),
             ],

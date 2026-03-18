@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/bound_text_field.dart';
+import 'package:genrp/core/model/ux/ux_spec_mapper.dart';
+import 'package:genrp/core/widgets/x_button.dart';
+import 'package:genrp/core/widgets/x_text_box.dart';
 
 typedef RuntimeNodeBuilder = Widget Function(
   Map<String, dynamic> node,
@@ -11,6 +13,8 @@ typedef RuntimeNodeBuilder = Widget Function(
 /// Runtime that renders the current small widget set from JSON nodes.
 class TemplateRuntime {
   const TemplateRuntime();
+
+  static const UxSpecMapper _mapper = UxSpecMapper();
 
   static final Map<String, RuntimeNodeBuilder> _builders = {
     'column': (node, autopilot, renderChild) => _RuntimeColumn(
@@ -84,10 +88,9 @@ class _RuntimeTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BoundTextField(
+    return XTextBox(
+      model: TemplateRuntime._mapper.textBoxFromNode(node),
       autopilot: autopilot,
-      bind: node['bind']?.toString() ?? '',
-      label: node['label']?.toString(),
     );
   }
 }
@@ -103,12 +106,9 @@ class _RuntimeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: ElevatedButton(
-        onPressed: () => autopilot.triggerAction(node['action']?.toString() ?? ''),
-        child: Text(node['text']?.toString() ?? 'Action'),
-      ),
+    return XButton(
+      model: TemplateRuntime._mapper.buttonFromNode(node),
+      autopilot: autopilot,
     );
   }
 }

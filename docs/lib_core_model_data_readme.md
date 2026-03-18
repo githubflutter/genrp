@@ -60,7 +60,7 @@ How to import
 ```dart
 import 'package:genrp/core/model/models.dart';
 
-final t = TableModel(i: 1, a: true, d: false, e: false, t: 0, n: 'name', s: 's');
+final t = TableModel(i: 1, a: true, d: 0, e: 0, t: 0, n: 'name', s: 's');
 final json = t.toJson();
 final restored = TableModel.fromJson(json);
 ```

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genrp/app/aibook.dart';
-import 'package:genrp/core/ux/bound_checkbox.dart';
+import 'package:genrp/core/widgets/x_checkbox.dart';
 
 void main() {
   testWidgets('AIBook renders spec-driven editor and preview flow', (tester) async {
@@ -10,7 +10,7 @@ void main() {
 
     expect(find.text('Book Editor'), findsOneWidget);
     expect(find.text('Book Title'), findsOneWidget);
-    expect(find.byType(BoundCheckbox), findsOneWidget);
+    expect(find.byType(XCheckBox), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'My Test Book');
     await tester.pump();
