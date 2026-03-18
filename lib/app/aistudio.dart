@@ -17,7 +17,46 @@ class AIStudioApp extends StatelessWidget {
               flex: 2,
               child: Container(
                 color: Colors.grey.shade100,
-                child: const Center(child: Text('Model Navigation')),
+                child: DefaultTabController(
+                  length: 2,
+                  child: Column(
+                    children: [
+                      const TabBar(
+                        labelColor: Colors.black87,
+                        unselectedLabelColor: Colors.grey,
+                        indicatorColor: Colors.blue,
+                        tabs: [
+                          Tab(text: 'Data'),
+                          Tab(text: 'UX/Spec'),
+                        ],
+                      ),
+                      Expanded(
+                        child: TabBarView(
+                          children: [
+                            ListView(
+                              children: const [
+                                ListTile(title: Text('Entity')),
+                                ListTile(title: Text('Field')),
+                                ListTile(title: Text('Relation')),
+                                ListTile(title: Text('Action')),
+                                ListTile(title: Text('Function')),
+                              ],
+                            ),
+                            ListView(
+                              children: const [
+                                ListTile(title: Text('Host')),
+                                ListTile(title: Text('Body')),
+                                ListTile(title: Text('Template')),
+                                ListTile(title: Text('Type')),
+                                ListTile(title: Text('Widget')),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
             const VerticalDivider(width: 1, thickness: 1),
