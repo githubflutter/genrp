@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:genrp/core/agent/copilot_data.dart';
 import 'package:genrp/core/agent/copilot_ux.dart';
+import 'package:genrp/core/base/x.dart';
 import 'package:genrp/core/agent/data_set.dart';
 import 'package:genrp/core/agent/state_set.dart';
 import 'package:genrp/core/agent/action_set.dart';
-import 'package:genrp/core/base/x.dart';
 
 abstract class Autopilot extends ChangeNotifier {
   Autopilot() {
