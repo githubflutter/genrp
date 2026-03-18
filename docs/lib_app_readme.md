@@ -149,4 +149,4 @@ flutter run -t lib/main.dart
 **Next steps**
 
 - Expand app-specific docs as each app moves from placeholder UI into its intended workflow role.
-- See `docs/aibook_beta_handover.md` for the current `AIBook` progress snapshot and ordered beta handover plan.
+- See `docs/aibook_handover.md` and `docs/aistudio_handover.md` for the current merged handover docs.

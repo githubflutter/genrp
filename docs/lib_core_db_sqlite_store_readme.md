@@ -11,6 +11,14 @@ Purpose
 - Supports local catalog-row persistence for `AIStudio` style editing work.
 - Can also support local cache/key-value storage for `AIBook`.
 
+Directory direction
+- Under `lib/core/db`, the intended structure is moving toward app-specific directories:
+  - `lib/core/db/aibook/`
+  - `lib/core/db/aicodex/`
+  - `lib/core/db/aistudio/`
+- Shared low-level database foundation can stay shared, but app-facing database code should live under the matching app directory.
+- `lib/core/db/sqlite_store.dart` is currently the shared SQLite foundation and should be treated as shared infrastructure until the db layout is split further.
+
 Current schema
 - `app_kv`
   - simple key/value JSON storage
@@ -51,6 +59,7 @@ Current intended usage
   - local persistence for data model rows and UX/spec rows
 - `AIBook`
   - local cache for spec data or base `X` business data when needed
+- Future app-specific db code should sit under the matching app db directory rather than accumulating in the db root.
 
 Current quality status
 - Covered by `test/sqlite_store_test.dart`
