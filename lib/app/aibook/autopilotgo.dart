@@ -97,6 +97,52 @@ class AutopilotGo extends Autopilot {
     final e2 = checkDuplicates('widgets');
     if (e2 != null) return e2;
 
+    final fieldBindings = List<Object?>.from(spec['fieldBindings'] as List? ?? const []);
+    for (final binding in fieldBindings.whereType<Map>()) {
+      if (binding['src'] == null || binding['fieldId'] == null) {
+        return 'fieldBindings entry missing src or fieldId';
+      }
+    }
+
+    final validActionIds = <int>{};
+    for (final action in List<Object?>.from(spec['actions'] as List? ?? const []).whereType<Map>()) {
+      final id = (action['id'] as num?)?.toInt();
+      if (id != null) validActionIds.add(id);
+    }
+
+    final validTemplateIds = <int>{};
+    for (final template in List<Object?>.from(spec['templates'] as List? ?? const []).whereType<Map>()) {
+      final id = (template['id'] as num?)?.toInt();
+      if (id != null) validTemplateIds.add(id);
+    }
+
+    final validTypeIds = <int>{};
+    for (final type in List<Object?>.from(spec['types'] as List? ?? const []).whereType<Map>()) {
+      final id = (type['id'] as num?)?.toInt();
+      if (id != null) validTypeIds.add(id);
+    }
+
+    final bodies = Map<String, dynamic>.from(spec['bodies'] as Map? ?? const {});
+    for (final bodyValue in bodies.values.whereType<Map>()) {
+      final templateId = (bodyValue['templateId'] as num?)?.toInt();
+      if (templateId != null && !validTemplateIds.contains(templateId)) {
+        return 'body reference missing templateId $templateId in templates list';
+      }
+
+      final children = List<Object?>.from(bodyValue['children'] as List? ?? const []);
+      for (final child in children.whereType<Map>()) {
+        final actionId = (child['actionId'] as num?)?.toInt();
+        if (actionId != null && !validActionIds.contains(actionId)) {
+          return 'body child reference missing actionId $actionId in actions list';
+        }
+
+        final typeId = (child['typeId'] as num?)?.toInt();
+        if (typeId != null && !validTypeIds.contains(typeId)) {
+          return 'body child reference missing typeId $typeId in types list';
+        }
+      }
+    }
+
     return null;
   }
 

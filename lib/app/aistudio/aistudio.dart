@@ -58,6 +58,16 @@ class _AIStudioHomeState extends State<AIStudioHome> with SingleTickerProviderSt
     });
   }
 
+  Widget _buildNavItem(String title) {
+    final isSelected = _selectedCatalog == title;
+    return ListTile(
+      title: Text(title, style: TextStyle(fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+      selected: isSelected,
+      selectedTileColor: Colors.blue.withValues(alpha: 0.1),
+      onTap: () => _onCatalogTapped(title),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,20 +96,28 @@ class _AIStudioHomeState extends State<AIStudioHome> with SingleTickerProviderSt
                         children: [
                           ListView(
                             children: [
-                              ListTile(title: const Text('Entity'), onTap: () => _onCatalogTapped('Entity')),
-                              ListTile(title: const Text('Field'), onTap: () => _onCatalogTapped('Field')),
-                              ListTile(title: const Text('Relation'), onTap: () => _onCatalogTapped('Relation')),
-                              ListTile(title: const Text('Action'), onTap: () => _onCatalogTapped('Action')),
-                              ListTile(title: const Text('Function'), onTap: () => _onCatalogTapped('Function')),
+                              _buildNavItem('Entity'),
+                              _buildNavItem('Field'),
+                              _buildNavItem('Relation'),
+                              _buildNavItem('Action'),
+                              _buildNavItem('Function'),
+                              _buildNavItem('Parameter'),
+                              _buildNavItem('Table'),
+                              _buildNavItem('Column'),
+                              _buildNavItem('System'),
+                              _buildNavItem('User'),
                             ],
                           ),
                           ListView(
                             children: [
-                              ListTile(title: const Text('Host'), onTap: () => _onCatalogTapped('Host')),
-                              ListTile(title: const Text('Body'), onTap: () => _onCatalogTapped('Body')),
-                              ListTile(title: const Text('Template'), onTap: () => _onCatalogTapped('Template')),
-                              ListTile(title: const Text('Type'), onTap: () => _onCatalogTapped('Type')),
-                              ListTile(title: const Text('Widget'), onTap: () => _onCatalogTapped('Widget')),
+                              _buildNavItem('Host'),
+                              _buildNavItem('Body'),
+                              _buildNavItem('Template'),
+                              _buildNavItem('Type'),
+                              _buildNavItem('Widget'),
+                              _buildNavItem('FieldBinding'),
+                              _buildNavItem('UX Action'),
+                              _buildNavItem('Body Spec Node'),
                             ],
                           ),
                         ],

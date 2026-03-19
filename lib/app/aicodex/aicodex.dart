@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:genrp/core/db/sqlite_store.dart';
 import 'package:genrp/meta.dart';
 
 class AICodexApp extends StatelessWidget {
@@ -23,14 +24,37 @@ class AICodexHome extends StatefulWidget {
 
 class _AICodexHomeState extends State<AICodexHome> {
   String? _selectedModelType;
-  // ignore: unused_field
   int? _selectedRowId;
+  List<SqliteCatalogRow> _rows = [];
+  String _searchText = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadRows(String modelType) async {
+    final rows = await SqliteStore.instance.listRows(modelType);
+    setState(() {
+      _rows = rows;
+    });
+  }
 
   void _onModelTypeTapped(String modelType) {
     setState(() {
       _selectedModelType = modelType;
       _selectedRowId = null;
+      _searchText = '';
+      _searchController.clear();
     });
+    _loadRows(modelType);
   }
 
   Widget _buildNavItem(String title) {
@@ -45,6 +69,11 @@ class _AICodexHomeState extends State<AICodexHome> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredRows = _rows.where((row) {
+      if (_searchText.isEmpty) return true;
+      return row.n.toLowerCase().contains(_searchText.toLowerCase());
+    }).toList();
+
     return Scaffold(
         appBar: AppBar(title: const Text('AICodex')),
         body: Row(
@@ -93,8 +122,60 @@ class _AICodexHomeState extends State<AICodexHome> {
                         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    const Expanded(
-                      child: Center(child: Text('Master/Main Editor')),
+                    if (_selectedModelType != null)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: const InputDecoration(
+                            labelText: 'Search',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.search),
+                          ),
+                          onChanged: (value) {
+                            setState(() {
+                              _searchText = value;
+                            });
+                          },
+                        ),
+                      ),
+                    Expanded(
+                      child: _selectedModelType == null
+                          ? const Center(child: Text('Master/Main Editor'))
+                          : filteredRows.isEmpty
+                              ? const Center(child: Text('No rows'))
+                              : ListView.builder(
+                                  itemCount: filteredRows.length,
+                                  itemBuilder: (context, index) {
+                                    final row = filteredRows[index];
+                                    final isSelected = row.i == _selectedRowId;
+                                    return ListTile(
+                                      title: Text(row.n.isNotEmpty ? row.n : 'Unnamed'),
+                                      subtitle: Text('ID: ${row.i}'),
+                                      trailing: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: row.a ? Colors.green.shade100 : Colors.red.shade100,
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          row.a ? 'Active' : 'Inactive',
+                                          style: TextStyle(
+                                            color: row.a ? Colors.green.shade800 : Colors.red.shade800,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      selected: isSelected,
+                                      selectedTileColor: Colors.blue.withValues(alpha: 0.1),
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedRowId = row.i;
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
                     )
                   ],
                 ),
