@@ -2,7 +2,7 @@
 
 Progressive step-by-step plan to reach constrained AIBook beta.
 
-**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime. Numeric-first body routing is already in place; validation expansion is next.
+**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime. Numeric-first body routing is already in place; validation expansion is next. Shared DB/request scaffolding now exists, but AIBook still uses `MockTransport` at runtime.
 
 **Current next step:** Step 2 — Validate binding references.
 
@@ -37,6 +37,7 @@ flutter test
 - [x] Basic spec validation (duplicate IDs in bodies and widgets)
 - [x] Numeric-first body routing with string fallback
 - [x] `SqliteStore` shared foundation (not wired to AIBook yet)
+- [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and `WebClient` envelope builder
 - [x] Tests: slot binding, validation, mock transport, body routing, widget behavior
 
 ---
@@ -212,6 +213,7 @@ You are working on AIBook Step 4: Real transport boundary.
 
 Current state:
 - `MockTransport` in `lib/core/agent/mock_transport.dart` loads spec from `assets/json` and simulates save.
+- `lib/core/db/webclient.dart` already builds the generic remote action envelope, but there is no real runtime HTTP transport yet.
 - The planned backend is a C# ASP.NET Core Minimal API.
 - POST body: `{"a": <actionId>, "u": "...", "p": "...", "data": {...}}`.
 - PostgreSQL returns JSON directly via C# passthrough.

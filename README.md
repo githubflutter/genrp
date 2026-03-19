@@ -6,9 +6,9 @@ A Flutter monolith with three apps sharing a common core engine.
 
 | App | Role | Entry | Status |
 |---|---|---|---|
-| **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta |
+| **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta; Step 2 pending |
 | **AIStudio** | Model-row editing surface (definition CRUD) | `lib/app/aistudio/aistudio.dart` | Step 1 done; Step 2 pending |
-| **AICodex** | Configurator / schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 1 done; Step 2 pending |
+| **AICodex** | Configurator / schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 1 done; paused before Step 2 |
 
 ## Quick Start
 
@@ -27,8 +27,8 @@ lib/
 ├── app/                   # App entry points (aibook, aicodex, aistudio)
 └── core/
     ├── agent/             # Autopilot orchestrator, copilots, actions, transport
-    ├── base/              # X transport classes, DataType, Converter
-    ├── db/                # SQLite store (shared foundation)
+    ├── base/              # X transport classes, DataType, sys registries
+    ├── db/                # SQLite store + generic PG/SQLite/Web DB builders
     ├── generator/         # DynamicSpecBody (body router)
     ├── model/data/        # 10 data models (Entity, Field, Table, etc.)
     ├── model/ux/          # UX spec models + registry + mapper
@@ -54,7 +54,10 @@ All docs live in `docs/`. Start with:
 3. **Numeric identity** — integer IDs for all runtime references (body, template, widget, action, binding).
 4. **Compact transport** — base `X` with slot-addressable `v[]` for business data.
 5. **Copilot split** — `CopilotData` and `CopilotUX` never merge.
-6. **Incremental** — keep analyzer green, keep tests green, keep app runnable after every step.
+6. **Foundation vs business split** — foundation tables can use direct CRUD; business-table writes go through function/action paths only.
+7. **Admin/client DB split** — admin builders create databases, tables, and functions; client builders do CRUD or action-envelope work only.
+8. **No `ALTER TABLE` / never-null columns** — generated columns are `NOT NULL`; schema evolution is create/drop/script oriented.
+9. **Incremental** — keep analyzer green, keep tests green, keep app runnable after every step.
 
 ## Quality Gate
 

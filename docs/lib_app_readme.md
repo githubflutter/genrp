@@ -41,7 +41,16 @@ Backend transport contract
 - SQLite should represent function-like behavior through a `virtualfun` table/model that stores scripts to run.
 - Direct CRUD is allowed for foundation tables.
 - Business-table CRUD goes through function-style actions only.
+- All generated columns are treated as never-null in the shared schema contract.
 - `ALTER TABLE` is not part of the current design.
+
+Current shared DB scaffolding
+- `lib/core/db/db_contract.dart` defines the generic database, table, function, and CRUD specs used by the builders.
+- `lib/core/db/pgsqladmin.dart` and `lib/core/db/sqliteadmin.dart` are the admin builders. They generate create-database, create-table, and create-function output only.
+- `lib/core/db/pgsqlclient.dart` and `lib/core/db/sqliteclient.dart` are the direct CRUD builders. They are intended for foundation rows and reject direct business-table CRUD.
+- `lib/core/db/webclient.dart` builds the generic action/CRUD request envelope used by remote transport layers.
+- System entrypoint seeds now live in `lib/core/base/systable.dart`, `lib/core/base/sysfunc.dart`, and `lib/core/base/systype.dart`.
+- In SQLite, function creation is represented as `virtualfun` row/script storage rather than true database functions.
 
 AIBook transport split
 - For `AIBook`, UX/UI composition data can come from the web as normal JSON.
@@ -80,6 +89,7 @@ Business write rule
 - There is no hard delete.
 - Soft delete means posting `data.a = false` through the function payload.
 - Foundation tables can still use direct CRUD paths when appropriate.
+- Foundation and business schema creation still belongs to the admin side; runtime clients should not generate create scripts.
 
 Planned UX spec note
 - The `lib/core/model/ux` layer already exists and is already used by the AIBook runtime (`UxRegistry`, `UxSpecMapper`, and typed `Ux*Model` classes).

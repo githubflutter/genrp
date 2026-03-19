@@ -13,11 +13,11 @@ GenRP is a **Flutter monolith** containing **three distinct applications** insid
 
 | App | Role | Maturity |
 |---|---|---|
-| **AIBook** | Runtime reader / preview flow (function-driven business-data consumer) | ~80% beta |
+| **AIBook** | Runtime reader / preview flow (function-driven business-data consumer) | ~80% beta; Step 2 pending |
 | **AIStudio** | Model-row editing surface (definition CRUD) | Step 1 done; Step 2 pending |
-| **AICodex** | Configurator / schema-application surface | Step 1 done; Step 2 pending |
+| **AICodex** | Configurator / schema-application surface | Step 1 done; paused before Step 2 |
 
-The apps share a common orchestration engine (`Autopilot`), data models, UX spec models, a JSON-driven UI composition system, and a local SQLite persistence layer. The architecture is intentionally lean, performance-first, and optimized for compact numeric transport.
+The apps share a common orchestration engine (`Autopilot`), data models, UX spec models, a JSON-driven UI composition system, and a local SQLite persistence layer. The repo now also has a shared DB contract/admin-client scaffold for PostgreSQL, SQLite, and web action payloads. The architecture is intentionally lean, performance-first, and optimized for compact numeric transport.
 
 ---
 
@@ -156,10 +156,10 @@ graph TB
 
 | Metric | Value |
 |---|---|
-| **Source files** (`lib/`) | 46 Dart files |
-| **Source LOC** (`lib/`) | ~3,342 lines |
-| **Test files** (`test/`) | 10 Dart files |
-| **Test LOC** (`test/`) | ~838 lines |
+| **Source files** (`lib/`) | 55 Dart files |
+| **Source LOC** (`lib/`) | ~4,163 lines |
+| **Test files** (`test/`) | 11 Dart files |
+| **Test LOC** (`test/`) | ~1,000 lines |
 | **Asset JSON files** | 3 files |
 | **Doc files** (`docs/`) | 10 markdown files |
 | **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
@@ -179,7 +179,7 @@ genrp/
 │   │   │   ├── aibook.dart               # AIBook entry (MaterialApp + Provider)
 │   │   │   └── autopilotgo.dart          # Concrete Autopilot for AIBook
 │   │   ├── aicodex/
-│   │   │   └── aicodex.dart              # AICodex Step 1 shell (grouped nav + placeholders)
+│   │   │   └── aicodex.dart              # AICodex Step 1 shell (currently paused before Step 2)
 │   │   └── aistudio/
 │   │       └── aistudio.dart             # AIStudio Step 1 shell (tabs + selection state)
 │   └── core/
@@ -195,10 +195,19 @@ genrp/
 │       ├── base/
 │       │   ├── converter.dart            # Tolerant type conversion helpers
 │       │   ├── data_type.dart            # DataType registry + TypeMapper
+│       │   ├── sysfunc.dart              # System function entrypoint seeds
+│       │   ├── systable.dart             # System table entrypoint seeds
+│       │   ├── systype.dart              # System target-kind entrypoint seeds
 │       │   └── x.dart                    # Base transport classes (X hierarchy)
 │       ├── db/
 │       │   ├── datasource_helper.dart    # Empty placeholder
-│       │   └── sqlite_store.dart         # SQLite store + SqliteCatalogRow
+│       │   ├── db_contract.dart          # Shared DB specs + SQL helpers
+│       │   ├── pgsqladmin.dart           # PostgreSQL create-db/table/function builder
+│       │   ├── pgsqlclient.dart          # PostgreSQL foundation CRUD builder
+│       │   ├── sqlite_store.dart         # SQLite store + SqliteCatalogRow
+│       │   ├── sqliteadmin.dart          # SQLite create-db/table/virtualfun builder
+│       │   ├── sqliteclient.dart         # SQLite foundation CRUD builder
+│       │   └── webclient.dart            # Generic web action/CRUD envelope builder
 │       ├── generator/
 │       │   └── boilerplate_generator.dart# DynamicSpecBody (body router)
 │       ├── model/
@@ -209,9 +218,9 @@ genrp/
 │       │   └── template_runtime.dart     # JSON→Widget runtime renderer
 │       ├── template/                     # 4 template widgets
 │       └── widgets/                      # 5 wrapped control widgets
-├── test/                                 # 10 test files
+├── test/                                 # 11 test files
 ├── assets/json/                          # 3 JSON spec/registry files
-├── docs/                                 # 8 documentation files
+├── docs/                                 # 10 documentation files
 └── pubspec.yaml
 ```
 
@@ -314,6 +323,17 @@ flowchart LR
 
 ### 5.6 Persistence (`core/db/`)
 
+**Shared DB scaffold** — generic DB specs and builders now sit beside the SQLite store:
+
+| Component | Purpose |
+|---|---|
+| `db_contract.dart` | Shared specs for database, table, function, and CRUD generation |
+| `pgsqladmin.dart` | PostgreSQL create-database, create-table, create-function SQL |
+| `sqliteadmin.dart` | SQLite create-database, create-table, and `virtualfun` row/script generation |
+| `pgsqlclient.dart` / `sqliteclient.dart` | Direct CRUD builders for foundation targets; business direct CRUD is rejected |
+| `webclient.dart` | Generic request payload builder for remote action/function calls |
+| `systable.dart` / `sysfunc.dart` / `systype.dart` | Base-layer entrypoint seeds for table, function, and target-kind routing |
+
 **`SqliteStore`** — A generic local SQLite foundation:
 
 | Table | Purpose | Key |
@@ -326,7 +346,9 @@ flowchart LR
 - Platform-aware: desktop uses `sqflite_common_ffi`, mobile uses `sqflite`, web throws `UnsupportedError`
 - Singleton pattern via `SqliteStore.instance`
 - Supports custom `databaseFactory` and `databasePath` injection for testing
-- Planned divergence: PostgreSQL can use real functions, while SQLite will likely represent function-like behavior through a `virtualfun` script store instead of database functions
+- PostgreSQL can use real foundation/business functions, while SQLite represents function-like behavior through `virtualfun` rows/scripts instead of database functions
+- Generated table builders currently emit `NOT NULL` for all columns
+- `ALTER TABLE` is intentionally not part of the current flow
 
 > [!NOTE]
 > `datasource_helper.dart` is an empty file — reserved for future use.
@@ -338,6 +360,7 @@ flowchart LR
 - **Home**: `_AIBookHome` → `FutureBuilder` loads spec via `MockTransport`, configures `AutopilotGo`, renders `DynamicSpecBody`
 - **AutopilotGo**: Concrete `Autopilot` — validates spec (duplicate IDs), configures field bindings (path + slot), converts `x_row` initial data to `X`, registers named actions with `_runAction` handler
 - **Action execution**: Handles `saveBook` specially (saves `X` row via MockTransport), then iterates `Todo` list for state mutations
+- **Near-term gap**: shared `WebClient` payload scaffolding exists, but real HTTP transport is still pending
 
 #### AIStudio (Step 1 done)
 - **Entry**: `AIStudioApp` → three-panel shell with tabbed left navigation
@@ -345,14 +368,14 @@ flowchart LR
 - Local state: `_activeTab`, `_selectedCatalog`, `_selectedRowId`
 - Middle panel: selected catalog header + placeholder body
 - Right panel: placeholder
-- SQLite wiring and remaining catalog entries are still pending
+- Shared DB builders exist, but SQLite wiring and remaining catalog entries are still pending
 
-#### AICodex (Step 1 done)
+#### AICodex (Step 1 done, currently paused)
 - **Entry**: `AICodexApp` → three-panel shell with grouped model navigation
 - Left: grouped model types with selection highlighting
 - Middle: selected model type header + placeholder body
 - Right: placeholder
-- SQLite master list, detail inspection, and DDL generation are still pending
+- SQLite master list, detail inspection, and DDL generation are still pending when work resumes
 
 ---
 
@@ -478,11 +501,12 @@ Defines **identity registries** — maps numeric IDs to names:
 | `aibook_app_test.dart` | AIBook app widget test |
 | `autopilot_slot_test.dart` | Slot-first read/write for base `X` |
 | `boilerplate_generator_test.dart` | DynamicSpecBody routing |
+| `db_clients_test.dart` | DB admin/client builders + system entrypoint seeds |
 | `main_app_test.dart` | Main launcher widget test |
 | `mock_transport_test.dart` | Mock transport save behavior |
 | `sqlite_store_test.dart` | SQLite store CRUD + KV |
 | `template_runtime_test.dart` | TemplateRuntime node rendering |
-| `validation_test.dart` | Duplicate ID validation |
+| `validation_test.dart` | Current spec validation coverage |
 | `x_button_test.dart` | XButton widget behavior |
 | `x_input_controls_test.dart` | XTextBox + XCheckBox widget behavior |
 
@@ -514,13 +538,14 @@ Defines **identity registries** — maps numeric IDs to names:
 |---|---|---|
 | Body routing still partly string-driven | High | Numeric-first with string fallback; needs cleanup |
 | Hybrid slot + path binding at runtime | High | Slot binding works but path fallback still active everywhere |
-| Mock-only transport | High | No real web/API transport path yet |
+| Mock-only runtime transport | High | `WebClient` envelope builder exists, but no real web/API transport path is wired yet |
 | SQLite not wired into AIBook | Medium | Store exists but AIBook doesn't use it for cache |
 | Basic-only validation | Medium | Only duplicate IDs checked; no reference/consistency validation |
+| Shared DB builders not wired into app flows yet | Medium | Contract/admin/client scaffolding exists, but app-level integration is still pending |
 | AIStudio only has local selection state | Medium | Tab state + catalog selection exist; SQLite list/editor flow is still missing |
 | AIStudio not wired to SQLite | Medium | Left panel lists exist but no persistence |
 | AIStudio incomplete catalog lists | Low | Missing: Parameter, Table, Column, System, User, FieldBinding, UX Action, Body Spec Node |
-| AICodex only has Step 1 navigation shell | Medium | Middle/right panels are still placeholders; no SQLite or DDL flow yet |
+| AICodex paused after Step 1 | Medium | Middle/right panels are still placeholders; resume after AIStudio advances |
 | Preview selection is debug-only | Low | Long-press in debug mode only |
 | `datasource_helper.dart` is empty | Low | Reserved placeholder |
 | No route navigation (intentional) | N/A | Architecture decision: body swap only |
@@ -581,7 +606,7 @@ graph LR
 ```
 
 > [!TIP]
-> The dependency set is intentionally minimal. No heavy frameworks, no code generators, no HTTP client yet (mock only).
+> The dependency set is intentionally minimal. No heavy frameworks, no code generators, and no real runtime HTTP transport yet.
 
 ---
 
@@ -601,7 +626,7 @@ Based on the existing handover docs and code analysis:
 7. **Build right panel** — generic editor for common `i/a/d/e/t/n/s` shape + JSON payload
 8. **Add AIStudio test coverage** — panel behavior + SQLite CRUD flow
 
-### Phase 3: Continue AICodex
+### Phase 3: Resume AICodex After AIStudio Step 3+
 9. **Build master list from SQLite** — rows for the selected model type
 10. **Build read-only detail panel** — inspect selected rows
 11. **Add DDL generation** — create/drop/function SQL + `virtualfun` script preview
@@ -616,7 +641,7 @@ Based on the existing handover docs and code analysis:
 
 ## 15. File Reference
 
-### Source Files (`lib/` — 46 files)
+### Source Files (`lib/` — 55 files)
 
 | Category | Files |
 |---|---|
@@ -625,8 +650,8 @@ Based on the existing handover docs and code analysis:
 | **AICodex app** | [aicodex.dart](lib/app/aicodex/aicodex.dart) |
 | **AIStudio app** | [aistudio.dart](lib/app/aistudio/aistudio.dart) |
 | **Agent/Orchestration** | [autopilot.dart](lib/core/agent/autopilot.dart), [copilot_data.dart](lib/core/agent/copilot_data.dart), [copilot_ux.dart](lib/core/agent/copilot_ux.dart), [data_set.dart](lib/core/agent/data_set.dart), [state_set.dart](lib/core/agent/state_set.dart), [action_set.dart](lib/core/agent/action_set.dart), [action.dart](lib/core/agent/action.dart), [mock_transport.dart](lib/core/agent/mock_transport.dart) |
-| **Base transport** | [x.dart](lib/core/base/x.dart), [data_type.dart](lib/core/base/data_type.dart), [converter.dart](lib/core/base/converter.dart) |
-| **Persistence** | [sqlite_store.dart](lib/core/db/sqlite_store.dart), [datasource_helper.dart](lib/core/db/datasource_helper.dart) |
+| **Base transport + registries** | [x.dart](lib/core/base/x.dart), [data_type.dart](lib/core/base/data_type.dart), [converter.dart](lib/core/base/converter.dart), [systable.dart](lib/core/base/systable.dart), [sysfunc.dart](lib/core/base/sysfunc.dart), [systype.dart](lib/core/base/systype.dart) |
+| **Persistence** | [sqlite_store.dart](lib/core/db/sqlite_store.dart), [db_contract.dart](lib/core/db/db_contract.dart), [pgsqladmin.dart](lib/core/db/pgsqladmin.dart), [pgsqlclient.dart](lib/core/db/pgsqlclient.dart), [sqliteadmin.dart](lib/core/db/sqliteadmin.dart), [sqliteclient.dart](lib/core/db/sqliteclient.dart), [webclient.dart](lib/core/db/webclient.dart), [datasource_helper.dart](lib/core/db/datasource_helper.dart) |
 | **Generator** | [boilerplate_generator.dart](lib/core/generator/boilerplate_generator.dart) |
 | **Data models** (10) | [entity_model.dart](lib/core/model/data/entity_model.dart), [field_model.dart](lib/core/model/data/field_model.dart), [relation_model.dart](lib/core/model/data/relation_model.dart), [action_model.dart](lib/core/model/data/action_model.dart), [function_model.dart](lib/core/model/data/function_model.dart), [parameter_model.dart](lib/core/model/data/parameter_model.dart), [table_model.dart](lib/core/model/data/table_model.dart), [column_model.dart](lib/core/model/data/column_model.dart), [system_model.dart](lib/core/model/data/system_model.dart), [user_model.dart](lib/core/model/data/user_model.dart) |
 | **UX models** (5) | [ux_button_model.dart](lib/core/model/ux/ux_button_model.dart), [ux_text_box_model.dart](lib/core/model/ux/ux_text_box_model.dart), [ux_checkbox_model.dart](lib/core/model/ux/ux_checkbox_model.dart), [ux_registry.dart](lib/core/model/ux/ux_registry.dart), [ux_spec_mapper.dart](lib/core/model/ux/ux_spec_mapper.dart) |

@@ -2,7 +2,7 @@
 
 Progressive step-by-step plan to build the AIStudio model-row editing surface.
 
-**Current status:** Step 1 is done — three-panel shell, tabbed catalog navigation, local selection state, and middle-panel header updates are in place. Step 2 is next.
+**Current status:** Step 1 is done — three-panel shell, tabbed catalog navigation, local selection state, and middle-panel header updates are in place. Step 2 is next. Shared DB scaffolding exists, but AIStudio UI wiring is still Step 3+ work.
 
 **Current next step:** Step 2 — Complete left-panel catalog lists.
 
@@ -34,6 +34,7 @@ flutter test
 - [x] Selected catalog resets when switching tabs
 - [x] FAB and bottom status bar
 - [x] `SqliteStore` shared foundation (not wired to AIStudio yet)
+- [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
 
 ---
 
@@ -172,6 +173,7 @@ Current state:
 - Step 2 is done — full catalog lists + selection state.
 - `SqliteStore` exists at `lib/core/db/sqlite_store.dart` with `listRows`, `upsertRow`, `getRow`, `deleteRow`.
 - `SqliteCatalogRow` has fields: catalog, i, a, d, e, t, n, s, payload, updatedAt.
+- Shared DB builders exist, but AIStudio should stay on foundation/model-row CRUD rather than business-action paths.
 
 Task:
 - Init SqliteStore in AIStudio.

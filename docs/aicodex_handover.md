@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to build the AICodex configurator and schema-application surface.
 
-**Current status:** Step 1 is done — grouped model navigation, local selection state, and middle-panel header updates are in place. Middle and right panels are still placeholders, so Step 2 is next.
+**Current status:** Paused after Step 1 — grouped model navigation, local selection state, and middle-panel header updates are in place. Middle and right panels are still placeholders.
 
-**Current next step:** Step 2 — Master list from SQLite.
+**Current next step:** Paused for now. When resumed, continue with Step 2 — Master list from SQLite.
 
 **Role:** AICodex is the **schema configurator**. It reads model definitions (Entity, Field, Table, Column, Function, etc.) and applies them as **create, drop, and function/script** operations against the PostgreSQL backend and SQLite foundation. It does not edit model definitions (that's AIStudio) and does not consume row data at runtime (that's AIBook).
 
@@ -39,6 +39,7 @@ flutter test
 - [x] Right panel: "Property Editor" placeholder
 - [x] FAB and bottom status bar
 - [x] `SqliteStore` shared foundation exists
+- [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
 - [x] All 10 data models exist (Entity, Field, Relation, Action, Function, Parameter, Table, Column, System, User)
 - [x] Backend contract documented (single POST endpoint, JSON passthrough, PG router function)
 

@@ -11,12 +11,12 @@ Index of documentation files in `docs/`:
 Current next steps in this snapshot:
 - `AIBook` — Step 2
 - `AIStudio` — Step 2
-- `AICodex` — Step 2
+- `AICodex` — paused after Step 1; resume from Step 2 later
 
 ## Architecture & Contracts
 
 - `project_deep_analysis.md` — full architecture analysis with diagrams, subsystem breakdowns, data flow, gap analysis, and roadmap.
-- `lib_app_readme.md` — app roles, backend transport contract, vocabulary, and naming rules.
+- `lib_app_readme.md` — app roles, backend transport contract, shared DB builder split, vocabulary, and naming rules.
 
 ## Code Reference
 
