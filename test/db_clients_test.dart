@@ -1,3 +1,4 @@
+import 'package:genrp/core/base/bootstrap.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genrp/core/db/db_contract.dart';
 import 'package:genrp/core/db/pgsqladmin.dart';
@@ -120,6 +121,19 @@ void main() {
         expect(
           sysTypeEntrypoints.map((entry) => entry.entrypoint),
           containsAll(<String>['foundation', 'business']),
+        );
+        expect(defaultCatalogRowSeedEntries, hasLength(1));
+        expect(defaultCatalogRowSeedEntries.first.catalog, SystemDefaults.catalog);
+        expect(defaultCatalogRowSeedEntries.first.payload['sid'], 1);
+        expect(defaultCatalogRowSeedEntries.first.payload['fv'], 1);
+        expect(defaultCatalogRowSeedEntries.first.payload['cv'], 1);
+        expect(
+          defaultCatalogRowSeedEntries.first.payload['ctm'],
+          containsPair('entity', 'Entity'),
+        );
+        expect(
+          defaultCatalogRowSeedEntries.first.payload['uxm'],
+          containsPair('widget', 'Widget'),
         );
       },
     );

@@ -6,9 +6,9 @@ A Flutter monolith with three apps sharing a common core engine.
 
 | App | Role | Entry | Status |
 |---|---|---|---|
-| **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta; Step 2 pending |
-| **AIStudio** | Model-row editing surface (definition CRUD) | `lib/app/aistudio/aistudio.dart` | Step 1 done; Step 2 pending |
-| **AICodex** | Configurator / schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 1 done; paused before Step 2 |
+| **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta; Step 2 done, Step 3 pending |
+| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | `lib/app/aistudio/aistudio.dart` | Step 1 done; Step 2 pending |
+| **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 1 done; paused before Step 2 |
 
 ## Quick Start
 
@@ -30,7 +30,7 @@ lib/
     ├── base/              # X transport classes, DataType, sys registries
     ├── db/                # SQLite store + generic PG/SQLite/Web DB builders
     ├── generator/         # DynamicSpecBody (body router)
-    ├── model/data/        # 10 data models (Entity, Field, Table, etc.)
+    ├── model/data/        # 9 data models (Entity, Field, Table, etc.)
     ├── model/ux/          # UX spec models + registry + mapper
     ├── runtime/           # TemplateRuntime (JSON → Flutter widgets)
     ├── template/          # 4 template widgets (form, detail, collection, checkboxForm)

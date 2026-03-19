@@ -1,10 +1,14 @@
 # AIStudio Handover
 
-Progressive step-by-step plan to build the AIStudio model-row editing surface.
+Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
 **Current status:** Step 1 is done — three-panel shell, tabbed catalog navigation, local selection state, and middle-panel header updates are in place. Step 2 is next. Shared DB scaffolding exists, but AIStudio UI wiring is still Step 3+ work.
 
 **Current next step:** Step 2 — Complete left-panel catalog lists.
+
+**Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio should focus on UX/spec CRUD. If data-model catalogs remain visible in the shell, they should be treated as secondary/reference paths until the UI is narrowed further.
+
+**Special rule:** `System` is not a normal `i/a/d/e/t/n/s` row. `SystemModel` is structural metadata (`sid`, `n`, `fv`, `cv`, `ld`, `lds`, `ldu`, `ctm`, `uxm`, `m1`, `m2`) and belongs to the sensitive data-model side owned by `AICodex`.
 
 ---
 
@@ -27,8 +31,8 @@ flutter test
 
 - [x] Three-panel shell inside one `Scaffold.body`
 - [x] Left panel with `Data` tab and `UX/Spec` tab
-- [x] `Data` tab lists: Entity, Field, Relation, Action, Function
-- [x] `UX/Spec` tab lists: Host, Body, Template, Type, Widget
+- [x] `Data` tab lists: Entity, Field, Relation, Function
+- [x] `UX/Spec` tab lists: Host, Body, Template, Type, Widget, UX Action
 - [x] Local selection state for active tab, selected catalog, and selected row
 - [x] Middle panel header updates from the selected catalog
 - [x] Selected catalog resets when switching tabs
@@ -107,13 +111,12 @@ Constraints:
    - `User`
 2. Add missing `UX/Spec` tab entries:
    - `FieldBinding`
-   - `UX Action`
    - `Body Spec Node`
 3. Add a visual indicator (e.g., background color or leading icon) for the currently selected catalog.
 
 **Done when:**
-- `Data` tab shows: Entity, Field, Relation, Action, Function, Parameter, Table, Column, System, User.
-- `UX/Spec` tab shows: Host, Body, Template, Type, Widget, FieldBinding, UX Action, Body Spec Node.
+- `Data` tab shows: Entity, Field, Relation, Function, Parameter, Table, Column, System, User.
+- `UX/Spec` tab shows: Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node.
 - Selected catalog is visually highlighted.
 - `flutter analyze` passes.
 - `flutter test` passes.
@@ -125,12 +128,12 @@ You are working on AIStudio Step 2: Complete left-panel catalog lists.
 
 Current state:
 - Step 1 is done — local selection state exists.
-- Data tab has: Entity, Field, Relation, Action, Function.
-- UX/Spec tab has: Host, Body, Template, Type, Widget.
+- Data tab has: Entity, Field, Relation, Function.
+- UX/Spec tab has: Host, Body, Template, Type, Widget, UX Action.
 
 Task:
 - Add Data entries: Parameter, Table, Column, System, User.
-- Add UX/Spec entries: FieldBinding, UX Action, Body Spec Node.
+- Add UX/Spec entries: FieldBinding, Body Spec Node.
 - Highlight the selected catalog visually (e.g., selected ListTile color).
 
 Constraints:
@@ -140,9 +143,9 @@ Constraints:
 
 ---
 
-## [ ] Step 3 — Middle panel with SQLite-backed row list
+## [ ] Step 3 — Middle panel with SQLite-backed UX/spec row list
 
-**Goal:** The middle panel shows rows from `SqliteStore` for the selected catalog, with search and an add button.
+**Goal:** The middle panel shows rows from `SqliteStore` for the selected UX/spec catalog, with search and an add button.
 
 **Files to change:**
 - `lib/app/aistudio/aistudio.dart`
@@ -153,7 +156,7 @@ Constraints:
 2. When `_selectedCatalog` changes, call `SqliteStore.listRows(catalogName)`.
 3. Display rows as a `ListView` showing `n` (name) and `i` (id).
 4. Add a search `TextField` at the top — filter displayed rows by `n`.
-5. Add an "Add" `IconButton` in the header — calls `SqliteStore.upsertRow` with a new empty row.
+5. Add an "Add" `IconButton` in the header for UX/spec catalogs — calls `SqliteStore.upsertRow` with a new empty row.
 6. Add an `onTap` to each row item that sets `_selectedRowId`.
 
 **Done when:**
@@ -173,39 +176,41 @@ Current state:
 - Step 2 is done — full catalog lists + selection state.
 - `SqliteStore` exists at `lib/core/db/sqlite_store.dart` with `listRows`, `upsertRow`, `getRow`, `deleteRow`.
 - `SqliteCatalogRow` has fields: catalog, i, a, d, e, t, n, s, payload, updatedAt.
-- Shared DB builders exist, but AIStudio should stay on foundation/model-row CRUD rather than business-action paths.
+- Shared DB builders exist, but AIStudio should stay on UX/spec CRUD rather than business-action paths or sensitive data-model CRUD.
 
 Task:
 - Init SqliteStore in AIStudio.
 - Load rows by selected catalog.
 - Display as ListView (show name + id).
 - Add search TextField (filter by n).
-- Add "Add" button (upsert empty row).
+- Add "Add" button (upsert empty row) for UX/spec catalogs.
 - Wire row tap → _selectedRowId.
 
 Constraints:
 - Use SqliteStore.instance.
+- Treat sensitive data-model CRUD as out of scope for AIStudio.
 - Do not add Provider or other state management — keep setState for now.
 - Keep analyzer and tests green.
 ```
 
 ---
 
-## [ ] Step 4 — Right panel generic editor
+## [ ] Step 4 — Right panel generic editor for UX/spec rows
 
-**Goal:** The right panel shows a form editor for the selected row and saves changes back to SQLite.
+**Goal:** The right panel shows a form editor for the selected UX/spec row and saves changes back to SQLite.
 
 **Files to change:**
 - `lib/app/aistudio/aistudio.dart`
 
 **What to do:**
 1. When `_selectedRowId` is set, load the row via `SqliteStore.getRow(catalog, id)`.
-2. Show `TextField` widgets for each common field: `n` (name), `s` (secondary).
+2. Show `TextField` widgets for each common field: `n` (readable name), `s` (system name, prefer lower snake_case).
 3. Show `Switch` or `Checkbox` for `a` (active).
 4. Show read-only display for `i`, `d`, `e`, `t`.
 5. Add a "Save" button that calls `SqliteStore.upsertRow` with updated data.
 6. Add a "Delete" button that calls `SqliteStore.deleteRow`.
 7. After save or delete, refresh the middle panel list.
+8. If a sensitive data-model catalog is selected, show a note that editing for that catalog belongs in AICodex instead of AIStudio.
 
 **Done when:**
 - Selecting a row in the middle panel loads it in the right panel editor.
@@ -232,32 +237,52 @@ Task:
 - Refresh middle panel after save/delete.
 
 Constraints:
-- Start with the common shape only — no catalog-specific fields yet.
+- Start with the common shape for UX/spec catalogs; sensitive data-model catalogs should redirect conceptually to AICodex.
 - Keep it direct — no complex form framework.
 - Keep analyzer and tests green.
 ```
 
 ---
 
-## [ ] Step 5 — Catalog-specific field editing (payload)
+## [ ] Step 5 — Catalog-specific UX/spec field editing (payload)
 
-**Goal:** Add optional JSON payload editing for catalog-specific fields that don't fit the common `i/a/d/e/t/n/s` shape.
+**Goal:** Add catalog-specific editing for UX/spec rows that don't fit the common `i/a/d/e/t/n/s` shape.
 
 **Files to change:**
 - `lib/app/aistudio/aistudio.dart`
 
 **What to do:**
-1. Add a collapsible "Payload" section in the right panel editor.
-2. Show the JSON payload as editable text (or a simple key-value editor).
-3. Validate that the payload is valid JSON before saving.
-4. Save the payload via the `payload` field of `SqliteCatalogRow`.
+1. Add catalog-specific editor handling for UX/spec catalogs that need more than the common fields.
+2. Add a collapsible "Payload" section for catalogs that still need free-form JSON.
+3. Validate that any edited payload is valid JSON before saving.
+4. Save catalog-specific data through the `payload` field of `SqliteCatalogRow` until dedicated storage is introduced.
 
 **Done when:**
-- The right panel shows payload editing below the common fields.
+- The right panel shows payload editing below the common fields for other catalogs.
 - Invalid JSON shows a validation error.
 - Valid payload saves correctly.
 - `flutter analyze` passes.
 - `flutter test` passes.
+
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIStudio Step 5: Catalog-specific UX/spec field editing.
+
+Current state:
+- Step 4 handles the common row shape for most catalogs.
+- Sensitive data-model CRUD belongs to AICodex.
+
+Task:
+- Add catalog-specific editor handling for UX/spec rows that need more than the common fields.
+- Keep payload editing for other catalogs that still need free-form JSON.
+- Validate payload JSON before save.
+
+Constraints:
+- Do not move sensitive data-model CRUD back into AIStudio.
+- Keep setState/local editing simple for now.
+- Keep analyzer and tests green.
+```
 
 ---
 
@@ -307,8 +332,8 @@ Constraints:
 - Do not redesign AIBook or AICodex.
 - Do not add route navigation.
 - Keep one `Scaffold`, everything in `Scaffold.body`.
-- AIStudio is the **model-row editing surface** — it edits definitions, not runtime data.
-- AIStudio edits foundation/model rows directly; business-table CRUD is not AIStudio's job.
+- AIStudio is the **UX/spec editing surface**.
+- Sensitive data-model CRUD belongs to AICodex, not AIStudio.
 - AIBook is the **runtime consumer** — it uses those definitions.
 - Prefer row-level save units, not one giant JSON blob.
 - Keep implementation direct and incremental.
@@ -319,6 +344,6 @@ Constraints:
 | Term | Meaning |
 |---|---|
 | `catalog` | A model type category (e.g., "Entity", "Field", "Host") |
-| `i/a/d/e/t/n/s` | id, active, date, entity, type, name, secondary |
+| `i/a/d/e/t/n/s` | id, active, date, entity, type, readable name, system name |
 | `payload` | JSON blob for catalog-specific fields beyond the common shape |
 | `SqliteCatalogRow` | The generic persisted row shape in SQLite |

@@ -8,7 +8,7 @@ File
 Purpose
 - Provides the current local SQLite foundation for the repo.
 - Keeps the first persistence shape generic and low-overhead.
-- Supports local catalog-row persistence for `AIStudio` style editing work.
+- Supports local catalog-row persistence for `AICodex` data-model editing work and `AIStudio` UX/spec editing work.
 - Can also support local cache/key-value storage for `AIBook`.
 - Sits beside the new shared DB builder layer rather than replacing it.
 
@@ -27,6 +27,7 @@ Related shared DB files
 - `lib/core/db/pgsqladmin.dart` / `lib/core/db/pgsqlclient.dart` — PostgreSQL-side admin/client generation
 - `lib/core/db/webclient.dart` — generic web request/action payload builder
 - `lib/core/base/systable.dart`, `lib/core/base/sysfunc.dart`, `lib/core/base/systype.dart` — entrypoint seeds for shared table/function/type routing
+- `lib/core/base/bootstrap.dart` — `SystemModel` bootstrap defaults, seed rows, and update helpers
 
 Current schema
 - `app_kv`
@@ -34,6 +35,7 @@ Current schema
 - `catalog_row`
   - generic row storage for catalog-based editing
   - primary key is `(catalog, i)`
+  - currently seeds one default `System` row on first create
 - `virtualfun` (planned/admin-generated)
   - SQLite-side substitute for database functions in this architecture
   - stored as a shared table spec today, but not yet provisioned by `SqliteStore`
@@ -56,6 +58,7 @@ Main types
 - `SqliteStore`
   - opens the database
   - creates schema
+  - applies shared foundation seed rows on first create
   - lists rows by catalog
   - gets one row
   - upserts one row
@@ -77,12 +80,14 @@ Planned divergence from PostgreSQL
 
 Current intended usage
 - `AIStudio`
-  - local persistence for foundation/model rows and UX/spec rows
+  - local persistence for UX/spec rows
+  - may read some data-model rows for context, but sensitive data-model CRUD belongs to `AICodex`
 - `AIBook`
   - local cache for spec data or base `X` business data when needed
   - may later cache `virtualfun` records/scripts when function-like behavior needs local representation
 - `AICodex`
-  - reads local foundation rows and may later generate/store SQLite-side `virtualfun` scripts
+  - owns local CRUD for sensitive data-model rows
+  - may later generate/store SQLite-side `virtualfun` scripts
 - `catalog_row` is a shared starting point, not the final direct-access pattern for business tables
 - Future app-specific db code should sit under the matching app db directory rather than accumulating in the db root.
 

@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to reach constrained AIBook beta.
 
-**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime. Numeric-first body routing is already in place; validation expansion is next. Shared DB/request scaffolding now exists, but AIBook still uses `MockTransport` at runtime.
+**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime. Numeric-first body routing and reference validation are in place. Shared DB/request scaffolding now exists, but AIBook still uses `MockTransport` at runtime.
 
-**Current next step:** Step 2 — Validate binding references.
+**Current next step:** Step 3 — Clean slot-first binding path.
 
 ---
 
@@ -34,7 +34,7 @@ flutter test
 - [x] `XButton`, `XTextBox`, `XCheckBox` with binding + debug selection highlight
 - [x] `UxRegistry` maps numeric IDs → names for host/body/template/type/widget
 - [x] `UxSpecMapper` converts JSON nodes → typed UX models
-- [x] Basic spec validation (duplicate IDs in bodies and widgets)
+- [x] Spec validation for duplicate IDs and broken field/action/template/type references
 - [x] Numeric-first body routing with string fallback
 - [x] `SqliteStore` shared foundation (not wired to AIBook yet)
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and `WebClient` envelope builder
@@ -88,7 +88,9 @@ Constraints:
 
 ---
 
-## [ ] Step 2 — Validate binding references
+## [x] Step 2 — Validate binding references
+
+**Status:** Done in the current repo snapshot.
 
 **Goal:** Expand spec validation beyond duplicate IDs. Catch broken references before runtime render.
 
@@ -116,7 +118,7 @@ You are working on AIBook Step 2: Validate binding references.
 
 Current state:
 - Step 1 is done — numeric-first body routing is already in place in `DynamicSpecBody`.
-- `_validateSpec` in `lib/app/aibook/autopilotgo.dart` currently only checks duplicate IDs in `bodiesRegistry` and `widgets`.
+- `_validateSpec` in `lib/app/aibook/autopilotgo.dart` currently checks duplicate IDs plus `fieldBindings`, `actionId`, `templateId`, and `typeId` references.
 - The spec uses `actionId`, `templateId`, `typeId` in body definitions and child nodes.
 - The registry has `actions`, `templates`, `types` lists.
 
@@ -335,4 +337,4 @@ Constraints:
 | `X` / `Xi` / `Xia` / `Xiad` / `Xiade` (base/) | Business-bound transport shape |
 | `slot` | Direct index into `X.v[]` |
 | `src` | Binding source: 0=state, 1=dataSource, 2=dataSet |
-| `i/a/d/e/t/n/s` | id, active, date, entity, type, name, secondary |
+| `i/a/d/e/t/n/s` | id, active, date, entity, type, readable name, system name |

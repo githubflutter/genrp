@@ -9,9 +9,14 @@ Index of documentation files in `docs/`:
 - `aicodex_handover.md` — AICodex progressive step-by-step handover with master-detail panels and DDL generation.
 
 Current next steps in this snapshot:
-- `AIBook` — Step 2
+- `AIBook` — Step 3
 - `AIStudio` — Step 2
 - `AICodex` — paused after Step 1; resume from Step 2 later
+
+Current ownership reminder:
+- `AIStudio` owns UX/spec CRUD.
+- `AICodex` owns sensitive data-model CRUD plus schema apply/generation work.
+- `AIBook` owns runtime business-data consumption through function-style actions.
 
 ## Architecture & Contracts
 

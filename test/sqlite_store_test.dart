@@ -6,13 +6,24 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test(
-    'SqliteStore upserts, lists, gets, deletes, and stores JSON values',
+    'SqliteStore seeds system metadata and supports row + kv operations',
     () async {
       sqfliteFfiInit();
       final store = SqliteStore(
         databaseFactory: databaseFactoryFfi,
         databasePath: inMemoryDatabasePath,
       );
+
+      final seededSystem = await store.getRow('System', 1);
+      expect(seededSystem, isNotNull);
+      expect(seededSystem!.n, 'GenRP');
+      expect(seededSystem.payload['sid'], 1);
+      expect(seededSystem.payload['fv'], 1);
+      expect(seededSystem.payload['cv'], 1);
+      expect(seededSystem.payload['ctm'], containsPair('entity', 'Entity'));
+      expect(seededSystem.payload['uxm'], containsPair('widget', 'Widget'));
+      expect(seededSystem.payload['m1'], isEmpty);
+      expect(seededSystem.payload['m2'], isEmpty);
 
       const row = SqliteCatalogRow(
         catalog: 'entity',

@@ -3,7 +3,7 @@ class ParameterModel {
   final bool a;
   final int d;
   final int e;
-  final int t;
+  final int fi;
   final String n;
   final String s;
 
@@ -12,7 +12,7 @@ class ParameterModel {
     required this.a,
     required this.d,
     required this.e,
-    required this.t,
+    required this.fi,
     required this.n,
     required this.s,
   });
@@ -22,7 +22,7 @@ class ParameterModel {
     a: json['a'] as bool? ?? false,
     d: json['d'] as int? ?? 0,
     e: json['e'] as int? ?? 0,
-    t: json['t'] as int? ?? 0,
+    fi: (json['fi'] as num?)?.toInt() ?? (json['t'] as num?)?.toInt() ?? 0,
     n: json['n'] as String? ?? '',
     s: json['s'] as String? ?? '',
   );
@@ -32,7 +32,7 @@ class ParameterModel {
     'a': a,
     'd': d,
     'e': e,
-    't': t,
+    'fi': fi,
     'n': n,
     's': s,
   };
@@ -42,7 +42,7 @@ class ParameterModel {
     bool? a,
     int? d,
     int? e,
-    int? t,
+    int? fi,
     String? n,
     String? s,
   }) => ParameterModel(
@@ -50,7 +50,7 @@ class ParameterModel {
     a: a ?? this.a,
     d: d ?? this.d,
     e: e ?? this.e,
-    t: t ?? this.t,
+    fi: fi ?? this.fi,
     n: n ?? this.n,
     s: s ?? this.s,
   );
@@ -63,10 +63,10 @@ class ParameterModel {
           other.a == a &&
           other.d == d &&
           other.e == e &&
-          other.t == t &&
+          other.fi == fi &&
           other.n == n &&
           other.s == s);
 
   @override
-  int get hashCode => Object.hash(i, a, d, e, t, n, s);
+  int get hashCode => Object.hash(i, a, d, e, fi, n, s);
 }

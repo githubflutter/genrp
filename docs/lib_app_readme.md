@@ -25,9 +25,15 @@ Identifier precaution
 - The move from text keys to integers is primarily for smaller payloads, cheaper comparisons, simpler routing, and lower runtime overhead.
 
 Current semantic split
-- `AIStudio` is the model-row editing surface. It performs direct CRUD on stored foundation/model rows such as `EntityModel` and `FieldModel`.
-- `AICodex` is the configurator/schema-application surface. It uses those models to create/drop structures and generate function/script definitions for PostgreSQL and SQLite. `ALTER TABLE` is not part of the planned flow.
+- GenRP has three CRUD domains: data-model CRUD, UX model-spec CRUD, and business-model/runtime CRUD.
+- Sensitive data-model CRUD belongs to `AICodex` because those changes can require database recreation or schema regeneration.
+- UX model-spec CRUD belongs to `AIStudio`.
+- Business-model/runtime CRUD belongs to `AIBook` through function-style actions rather than direct business-table writes.
+- `AIStudio` is the UX/spec editing surface. It should focus on CRUD for UX-side model/spec rows rather than the sensitive data-model layer.
+- `AIStudio` may still show some data-model catalogs for reference while the shell catches up, but it should not become the owner of sensitive data-model CRUD.
+- `AICodex` is the sensitive data-model CRUD and schema-application surface. It owns CRUD for data models such as `EntityModel`, `FieldModel`, `TableModel`, and related definition rows because those changes may require database recreation. It also creates/drops structures and generates function/script definitions for PostgreSQL and SQLite. `ALTER TABLE` is not part of the planned flow.
 - `AIBook` is the runtime/business-data consumer. It uses the generated structures produced from those models and should invoke function-style actions for business-table CRUD rather than doing direct table CRUD.
+- `SystemModel` is structural foundation metadata rather than a normal generic model row; it carries system/version/timestamp info plus JSON-based bootstrap maps.
 
 Backend transport contract
 - The server layer is a C# ASP.NET Core Minimal Web API with a single endpoint URL.
@@ -41,6 +47,7 @@ Backend transport contract
 - SQLite should represent function-like behavior through a `virtualfun` table/model that stores scripts to run.
 - Direct CRUD is allowed for foundation tables.
 - Business-table CRUD goes through function-style actions only.
+- In this project, function parameters are input-only; returned business shape should be modeled through fields/result rows rather than output parameters.
 - All generated columns are treated as never-null in the shared schema contract.
 - `ALTER TABLE` is not part of the current design.
 
@@ -50,6 +57,7 @@ Current shared DB scaffolding
 - `lib/core/db/pgsqlclient.dart` and `lib/core/db/sqliteclient.dart` are the direct CRUD builders. They are intended for foundation rows and reject direct business-table CRUD.
 - `lib/core/db/webclient.dart` builds the generic action/CRUD request envelope used by remote transport layers.
 - System entrypoint seeds now live in `lib/core/base/systable.dart`, `lib/core/base/sysfunc.dart`, and `lib/core/base/systype.dart`.
+- Shared bootstrap logic for `SystemModel` now lives in `lib/core/base/bootstrap.dart`; it owns default model values, seed rows, and update helpers without changing the generic SQL builders.
 - In SQLite, function creation is represented as `virtualfun` row/script storage rather than true database functions.
 
 AIBook transport split
@@ -82,12 +90,13 @@ Example request
 
 Business write rule
 - There is no direct `insert`, `update`, or `delete` endpoint for business tables.
-- Business-table writes use one function-style action such as `edit_modelname`.
-- `data.i == 0` means insert.
-- `data.i > 0` means update.
+- Business-table writes use one function-style action such as `edit<ModelName>`.
+- There are no separate business write functions named `insert<ModelName>`, `update<ModelName>`, or `delete<ModelName>`.
+- Within `edit<ModelName>`, `data.i == 0` means create.
+- Within `edit<ModelName>`, `data.i > 0` means update.
 - Updates are partial; only the fields that actually changed are posted.
 - There is no hard delete.
-- Soft delete means posting `data.a = false` through the function payload.
+- Within `edit<ModelName>`, `data.a = false` is treated as delete behavior through the function payload.
 - Foundation tables can still use direct CRUD paths when appropriate.
 - Foundation and business schema creation still belongs to the admin side; runtime clients should not generate create scripts.
 

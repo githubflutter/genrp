@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:genrp/core/base/bootstrap.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
@@ -229,9 +230,37 @@ class SqliteStore {
           await db.execute(
             'CREATE INDEX idx_catalog_row_catalog_name ON catalog_row (catalog, n, i)',
           );
+          await _seedFoundationData(db);
         },
       ),
     );
+  }
+
+  Future<void> _seedFoundationData(sqflite.Database db) async {
+    final seededAt = DateTime.now().millisecondsSinceEpoch;
+
+    for (final seed in defaultAppKvSeedEntries) {
+      await db.insert('app_kv', <String, Object?>{
+        'k': seed.key,
+        'v': jsonEncode(seed.value),
+        'updated_at': seed.updatedAt == 0 ? seededAt : seed.updatedAt,
+      }, conflictAlgorithm: sqflite.ConflictAlgorithm.ignore);
+    }
+
+    for (final seed in defaultCatalogRowSeedEntries) {
+      await db.insert('catalog_row', <String, Object?>{
+        'catalog': seed.catalog,
+        'i': seed.i,
+        'a': seed.a ? 1 : 0,
+        'd': seed.d,
+        'e': seed.e,
+        't': seed.t,
+        'n': seed.n,
+        's': seed.s,
+        'payload': jsonEncode(seed.payload),
+        'updated_at': seed.updatedAt == 0 ? seededAt : seed.updatedAt,
+      }, conflictAlgorithm: sqflite.ConflictAlgorithm.ignore);
+    }
   }
 
   sqflite.DatabaseFactory _resolveDatabaseFactory() {

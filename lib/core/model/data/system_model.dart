@@ -1,59 +1,85 @@
+import 'dart:convert';
+
 class SystemModel {
-  final int i;
-  final bool a;
-  final int d;
-  final int e;
-  final int t;
+  final int sid;
   final String n;
-  final String s;
+  final int fv;
+  final int cv;
+  final int ld;
+  final int lds;
+  final int ldu;
+  final Map<String, dynamic> ctm;
+  final Map<String, dynamic> uxm;
+  final Map<String, dynamic> m1;
+  final Map<String, dynamic> m2;
 
   const SystemModel({
-    required this.i,
-    required this.a,
-    required this.d,
-    required this.e,
-    required this.t,
+    required this.sid,
     required this.n,
-    required this.s,
+    required this.fv,
+    required this.cv,
+    required this.ld,
+    required this.lds,
+    required this.ldu,
+    required this.ctm,
+    required this.uxm,
+    required this.m1,
+    required this.m2,
   });
 
   factory SystemModel.fromJson(Map<String, dynamic> json) => SystemModel(
-    i: json['i'] as int? ?? 0,
-    a: json['a'] as bool? ?? false,
-    d: json['d'] as int? ?? 0,
-    e: json['e'] as int? ?? 0,
-    t: json['t'] as int? ?? 0,
+    sid: (json['sid'] as num?)?.toInt() ?? 0,
     n: json['n'] as String? ?? '',
-    s: json['s'] as String? ?? '',
+    fv: (json['fv'] as num?)?.toInt() ?? 0,
+    cv: (json['cv'] as num?)?.toInt() ?? 0,
+    ld: (json['ld'] as num?)?.toInt() ?? 0,
+    lds: (json['lds'] as num?)?.toInt() ?? 0,
+    ldu: (json['ldu'] as num?)?.toInt() ?? 0,
+    ctm: Map<String, dynamic>.from(json['ctm'] as Map? ?? const {}),
+    uxm: Map<String, dynamic>.from(json['uxm'] as Map? ?? const {}),
+    m1: Map<String, dynamic>.from(json['m1'] as Map? ?? const {}),
+    m2: Map<String, dynamic>.from(json['m2'] as Map? ?? const {}),
   );
 
   Map<String, dynamic> toJson() => {
-    'i': i,
-    'a': a,
-    'd': d,
-    'e': e,
-    't': t,
+    'sid': sid,
     'n': n,
-    's': s,
+    'fv': fv,
+    'cv': cv,
+    'ld': ld,
+    'lds': lds,
+    'ldu': ldu,
+    'ctm': ctm,
+    'uxm': uxm,
+    'm1': m1,
+    'm2': m2,
   };
 
   SystemModel copyWith({
-    int? i,
-    bool? a,
-    int? d,
-    int? e,
-    int? t,
+    int? sid,
     String? n,
-    String? s,
+    int? fv,
+    int? cv,
+    int? ld,
+    int? lds,
+    int? ldu,
+    Map<String, dynamic>? ctm,
+    Map<String, dynamic>? uxm,
+    Map<String, dynamic>? m1,
+    Map<String, dynamic>? m2,
   }) {
     return SystemModel(
-      i: i ?? this.i,
-      a: a ?? this.a,
-      d: d ?? this.d,
-      e: e ?? this.e,
-      t: t ?? this.t,
+      sid: sid ?? this.sid,
       n: n ?? this.n,
-      s: s ?? this.s,
+      fv: fv ?? this.fv,
+      cv: cv ?? this.cv,
+      ld: ld ?? this.ld,
+      lds: lds ?? this.lds,
+      ldu: ldu ?? this.ldu,
+      ctm: ctm ?? this.ctm,
+      uxm: uxm ?? this.uxm,
+      m1: m1 ?? this.m1,
+      m2: m2 ?? this.m2,
     );
   }
 
@@ -61,14 +87,46 @@ class SystemModel {
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is SystemModel &&
-          other.i == i &&
-          other.a == a &&
-          other.d == d &&
-          other.e == e &&
-          other.t == t &&
+          other.sid == sid &&
           other.n == n &&
-          other.s == s);
+          other.fv == fv &&
+          other.cv == cv &&
+          other.ld == ld &&
+          other.lds == lds &&
+          other.ldu == ldu &&
+          _canonicalJsonText(other.ctm) == _canonicalJsonText(ctm) &&
+          _canonicalJsonText(other.uxm) == _canonicalJsonText(uxm) &&
+          _canonicalJsonText(other.m1) == _canonicalJsonText(m1) &&
+          _canonicalJsonText(other.m2) == _canonicalJsonText(m2));
 
   @override
-  int get hashCode => Object.hash(i, a, d, e, t, n, s);
+  int get hashCode => Object.hash(
+    sid,
+    n,
+    fv,
+    cv,
+    ld,
+    lds,
+    ldu,
+    _canonicalJsonText(ctm),
+    _canonicalJsonText(uxm),
+    _canonicalJsonText(m1),
+    _canonicalJsonText(m2),
+  );
+}
+
+String _canonicalJsonText(Object? value) => jsonEncode(_normalizeJson(value));
+
+Object? _normalizeJson(Object? value) {
+  if (value is Map) {
+    final entries = value.entries.toList()
+      ..sort((left, right) => left.key.toString().compareTo(right.key.toString()));
+    return <String, Object?>{
+      for (final entry in entries) entry.key.toString(): _normalizeJson(entry.value),
+    };
+  }
+  if (value is List) {
+    return value.map(_normalizeJson).toList(growable: false);
+  }
+  return value;
 }
