@@ -142,10 +142,9 @@ void main() {
     await pumpUi(tester);
 
     expect(
-      find.byKey(const ValueKey<String>('aistudio_right_selected')),
+      find.byKey(const ValueKey<String>('aistudio_detail_name_field')),
       findsOneWidget,
     );
-    expect(find.textContaining('Selected row: 1'), findsOneWidget);
 
     await store.close();
   });
@@ -170,7 +169,130 @@ void main() {
       findsOneWidget,
     );
     expect(
-      find.byKey(const ValueKey<String>('aistudio_right_draft')),
+      find.byKey(const ValueKey<String>('aistudio_detail_name_field')),
+      findsOneWidget,
+    );
+    expect(find.text('0 (draft)'), findsOneWidget);
+
+    await store.close();
+  });
+
+  testWidgets('AIStudio edits and saves a selected UX catalog row', (tester) async {
+    final store = _FakeSqliteStore();
+
+    await store.upsertRow(
+      const SqliteCatalogRow(
+        catalog: 'Host',
+        i: 1,
+        a: true,
+        d: 10,
+        e: 2,
+        t: 0,
+        n: 'Main Host',
+        s: 'main_host',
+        updatedAt: 0,
+      ),
+    );
+
+    await tester.pumpWidget(AIStudioApp(store: store));
+    await pumpUi(tester);
+
+    await tester.tap(find.text('Host'));
+    await pumpUi(tester);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('aistudio_row_Host_1')),
+    );
+    await pumpUi(tester);
+
+    expect(
+      find.byKey(const ValueKey<String>('aistudio_detail_name_field')),
+      findsOneWidget,
+    );
+    expect(find.text('Main Host'), findsWidgets);
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('aistudio_detail_name_field')),
+      'Updated Host',
+    );
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('aistudio_detail_system_field')),
+      'updated_host',
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+
+    final detailScrollable = find.descendant(
+      of: find.byKey(const ValueKey<String>('aistudio_detail_scroll')),
+      matching: find.byType(Scrollable),
+    ).first;
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey<String>('aistudio_detail_save_button')),
+      200,
+      scrollable: detailScrollable,
+    );
+    await tester.ensureVisible(find.byKey(const ValueKey<String>('aistudio_detail_save_button')));
+
+    await tester.tap(find.byKey(const ValueKey<String>('aistudio_detail_save_button')));
+    await pumpUi(tester);
+
+    final saved = await store.getRow('Host', 1);
+    expect(saved, isNotNull);
+    expect(saved!.n, 'Updated Host');
+    expect(saved.s, 'updated_host');
+    expect(saved.d, greaterThan(10));
+
+    await store.close();
+  });
+
+  testWidgets('AIStudio deletes a selected UX catalog row', (tester) async {
+    final store = _FakeSqliteStore();
+
+    await store.upsertRow(
+      const SqliteCatalogRow(
+        catalog: 'Host',
+        i: 3,
+        a: true,
+        d: 10,
+        e: 2,
+        t: 0,
+        n: 'Delete Me',
+        s: 'delete_me',
+        updatedAt: 0,
+      ),
+    );
+
+    await tester.pumpWidget(AIStudioApp(store: store));
+    await pumpUi(tester);
+
+    await tester.tap(find.text('Host'));
+    await pumpUi(tester);
+    await tester.tap(
+      find.byKey(const ValueKey<String>('aistudio_row_Host_3')),
+    );
+    await pumpUi(tester);
+
+    final detailScrollable = find.descendant(
+      of: find.byKey(const ValueKey<String>('aistudio_detail_scroll')),
+      matching: find.byType(Scrollable),
+    ).first;
+
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey<String>('aistudio_detail_delete_button')),
+      200,
+      scrollable: detailScrollable,
+    );
+    await tester.ensureVisible(find.byKey(const ValueKey<String>('aistudio_detail_delete_button')));
+    await tester.drag(detailScrollable, const Offset(0, -80));
+    await pumpUi(tester);
+
+    await tester.tap(find.byKey(const ValueKey<String>('aistudio_detail_delete_button')));
+    await pumpUi(tester);
+
+    expect(await store.getRow('Host', 3), isNull);
+    expect(
+      find.byKey(const ValueKey<String>('aistudio_right_empty')),
       findsOneWidget,
     );
 

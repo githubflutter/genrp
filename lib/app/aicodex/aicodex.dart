@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:genrp/core/db/sqlite_store.dart';
+import 'package:genrp/core/generator/ddl_generator.dart';
 import 'package:genrp/core/theme/genrp_theme.dart';
 import 'package:genrp/core/widgets/hybrid_authoring_shell.dart';
 import 'package:genrp/meta.dart';
@@ -66,6 +68,7 @@ class _AICodexHomeState extends State<AICodexHome> {
   final TextEditingController _detailPayloadController =
       TextEditingController();
   bool _detailActive = true;
+  String? _generatedScript;
 
   static const JsonEncoder _prettyJsonEncoder = JsonEncoder.withIndent('  ');
 
@@ -113,6 +116,7 @@ class _AICodexHomeState extends State<AICodexHome> {
       _selectedRow = null;
       _detailError = null;
       _isLoadingDetail = false;
+      _generatedScript = null;
     });
     _searchController.clear();
     _clearDetailEditors();
@@ -213,6 +217,7 @@ class _AICodexHomeState extends State<AICodexHome> {
     _detailSystemNameController.clear();
     _detailPayloadController.text = '{}';
     _detailActive = true;
+    _generatedScript = null;
   }
 
   String _formatPayload(Map<String, dynamic> payload) {
@@ -390,6 +395,7 @@ class _AICodexHomeState extends State<AICodexHome> {
         _selectedRow = null;
         _detailError = null;
         _isLoadingDetail = false;
+        _generatedScript = null;
       });
       ScaffoldMessenger.of(
         context,
@@ -411,6 +417,7 @@ class _AICodexHomeState extends State<AICodexHome> {
         _selectedRowId = null;
         _selectedRow = null;
         _detailError = null;
+        _generatedScript = null;
       });
       ScaffoldMessenger.of(
         context,
@@ -427,6 +434,62 @@ class _AICodexHomeState extends State<AICodexHome> {
         });
       }
     }
+  }
+
+  Future<void> _generateCreateTable() async {
+    final row = _selectedRow;
+    if (row == null || _selectedModelType != 'Entity') return;
+    try {
+      // Basic generation; ideally we would fetch fields from store for this entity
+      final sql = DdlGenerator.generateCreate(row, []);
+      setState(() {
+        _generatedScript = sql;
+      });
+    } catch (e) {
+      setState(() {
+        _detailError = 'Failed to generate Create Table SQL: $e';
+      });
+    }
+  }
+
+  Future<void> _generateDropTable() async {
+    final row = _selectedRow;
+    if (row == null || _selectedModelType != 'Entity') return;
+    setState(() {
+      _generatedScript = DdlGenerator.generateDrop(row);
+    });
+  }
+
+  Future<void> _generateCreateFunction() async {
+    final row = _selectedRow;
+    if (row == null || _selectedModelType != 'Function') return;
+    try {
+      // Basic generation; ideally we would fetch params from store for this function
+      final sql = DdlGenerator.generateCreateFunction(row, []);
+      setState(() {
+        _generatedScript = sql;
+      });
+    } catch (e) {
+      setState(() {
+        _detailError = 'Failed to generate Create Function SQL: $e';
+      });
+    }
+  }
+
+  Future<void> _generateVirtualFun() async {
+    final row = _selectedRow;
+    if (row == null || _selectedModelType != 'Function') return;
+    setState(() {
+      _generatedScript = DdlGenerator.generateVirtualFun(row, _detailPayloadController.text);
+    });
+  }
+
+  void _copyScript() {
+    if (_generatedScript == null) return;
+    Clipboard.setData(ClipboardData(text: _generatedScript!));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Script copied to clipboard.')),
+    );
   }
 
   Widget _buildReadOnlyField({
@@ -757,6 +820,71 @@ class _AICodexHomeState extends State<AICodexHome> {
           if (_isSavingDetail) ...[
             const SizedBox(height: 12),
             const LinearProgressIndicator(),
+          ],
+          if (_selectedModelType == 'Entity' && row.i != 0) ...[
+            const Divider(height: 32),
+            Text('Schema Actions', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _generateCreateTable,
+                  icon: const Icon(Icons.table_chart),
+                  label: const Text('Create Table'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _generateDropTable,
+                  icon: const Icon(Icons.delete_sweep),
+                  label: const Text('Drop Table'),
+                ),
+              ],
+            ),
+          ],
+          if (_selectedModelType == 'Function' && row.i != 0) ...[
+            const Divider(height: 32),
+            Text('Schema Actions', style: Theme.of(context).textTheme.titleSmall),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: _generateCreateFunction,
+                  icon: const Icon(Icons.functions),
+                  label: const Text('Create Function'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: _generateVirtualFun,
+                  icon: const Icon(Icons.memory),
+                  label: const Text('SQLite vfun'),
+                ),
+              ],
+            ),
+          ],
+          if (_generatedScript != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SelectableText(
+                _generatedScript!,
+                style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: _copyScript,
+                icon: const Icon(Icons.copy),
+                label: const Text('Copy Script'),
+              ),
+            ),
           ],
           const SizedBox(height: 8),
           Text(switch (mode) {

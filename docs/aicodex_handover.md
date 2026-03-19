@@ -304,7 +304,7 @@ Constraints:
 
 ---
 
-## [ ] Step 4 — DDL and function-script generation display
+## [x] Step 4 — DDL and function-script generation display
 
 **Goal:** Add schema action buttons and SQL/script preview to the detail panel after the row editing surface exists. This is what makes AICodex different from AIStudio — it both owns sensitive data-model CRUD and shows the generated table DDL and function/`vfun` scripts for the selected model.
 
