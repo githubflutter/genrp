@@ -97,6 +97,59 @@ class AutopilotGo extends Autopilot {
     final e2 = checkDuplicates('widgets');
     if (e2 != null) return e2;
 
+    // Validate fieldBindings: must have src and fieldId
+    final bindings = List<Object?>.from(spec['fieldBindings'] as List? ?? []);
+    for (final item in bindings.whereType<Map>()) {
+      final map = Map<String, dynamic>.from(item);
+      final src = (map['src'] as num?)?.toInt();
+      final fieldId = (map['fieldId'] as num?)?.toInt() ?? (map['f'] as num?)?.toInt();
+      if (src == null || fieldId == null) {
+        return 'fieldBinding missing src or fieldId';
+      }
+    }
+
+    // Collect valid IDs from registry lists
+    final actionIds = <int>{};
+    for (final item in List<Object?>.from(spec['actions'] as List? ?? []).whereType<Map>()) {
+      final id = (item['id'] as num?)?.toInt();
+      if (id != null) actionIds.add(id);
+    }
+
+    final templateIds = <int>{};
+    for (final item in List<Object?>.from(spec['templates'] as List? ?? []).whereType<Map>()) {
+      final id = (item['id'] as num?)?.toInt();
+      if (id != null) templateIds.add(id);
+    }
+
+    final typeIds = <int>{};
+    for (final item in List<Object?>.from(spec['types'] as List? ?? []).whereType<Map>()) {
+      final id = (item['id'] as num?)?.toInt();
+      if (id != null) typeIds.add(id);
+    }
+
+    // Validate bodies
+    final bodies = List<Object?>.from(spec['bodiesRegistry'] as List? ?? []);
+    for (final b in bodies.whereType<Map>()) {
+      final body = Map<String, dynamic>.from(b);
+      final templateId = (body['templateId'] as num?)?.toInt();
+      if (templateId != null && !templateIds.contains(templateId)) {
+        return 'Invalid templateId $templateId in body';
+      }
+
+      final children = List<Object?>.from(body['children'] as List? ?? []);
+      for (final c in children.whereType<Map>()) {
+        final child = Map<String, dynamic>.from(c);
+        final actionId = (child['actionId'] as num?)?.toInt();
+        if (actionId != null && !actionIds.contains(actionId)) {
+          return 'Invalid actionId $actionId in body child';
+        }
+        final typeId = (child['typeId'] as num?)?.toInt();
+        if (typeId != null && !typeIds.contains(typeId)) {
+          return 'Invalid typeId $typeId in body child';
+        }
+      }
+    }
+
     return null;
   }
 
