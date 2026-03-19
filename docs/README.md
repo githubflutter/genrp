@@ -8,6 +8,11 @@ Index of documentation files in `docs/`:
 - `aistudio_handover.md` — AIStudio progressive step-by-step handover with micro-tasks and per-step prompts.
 - `aicodex_handover.md` — AICodex progressive step-by-step handover with master-detail panels and DDL generation.
 
+Current next steps in this snapshot:
+- `AIBook` — Step 2
+- `AIStudio` — Step 2
+- `AICodex` — Step 2
+
 ## Architecture & Contracts
 
 - `project_deep_analysis.md` — full architecture analysis with diagrams, subsystem breakdowns, data flow, gap analysis, and roadmap.

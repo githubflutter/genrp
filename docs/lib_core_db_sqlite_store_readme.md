@@ -25,6 +25,9 @@ Current schema
 - `catalog_row`
   - generic row storage for catalog-based editing
   - primary key is `(catalog, i)`
+- `virtualfun` (planned)
+  - SQLite-side substitute for database functions in this architecture
+  - stores scripts/payloads to run when function-like behavior is needed locally
 
 Main types
 - `SqliteCatalogRow`
@@ -54,11 +57,22 @@ Platform direction
 - Uses `sqflite_common_ffi` for desktop-compatible database access.
 - Web is not configured for this SQLite path.
 
+Planned divergence from PostgreSQL
+- SQLite is local foundation/cache infrastructure, not a mirror of PostgreSQL function support.
+- PostgreSQL can use real foundation and business functions.
+- SQLite should represent that function layer through a `virtualfun` table/model rather than direct database functions.
+- Direct CRUD is acceptable for foundation tables.
+- Business data should stay function/script-driven rather than relying on generic direct table CRUD.
+
 Current intended usage
 - `AIStudio`
-  - local persistence for data model rows and UX/spec rows
+  - local persistence for foundation/model rows and UX/spec rows
 - `AIBook`
   - local cache for spec data or base `X` business data when needed
+  - may later cache `virtualfun` records/scripts when function-like behavior needs local representation
+- `AICodex`
+  - reads local foundation rows and may later generate/store SQLite-side `virtualfun` scripts
+- `catalog_row` is a shared starting point, not the final direct-access pattern for business tables
 - Future app-specific db code should sit under the matching app db directory rather than accumulating in the db root.
 
 Current quality status

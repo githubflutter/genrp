@@ -25,9 +25,9 @@ Identifier precaution
 - The move from text keys to integers is primarily for smaller payloads, cheaper comparisons, simpler routing, and lower runtime overhead.
 
 Current semantic split
-- `AIStudio` is the model-row editing surface. It performs CRUD on stored model rows such as `EntityModel` and `FieldModel`.
-- `AICodex` is the configurator/schema-application surface. It uses those models to create, drop, and alter generated table/function structure.
-- `AIBook` is the row-level CRUD consumer. It uses the generated structures produced from those models rather than owning schema authoring directly.
+- `AIStudio` is the model-row editing surface. It performs direct CRUD on stored foundation/model rows such as `EntityModel` and `FieldModel`.
+- `AICodex` is the configurator/schema-application surface. It uses those models to create/drop structures and generate function/script definitions for PostgreSQL and SQLite. `ALTER TABLE` is not part of the planned flow.
+- `AIBook` is the runtime/business-data consumer. It uses the generated structures produced from those models and should invoke function-style actions for business-table CRUD rather than doing direct table CRUD.
 
 Backend transport contract
 - The server layer is a C# ASP.NET Core Minimal Web API with a single endpoint URL.
@@ -35,6 +35,13 @@ Backend transport contract
 - The request body is handed over as JSON directly; the C# server does not map the body into business-model objects first.
 - PostgreSQL returns JSON directly, and the C# server returns that JSON without converting it into response model objects.
 - PostgreSQL owns the central router function that interprets the request and performs CRUD behavior.
+- PostgreSQL and SQLite are not mirror backends in this architecture.
+- Both PostgreSQL and SQLite can have bootstrap/foundation structures.
+- PostgreSQL foundation/business behavior can use real database functions.
+- SQLite should represent function-like behavior through a `virtualfun` table/model that stores scripts to run.
+- Direct CRUD is allowed for foundation tables.
+- Business-table CRUD goes through function-style actions only.
+- `ALTER TABLE` is not part of the current design.
 
 AIBook transport split
 - For `AIBook`, UX/UI composition data can come from the web as normal JSON.
@@ -42,6 +49,7 @@ AIBook transport split
 - This split is intentional: composition wants readable JSON structure, while bound business transport wants the smallest and cheapest machine-oriented shape.
 - In architecture language, `base X` means the transport/data shape from `lib/core/base/x.dart`.
 - `X*` under `lib/core/widgets` still means wrapped implementation controls such as `XButton`, `XTextBox`, and `XCheckBox`.
+- HTTP transport for business data should invoke function-style actions; it should not mirror direct SQLite table writes for business tables.
 
 Request body shape
 - `a` — action ID (`bigint`).
@@ -63,21 +71,21 @@ Example request
 }
 ```
 
-Edit rule
-- There is no separate `insert`, `update`, or `delete` endpoint/function surface.
-- Each model uses one edit-style function such as `edit_modelname`.
+Business write rule
+- There is no direct `insert`, `update`, or `delete` endpoint for business tables.
+- Business-table writes use one function-style action such as `edit_modelname`.
 - `data.i == 0` means insert.
 - `data.i > 0` means update.
 - Updates are partial; only the fields that actually changed are posted.
 - There is no hard delete.
-- Soft delete means posting `data.a = false`.
+- Soft delete means posting `data.a = false` through the function payload.
+- Foundation tables can still use direct CRUD paths when appropriate.
 
 Planned UX spec note
-- A separate UX/UI spec surface is planned for `AIBook`.
-- That future work is intended to live under `lib/core/model/ux`.
-- It is not implemented yet and should be treated as experimental rather than stable.
-- For `AIBook`, those UX models will act as UX/UI spec.
-- For `AIStudio`, those same UX models are expected to act as editable models.
+- The `lib/core/model/ux` layer already exists and is already used by the AIBook runtime (`UxRegistry`, `UxSpecMapper`, and typed `Ux*Model` classes).
+- The editing surfaces around those UX models are still incomplete and should be treated as evolving rather than finalized.
+- For `AIBook`, those UX models already act as runtime spec support.
+- For `AIStudio`, those same UX models are still expected to become editable models.
 
 Planned UX spec transport shape
 - The preferred JSON shape is as flat as possible for direct C# and PostgreSQL conversion.
@@ -148,5 +156,5 @@ flutter run -t lib/main.dart
 
 **Next steps**
 
-- Expand app-specific docs as each app moves from placeholder UI into its intended workflow role.
-- See `docs/aibook_handover.md` and `docs/aistudio_handover.md` for the current merged handover docs.
+- Expand app-specific docs as each app moves from early shell work into its intended workflow role.
+- See `docs/aibook_handover.md`, `docs/aistudio_handover.md`, and `docs/aicodex_handover.md` for the current handover docs.

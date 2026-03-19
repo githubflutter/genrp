@@ -2,15 +2,19 @@
 
 Progressive step-by-step plan to build the AICodex configurator and schema-application surface.
 
-**Current status:** Placeholder — static three-panel layout with no functionality.
+**Current status:** Step 1 is done — grouped model navigation, local selection state, and middle-panel header updates are in place. Middle and right panels are still placeholders, so Step 2 is next.
 
-**Role:** AICodex is the **schema configurator**. It reads model definitions (Entity, Field, Table, Column, Function, etc.) and applies them as **create, drop, and alter** operations against the PostgreSQL backend. It does not edit model definitions (that's AIStudio) and does not consume row data at runtime (that's AIBook).
+**Current next step:** Step 2 — Master list from SQLite.
+
+**Role:** AICodex is the **schema configurator**. It reads model definitions (Entity, Field, Table, Column, Function, etc.) and applies them as **create, drop, and function/script** operations against the PostgreSQL backend and SQLite foundation. It does not edit model definitions (that's AIStudio) and does not consume row data at runtime (that's AIBook).
+
+**Database rule:** PostgreSQL and SQLite are not mirror backends. PostgreSQL can use real foundation/business functions. SQLite should represent function-like behavior through a `virtualfun` table/model that stores scripts to run. Foundation tables allow direct CRUD; business tables go through function/script paths only. `ALTER TABLE` is not part of this project.
 
 ---
 
 ## How to use this document
 
-1. Find your current step (the first unchecked `[ ]` box).
+1. Find your current step (the first `[ ] Step` heading).
 2. Read only that step's section.
 3. Complete the step, run the quality gate, check the box.
 4. Move to the next step.
@@ -28,7 +32,9 @@ flutter test
 ## What is already done
 
 - [x] Three-panel layout skeleton inside one `Scaffold.body`
-- [x] Left panel: "Model Navigation" placeholder
+- [x] Left panel navigation with grouped model types
+- [x] Local selection state for model type and selected row
+- [x] Middle panel header reflects the selected model type
 - [x] Middle panel: "Master/Main Editor" placeholder
 - [x] Right panel: "Property Editor" placeholder
 - [x] FAB and bottom status bar
@@ -52,7 +58,7 @@ flutter test
 │  Action      │                                    │  Status: synced │
 │              │                                    │                 │
 │              │  [+ Generate]                      │  [Create DDL]   │
-│              │                                    │  [Alter DDL]    │
+│              │                                    │  [Create Fn]    │
 │              │                                    │  [Drop DDL]     │
 └──────────────┴───────────────────────────────────┴──────────────────┘
 ```
@@ -61,11 +67,13 @@ flutter test
 |---|---|
 | **Left** (Navigation) | Pick the model type to work with (Entity, Table, Function, etc.) |
 | **Middle** (Master) | Browse model-definition rows for the selected type from SQLite |
-| **Right** (Detail) | Inspect the selected row + schema actions (create/alter/drop DDL) |
+| **Right** (Detail) | Inspect the selected row + schema actions (create/drop/function scripts) |
 
 ---
 
-## Step 1 — Navigation panel with model type list
+## [x] Step 1 — Navigation panel with model type list
+
+**Status:** Done in the current repo snapshot.
 
 **Goal:** Replace the left placeholder with a real model type list that tracks selection.
 
@@ -132,7 +140,7 @@ Constraints:
 
 ---
 
-## Step 2 — Master list from SQLite
+## [ ] Step 2 — Master list from SQLite
 
 **Goal:** The middle panel shows model-definition rows from `SqliteStore` for the selected model type.
 
@@ -184,7 +192,7 @@ Constraints:
 
 ---
 
-## Step 3 — Detail panel with row inspection
+## [ ] Step 3 — Detail panel with row inspection
 
 **Goal:** The right panel shows full details of the selected model-definition row in read-only mode.
 
@@ -236,9 +244,9 @@ Constraints:
 
 ---
 
-## Step 4 — DDL generation display
+## [ ] Step 4 — DDL and function-script generation display
 
-**Goal:** Add schema action buttons and DDL preview to the detail panel. This is what makes AICodex different from AIStudio — it shows the **generated SQL** for the selected model.
+**Goal:** Add schema action buttons and SQL/script preview to the detail panel. This is what makes AICodex different from AIStudio — it shows the generated table DDL and function/`virtualfun` scripts for the selected model.
 
 **Files to change:**
 - `lib/app/aicodex/aicodex.dart`
@@ -251,24 +259,25 @@ Constraints:
    - Use `TypeMapper.byId(field.t)` to resolve PostgreSQL column types.
 3. Implement `generateDrop(SqliteCatalogRow entity)`:
    - Build a `DROP TABLE IF EXISTS` statement.
-4. Implement `generateAlter(SqliteCatalogRow entity, List<SqliteCatalogRow> fields)`:
-   - Build `ALTER TABLE ADD COLUMN` for new fields (placeholder logic).
-5. In the detail panel, show three buttons: **Create DDL**, **Alter DDL**, **Drop DDL**.
-6. When pressed, display the generated SQL in a read-only code block below the buttons.
-7. Add a "Copy" button to copy the DDL to clipboard.
+4. Implement `generateCreateFunction(...)` for PostgreSQL foundation/business function SQL.
+5. Implement `generateVirtualFun(...)` for SQLite `virtualfun` payload/script generation where function behavior needs local representation.
+6. In the detail panel, show three buttons: **Create Table**, **Create Function**, **Drop Table**.
+7. When pressed, display the generated SQL/script in a read-only code block below the buttons.
+8. Add a "Copy" button to copy the SQL/script to clipboard.
 
 **Done when:**
-- Selecting an Entity and pressing "Create DDL" shows a valid `CREATE TABLE` statement.
+- Selecting an Entity and pressing "Create Table" shows a valid `CREATE TABLE` statement.
 - PostgreSQL types are resolved from `TypeMapper`.
-- "Drop DDL" shows a `DROP TABLE` statement.
-- "Copy" copies DDL text to clipboard.
+- "Create Function" shows appropriate function SQL or SQLite `virtualfun` script output.
+- "Drop Table" shows a `DROP TABLE` statement.
+- "Copy" copies the generated SQL/script text.
 - `flutter analyze` passes.
 - `flutter test` passes.
 
 **Copy-paste prompt:**
 ```text
 Continue in `/Users/Shared/dev/git/genrp`.
-You are working on AICodex Step 4: DDL generation display.
+You are working on AICodex Step 4: DDL and function-script generation display.
 
 Current state:
 - Step 3 is done — detail panel shows selected row.
@@ -279,20 +288,22 @@ Task:
 - Create `lib/core/generator/ddl_generator.dart` with DdlGenerator class.
 - generateCreate(entity, fields) → CREATE TABLE SQL using TypeMapper for column types.
 - generateDrop(entity) → DROP TABLE IF EXISTS SQL.
-- generateAlter(entity, fields) → ALTER TABLE ADD COLUMN SQL (basic).
-- Add three buttons in detail panel: Create DDL, Alter DDL, Drop DDL.
-- Show generated SQL in a read-only code block.
+- generateCreateFunction(...) → function SQL for PostgreSQL.
+- generateVirtualFun(...) → SQLite `virtualfun` script/payload for function-like behavior.
+- Add three buttons in detail panel: Create Table, Create Function, Drop Table.
+- Show generated SQL/script in a read-only code block.
 - Add Copy to clipboard button.
 
 Constraints:
-- Generate DDL strings only — do NOT execute against any database.
+- Generate SQL/script strings only — do NOT execute against any database.
 - Use TypeMapper.byId() for PostgreSQL type names.
+- Do not introduce `ALTER TABLE`.
 - Keep analyzer green.
 ```
 
 ---
 
-## Step 5 — Schema action dispatch to backend
+## [ ] Step 5 — Schema action dispatch to backend
 
 **Goal:** Add the ability to send generated DDL to the backend via the real transport endpoint.
 
@@ -301,7 +312,7 @@ Constraints:
 - `lib/core/agent/transport.dart` (reuse from AIBook Step 4, or `mock_transport.dart` if transport isn't wired yet)
 
 **What to do:**
-1. Add an "Execute" button next to each DDL action (Create, Alter, Drop).
+1. Add an "Execute" button next to each schema action (Create Table, Create Function, Drop Table).
 2. On press, POST the DDL action to the backend using the transport contract:
    ```json
    {"a": <schema_action_id>, "u": "...", "p": "...", "data": {"ddl": "...", "entityId": N}}
@@ -319,29 +330,31 @@ Constraints:
 
 ---
 
-## Step 6 — Function and Action DDL
+## [ ] Step 6 — Foundation and business function scripts
 
-**Goal:** Extend DDL generation beyond tables to support Function and Action definitions.
+**Goal:** Extend generation beyond tables to support PostgreSQL foundation/business functions and SQLite `virtualfun` records.
 
 **Files to change:**
 - `lib/core/generator/ddl_generator.dart`
 
 **What to do:**
-1. `generateCreateFunction(function, parameters)` → `CREATE OR REPLACE FUNCTION` SQL.
+1. `generateCreateFunction(function, parameters)` → `CREATE OR REPLACE FUNCTION` SQL for PostgreSQL.
 2. Use `TypeMapper` for parameter and return types.
 3. `generateDropFunction(function)` → `DROP FUNCTION IF EXISTS` SQL.
-4. In the detail panel, show function DDL when `_selectedModelType` is `Function`.
-5. For `Action` model type, show the action's associated function reference.
+4. `generateVirtualFun(function, script)` → SQLite `virtualfun` row payload/script.
+5. In the detail panel, show function SQL or `virtualfun` output when `_selectedModelType` is `Function`.
+6. For `Action` model type, show the action's associated function reference.
 
 **Done when:**
-- Function DDL generation works with parameters and return types.
-- Detail panel shows appropriate DDL for Function model type.
+- Function SQL generation works with parameters and return types.
+- SQLite `virtualfun` payload generation works for local function-like behavior.
+- Detail panel shows appropriate SQL/script output for Function model type.
 - `flutter analyze` passes.
 - `flutter test` passes.
 
 ---
 
-## Step 7 — AICodex test coverage
+## [ ] Step 7 — AICodex test coverage
 
 **Goal:** Add dedicated tests for AICodex panel behavior and DDL generation.
 
@@ -367,7 +380,10 @@ Constraints:
 ## Architecture constraints (apply to all steps)
 
 - AICodex **reads** model definitions — it does NOT edit them (editing is AIStudio's job).
-- AICodex **generates and applies** schema operations — create, alter, drop.
+- AICodex **generates and applies** schema operations — create, drop, and function/script actions only.
+- Do not introduce `ALTER TABLE`.
+- PostgreSQL can use real functions.
+- SQLite function behavior should be represented via `virtualfun` records/scripts.
 - Do not redesign AIBook or AIStudio.
 - Do not add route navigation.
 - Keep one `Scaffold`, everything in `Scaffold.body`.
@@ -377,17 +393,18 @@ Constraints:
 ## App role reminder
 
 ```
-AIStudio ──(edits)──► Model Definitions ──(reads)──► AICodex ──(generates)──► DDL/Schema
+AIStudio ──(edits)──► Model Definitions ──(reads)──► AICodex ──(generates)──► Tables/Functions
                               │
-                              └──(consumed by)──► AIBook ──(row CRUD)──► Business Data
+                              └──(consumed by)──► AIBook ──(function CRUD)──► Business Data
 ```
 
 ## Vocabulary quick reference
 
 | Term | Meaning |
 |---|---|
-| DDL | Data Definition Language — CREATE, ALTER, DROP statements |
+| DDL | Data Definition Language — CREATE, DROP, and related function/script statements |
 | Schema Source | App-facing models: Entity, Field, Relation, Action, Function, Parameter |
 | Schema Target | Physical models: Table, Column, System, User |
+| `virtualfun` | SQLite-side script store used when function behavior needs local representation |
 | `TypeMapper` | Maps type ID → PostgreSQL/Dart/SQLite/JSON type names |
 | `i/a/d/e/t/n/s` | id, active, date, entity, type, name, secondary |

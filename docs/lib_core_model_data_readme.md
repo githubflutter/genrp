@@ -8,15 +8,15 @@ This directory contains the plain Dart structural classes shared by the project.
 
 Role by app
 - In `AIStudio`, these classes are edited as model-definition rows.
-- In `AICodex`, these classes are consumed as schema-generation input for create/drop/alter work.
-- In `AIBook`, these classes are not the primary authoring surface; `AIBook` uses the resulting row-level CRUD structures produced from them.
+- In `AICodex`, these classes are consumed as schema-generation input for create/drop/function-script work.
+- In `AIBook`, these classes are not the primary authoring surface; `AIBook` uses the resulting business-data structures produced from them and reaches them through function-driven CRUD.
 - This means the class shape is shared, but the semantic role depends on the app.
 - In `AIBook`, current business-bound runtime transport is expected to prefer the base `X` variants from `lib/core/base/x.dart` rather than human-readable object maps.
 
 Examples
 - In `AIStudio`, `EntityModel` and `FieldModel` are edited as stored model rows.
-- In `AICodex`, `EntityModel` and `FieldModel` act as the source definitions used to create, drop, or alter generated table/function structure.
-- In `AIBook`, the app works with CRUD on the generated row structures rather than owning schema authoring.
+- In `AICodex`, `EntityModel` and `FieldModel` act as the source definitions used to create, drop, or script generated table/function structure.
+- In `AIBook`, the app works with function-driven CRUD on the generated business structures rather than owning schema authoring.
 - For `AIBook`, the effective app-facing dynamic schema comes from `EntityModel` and `FieldModel`, not directly from `TableModel` and `ColumnModel`.
 - A physical table may contain storage-level columns that are intentionally not exposed in the app-facing entity/field schema. Example: table `user` may contain column `password`, while entity `user` does not expose field `password`.
 

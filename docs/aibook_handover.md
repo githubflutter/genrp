@@ -2,13 +2,15 @@
 
 Progressive step-by-step plan to reach constrained AIBook beta.
 
-**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime.
+**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime. Numeric-first body routing is already in place; validation expansion is next.
+
+**Current next step:** Step 2 — Validate binding references.
 
 ---
 
 ## How to use this document
 
-1. Find your current step (the first unchecked `[ ]` box).
+1. Find your current step (the first `[ ] Step` heading).
 2. Read only that step's section.
 3. Complete the step, run the quality gate, check the box.
 4. Move to the next step.
@@ -33,12 +35,15 @@ flutter test
 - [x] `UxRegistry` maps numeric IDs → names for host/body/template/type/widget
 - [x] `UxSpecMapper` converts JSON nodes → typed UX models
 - [x] Basic spec validation (duplicate IDs in bodies and widgets)
+- [x] Numeric-first body routing with string fallback
 - [x] `SqliteStore` shared foundation (not wired to AIBook yet)
 - [x] Tests: slot binding, validation, mock transport, body routing, widget behavior
 
 ---
 
-## Step 1 — Numeric-only body routing
+## [x] Step 1 — Numeric-only body routing
+
+**Status:** Done in the current repo snapshot.
 
 **Goal:** Remove string-driven body lookup from the runtime hot path. Numeric `bodyId` becomes the primary lookup; string name is fallback only.
 
@@ -82,7 +87,7 @@ Constraints:
 
 ---
 
-## Step 2 — Validate binding references
+## [ ] Step 2 — Validate binding references
 
 **Goal:** Expand spec validation beyond duplicate IDs. Catch broken references before runtime render.
 
@@ -109,6 +114,7 @@ Continue in `/Users/Shared/dev/git/genrp`.
 You are working on AIBook Step 2: Validate binding references.
 
 Current state:
+- Step 1 is done — numeric-first body routing is already in place in `DynamicSpecBody`.
 - `_validateSpec` in `lib/app/aibook/autopilotgo.dart` currently only checks duplicate IDs in `bodiesRegistry` and `widgets`.
 - The spec uses `actionId`, `templateId`, `typeId` in body definitions and child nodes.
 - The registry has `actions`, `templates`, `types` lists.
@@ -130,7 +136,7 @@ Constraints:
 
 ---
 
-## Step 3 — Clean slot-first binding path
+## [ ] Step 3 — Clean slot-first binding path
 
 **Goal:** Ensure all business-bound runtime reads and writes go through slot-first resolution. Path binding should only activate when slot metadata is missing.
 
@@ -174,9 +180,9 @@ Constraints:
 
 ---
 
-## Step 4 — Real transport boundary
+## [ ] Step 4 — Real transport boundary
 
-**Goal:** Replace `MockTransport` with a real HTTP transport boundary for loading composition JSON and saving base `X` business data.
+**Goal:** Replace `MockTransport` with a real HTTP transport boundary for loading composition JSON and invoking business-table functions.
 
 **Files to change:**
 - `lib/core/agent/mock_transport.dart` → rename/refactor to `lib/core/agent/transport.dart`
@@ -184,16 +190,17 @@ Constraints:
 - `lib/app/aibook/autopilotgo.dart`
 
 **What to do:**
-1. Create a `Transport` class with `fetchSpec(String url)` and `saveRow(String url, X row)`.
-2. Use `dart:io` `HttpClient` or add `http` package for POST requests.
+1. Create a `Transport` class with `fetchSpec(String url)` and `invokeAction(String url, {required int actionId, required Object? data})`.
+2. Use `dart:io` `HttpClient` for POST requests.
 3. Keep `MockTransport` available as a static fallback for local/offline development.
 4. Update `AIBook` to accept a configurable base URL (can default to mock).
 5. Follow the backend contract: POST body = `{"a": <actionId>, "u": "...", "p": "...", "data": {...}}`.
-6. Add a test for transport failure handling (simulated network error).
+6. Ensure business-table CRUD goes through function-style actions only; do not add direct table CRUD calls.
+7. Add a test for transport failure handling (simulated network error).
 
 **Done when:**
 - AIBook can switch between mock and real transport.
-- The real transport follows the planned backend contract.
+- The real transport follows the planned function-driven backend contract.
 - A transport failure shows a clear error state.
 - `flutter analyze` passes.
 - `flutter test` passes.
@@ -211,8 +218,9 @@ Current state:
 
 Task:
 - Create `Transport` class alongside `MockTransport`.
-- Implement `fetchSpec(url)` and `saveRow(url, X row)` with HTTP POST.
+- Implement `fetchSpec(url)` and `invokeAction(url, actionId, data)` with HTTP POST.
 - Update `AIBook` to use transport (default to mock for now).
+- Keep business-table writes function-driven; do not add direct table CRUD calls.
 - Add transport failure test.
 
 Constraints:
@@ -223,7 +231,7 @@ Constraints:
 
 ---
 
-## Step 5 — Local SQLite cache for AIBook
+## [ ] Step 5 — Local SQLite cache for AIBook
 
 **Goal:** Wire `SqliteStore` into the AIBook runtime path so specs and/or `X` row data can be cached locally.
 
@@ -236,7 +244,7 @@ Constraints:
 1. Create `lib/core/db/aibook/aibook_cache.dart` wrapping `SqliteStore` for AIBook concerns.
 2. Cache the last-fetched spec JSON via `putJsonValue` / `getJsonValue`.
 3. If transport fetch fails, try loading from cache before showing an error.
-4. Optionally cache the last-saved `X` row for offline resilience.
+4. Optionally cache the last-saved `X` row for offline resilience, but keep remote function execution as the write authority.
 5. Add a test for cache-hit-on-failure scenario.
 
 **Done when:**
@@ -247,7 +255,7 @@ Constraints:
 
 ---
 
-## Step 6 — Harden failure states
+## [ ] Step 6 — Harden failure states
 
 **Goal:** Replace basic error text with clear, user-friendly failure views.
 
@@ -266,7 +274,7 @@ Constraints:
 
 ---
 
-## Step 7 — Preview mode decision
+## [ ] Step 7 — Preview mode decision
 
 **Goal:** Decide whether debug-only selection highlighting becomes a production feature or stays debug-only.
 
@@ -284,7 +292,7 @@ Constraints:
 
 ---
 
-## Step 8 — Beta-path test expansion
+## [ ] Step 8 — Beta-path test expansion
 
 **Goal:** Add focused tests that cover the full beta editor-to-preview flow.
 
@@ -311,6 +319,7 @@ Constraints:
 - Do not merge `CopilotData` and `CopilotUX`.
 - Keep implementation incremental and backward-compatible.
 - Prefer numeric identity over human-readable runtime keys.
+- Business-table CRUD must stay function-driven over transport; do not add direct business-table CRUD paths.
 - Keep analyzer and tests green after every step.
 - If adding registry/support JSON, put it under `assets/json`.
 

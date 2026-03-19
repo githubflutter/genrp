@@ -2,13 +2,15 @@
 
 Progressive step-by-step plan to build the AIStudio model-row editing surface.
 
-**Current status:** ~35% — three-panel shell exists, left panel has partial catalog lists, middle/right are placeholders.
+**Current status:** Step 1 is done — three-panel shell, tabbed catalog navigation, local selection state, and middle-panel header updates are in place. Step 2 is next.
+
+**Current next step:** Step 2 — Complete left-panel catalog lists.
 
 ---
 
 ## How to use this document
 
-1. Find your current step (the first unchecked `[ ]` box).
+1. Find your current step (the first `[ ] Step` heading).
 2. Read only that step's section.
 3. Complete the step, run the quality gate, check the box.
 4. Move to the next step.
@@ -27,12 +29,17 @@ flutter test
 - [x] Left panel with `Data` tab and `UX/Spec` tab
 - [x] `Data` tab lists: Entity, Field, Relation, Action, Function
 - [x] `UX/Spec` tab lists: Host, Body, Template, Type, Widget
+- [x] Local selection state for active tab, selected catalog, and selected row
+- [x] Middle panel header updates from the selected catalog
+- [x] Selected catalog resets when switching tabs
 - [x] FAB and bottom status bar
 - [x] `SqliteStore` shared foundation (not wired to AIStudio yet)
 
 ---
 
-## Step 1 — Add local selection state
+## [x] Step 1 — Add local selection state
+
+**Status:** Done in the current repo snapshot.
 
 **Goal:** Track what the user has selected so the middle and right panels can respond.
 
@@ -83,7 +90,7 @@ Constraints:
 
 ---
 
-## Step 2 — Complete left-panel catalog lists
+## [ ] Step 2 — Complete left-panel catalog lists
 
 **Goal:** Add all missing catalog entries to both tabs.
 
@@ -132,7 +139,7 @@ Constraints:
 
 ---
 
-## Step 3 — Middle panel with SQLite-backed row list
+## [ ] Step 3 — Middle panel with SQLite-backed row list
 
 **Goal:** The middle panel shows rows from `SqliteStore` for the selected catalog, with search and an add button.
 
@@ -182,7 +189,7 @@ Constraints:
 
 ---
 
-## Step 4 — Right panel generic editor
+## [ ] Step 4 — Right panel generic editor
 
 **Goal:** The right panel shows a form editor for the selected row and saves changes back to SQLite.
 
@@ -230,7 +237,7 @@ Constraints:
 
 ---
 
-## Step 5 — Catalog-specific field editing (payload)
+## [ ] Step 5 — Catalog-specific field editing (payload)
 
 **Goal:** Add optional JSON payload editing for catalog-specific fields that don't fit the common `i/a/d/e/t/n/s` shape.
 
@@ -252,7 +259,7 @@ Constraints:
 
 ---
 
-## Step 6 — AIStudio test coverage
+## [ ] Step 6 — AIStudio test coverage
 
 **Goal:** Add dedicated tests for AIStudio panel behavior and SQLite CRUD flow.
 
@@ -273,7 +280,7 @@ Constraints:
 
 ---
 
-## Step 7 — Remote transport (after local is solid)
+## [ ] Step 7 — Remote transport (after local is solid)
 
 **Goal:** Add remote load/save transport for AIStudio model rows, using the same backend contract as AIBook.
 
@@ -299,6 +306,7 @@ Constraints:
 - Do not add route navigation.
 - Keep one `Scaffold`, everything in `Scaffold.body`.
 - AIStudio is the **model-row editing surface** — it edits definitions, not runtime data.
+- AIStudio edits foundation/model rows directly; business-table CRUD is not AIStudio's job.
 - AIBook is the **runtime consumer** — it uses those definitions.
 - Prefer row-level save units, not one giant JSON blob.
 - Keep implementation direct and incremental.

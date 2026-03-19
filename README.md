@@ -6,9 +6,9 @@ A Flutter monolith with three apps sharing a common core engine.
 
 | App | Role | Entry | Status |
 |---|---|---|---|
-| **AIBook** | Runtime reader / row-level CRUD consumer | `lib/app/aibook/aibook.dart` | ~80% beta |
-| **AIStudio** | Model-row editing surface (definition CRUD) | `lib/app/aistudio/aistudio.dart` | ~35% shell |
-| **AICodex** | Configurator / schema-application surface | `lib/app/aicodex/aicodex.dart` | Placeholder |
+| **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta |
+| **AIStudio** | Model-row editing surface (definition CRUD) | `lib/app/aistudio/aistudio.dart` | Step 1 done; Step 2 pending |
+| **AICodex** | Configurator / schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 1 done; Step 2 pending |
 
 ## Quick Start
 
