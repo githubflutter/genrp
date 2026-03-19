@@ -139,7 +139,7 @@ Constraints:
 
 ---
 
-## [ ] Step 3 — Clean slot-first binding path
+## [x] Step 3 — Clean slot-first binding path
 
 **Goal:** Ensure all business-bound runtime reads and writes go through slot-first resolution. Path binding should only activate when slot metadata is missing.
 

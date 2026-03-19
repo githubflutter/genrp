@@ -217,7 +217,7 @@ Constraints:
 
 ---
 
-## [ ] Step 4 — Right panel generic editor for UX/spec rows
+## [x] Step 4 — Right panel generic editor for UX/spec rows
 
 **Goal:** The right-side workspace inside the active major tab shows a form editor for the selected UX/spec row and saves changes back to SQLite.
 

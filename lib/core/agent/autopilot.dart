@@ -136,8 +136,8 @@ abstract class Autopilot extends ChangeNotifier {
         if (slot >= 0 && slot < value.v.length) {
           return value.v[slot];
         }
-        return null;
       }
+      return null;
     }
 
     final resolvedPath = _resolveFieldPath(
@@ -185,8 +185,8 @@ abstract class Autopilot extends ChangeNotifier {
           xRow.v[slot] = value;
         }
         publishChange();
-        return;
       }
+      return;
     }
 
     final resolvedPath = _resolveFieldPath(

@@ -216,6 +216,52 @@ void main() {
     await store.close();
   });
 
+  testWidgets('AICodex generates CREATE TABLE SQL for selected Entity', (tester) async {
+    final store = _FakeSqliteStore();
+
+    await store.upsertRow(
+      const SqliteCatalogRow(
+        catalog: 'Entity',
+        i: 1,
+        a: true,
+        d: 10,
+        e: 2,
+        t: 0,
+        n: 'Book',
+        s: 'book',
+        payload: <String, dynamic>{},
+        updatedAt: 0,
+      ),
+    );
+
+    await tester.pumpWidget(AICodexApp(store: store));
+    await pumpUi(tester);
+
+    await tester.tap(find.text('Entity'));
+    await pumpUi(tester);
+
+    await tester.tap(
+      find.byKey(const ValueKey<String>('aicodex_row_Entity_1')),
+    );
+    await pumpUi(tester);
+
+    final scrollableFinder = detailScrollable();
+
+    await tester.scrollUntilVisible(
+      find.text('Create Table'),
+      200,
+      scrollable: scrollableFinder,
+    );
+    await tester.ensureVisible(find.text('Create Table'));
+
+    await tester.tap(find.text('Create Table'));
+    await pumpUi(tester);
+
+    expect(find.textContaining('CREATE TABLE t_book ('), findsOneWidget);
+
+    await store.close();
+  });
+
   testWidgets('AICodex deletes a selected catalog row', (tester) async {
     final store = _FakeSqliteStore();
 
