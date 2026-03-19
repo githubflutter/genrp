@@ -103,6 +103,10 @@ Convergent shell design
 - The convergent rule is structural first:
   - `AIStudio` and `AICodex` should share the same minor/major shell
   - app differences should happen inside the tab contents, not by inventing different outer layouts
+- The shared shell contract should stay narrow:
+  - shell owns layout, tab mechanism, width ratios, and shared chrome styling
+  - shell does **not** own the left explorer/list mechanism
+  - left-side explorer/navigation widgets should stay app-specific and be injected into the shell
 - Shared visual rules should stay the same across both apps:
   - same minor-panel width logic
   - same major-tab behavior

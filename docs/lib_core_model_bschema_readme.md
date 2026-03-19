@@ -55,7 +55,10 @@ Boundary notes
 - `ActionModel` has been moved to `lib/core/model/uschema` because it is now treated as UX-side metadata rather than a data/schema model.
 - For `AIBook`, those model classes help define runtime meaning, but business payload transport should stay compact and index-oriented when possible.
 - For `base`, `bschema`, and `uschema`, `i` and `e` are intended to stay `int4`.
-- New rows in `base`, `bschema`, and `uschema` should allocate `i` with `max(i) + 1`.
+- New schema-side drafts should start with `i = 0`.
+- Save/edit is what decides insert vs update:
+  - `i = 0` means insert, and save allocates `max(i) + 1`
+  - `i > 0` means update
 - `d` keeps the same cross-layer rule here too: it is the last date/time integer, usually UTC epoch milliseconds, and should stay web-safe `int^53` / PostgreSQL `bigint`.
 - Because schema editing is single-user/admin-side only, `max(i) + 1` is acceptable for model-definition ID allocation.
 

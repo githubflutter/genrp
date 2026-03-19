@@ -19,7 +19,7 @@ GenRP is a **Flutter monolith** containing **three distinct applications** insid
 
 The apps share a common orchestration engine (`Autopilot`), data models, UX spec models, a JSON-driven UI composition system, and a local SQLite persistence layer. The repo now also has a shared DB contract/admin-client scaffold for PostgreSQL, SQLite, and web action payloads. The architecture is intentionally lean, performance-first, and optimized for compact numeric transport.
 
-The current UI direction is to keep `AIStudio` and `AICodex` converged on one **hybrid authoring shell**: a left-side minor panel plus a right-side major panel. The major panel changes between one-panel and two-panel modes through tabs, so the apps differ by domain responsibility rather than by inventing different outer layouts. The current working split is `20 / 60 / 20` in dual mode, with the left minor panel and right detail panel intentionally matching widths.
+The current UI direction is to keep `AIStudio` and `AICodex` converged on one **hybrid authoring shell**: a left-side minor panel plus a right-side major panel. The major panel changes between one-panel and two-panel modes through tabs, so the apps differ by domain responsibility rather than by inventing different outer layouts. The current working split is `20 / 60 / 20` in dual mode, with the left minor panel and right detail panel intentionally matching widths. The shared shell contract should stay narrow: layout, tab mechanism, width ratios, and chrome styling only. Left-side explorer/list behavior should remain app-specific.
 
 The current visual baseline is a shared **dark Material 3 theme** with centralized typography and chrome sizing. Launcher, AIBook, AIStudio, and AICodex now share the same theme rules, toolbar height, and bottom status-bar height, and scaffold-level FABs have been removed in favor of in-panel or header actions.
 
@@ -464,6 +464,9 @@ flowchart LR
   - dark Material 3 theme
   - centralized font sizes and toolbar/status heights
   - no scaffold FABs
+- Shared shell boundary:
+  - shell owns layout/tab/chrome
+  - app code owns left explorer/list/navigation behavior
 - This keeps the apps visually and behaviorally aligned while still letting `AIStudio` own UX/spec rows and `AICodex` own sensitive data-model rows plus schema actions.
 
 #### AIBook (~80% beta)
@@ -479,6 +482,7 @@ flowchart LR
 - Major panel: `Single`, `Dual`, `Equal`
 - Visual baseline: shared dark Material 3 theme, centralized toolbar/status sizing, no scaffold FAB
 - Local state: `_selectedCatalog`, `_selectedRowId`
+- Explorer boundary: current left catalog list is app-owned and should stay decoupled from the shell widget
 - Current direction: AIStudio is now narrowed to the UX/spec explorer path only
 - Shared DB builders exist, but SQLite wiring and remaining UX/spec editor work are still pending
 
@@ -487,6 +491,7 @@ flowchart LR
 - Minor panel: `Catalogs` + `Context`
 - Major panel: `Single`, `Dual`, `Equal`
 - Visual baseline: shared dark Material 3 theme, centralized toolbar/status sizing, no scaffold FAB
+- Explorer boundary: current grouped model explorer is app-owned and should stay decoupled from the shell widget
 - Current direction: AICodex owns the data-model explorer/collection path plus sensitive data-model CRUD and schema generation/apply work
 - Current snapshot: SQLite-backed master/detail editing is working, including payload editing and save/delete flow for selected rows
 - Remaining next step: DDL and function-script generation display

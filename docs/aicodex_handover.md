@@ -24,6 +24,8 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 - major tab 3 = equal mid + right
 - current shell width baseline = `20%` minor + `80%` major
 - current dual-mode working split = `20 / 60 / 20`
+- the shared shell contract is layout/tab/chrome only
+- AICodex still owns its own left explorer/navigation mechanism inside that shell
 - functional data-model CRUD and schema work should now continue inside that shared shell
 
 ---
@@ -81,11 +83,13 @@ flutter test
    - tab 2: larger mid + smaller right
    - tab 3: equal mid + right
 5. Preserve current AICodex navigation/master-list behavior inside the new shell.
+6. Keep the left explorer/navigation mechanism app-owned rather than moving it into the shell contract.
 
 **Done when:**
 - AICodex uses the shared hybrid shell.
 - The old fixed three-panel layout is gone.
 - Current navigation/master-list behavior still works inside the new shell.
+- The shared shell remains a layout/tab mechanism only.
 
 ---
 

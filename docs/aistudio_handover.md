@@ -10,7 +10,7 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
 **Special rule:** `System` and `Usr` are base-side models under `lib/core/model/base/`, not normal `i/a/d/e/t/n/s` rows. `SystemModel` is structural metadata (`sid`, `n`, `fv`, `cv`, `ld`, `lds`, `ldu`, `ctm`, `uxm`, `m1`, `m2`) and belongs to the sensitive data-model side owned by `AICodex`.
 
-**UX integer rule:** For `uschema`, `i` and `e` stay `int4`, and new rows allocate `i` with `max(i) + 1`. `d` stays the last date/time integer, usually UTC epoch milliseconds, and should remain web-safe `int^53`. UX rows should not become real database foreign-key owners of the data-model layer.
+**UX integer rule:** For `uschema`, `i` and `e` stay `int4`. New drafts should start with `i = 0`, and save/edit decides insert vs update: `i = 0` allocates `max(i) + 1`, while `i > 0` updates in place. `d` stays the last date/time integer, usually UTC epoch milliseconds, and should remain web-safe `int^53`. UX rows should not become real database foreign-key owners of the data-model layer.
 
 **Convergent UI rule:** AIStudio should use the same hybrid shell as AICodex:
 - left side = **minor panel**
@@ -22,6 +22,8 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 - major tab 3 = equal mid + right
 - current shell width baseline = `20%` minor + `80%` major
 - current dual-mode working split = `20 / 60 / 20`
+- the shared shell contract is layout/tab/chrome only
+- AIStudio still owns its own left explorer/list mechanism inside that shell
 - functional UX/spec work should now continue inside that shared shell
 
 ---
@@ -72,11 +74,13 @@ flutter test
    - tab 2: larger mid + smaller right
    - tab 3: equal mid + right
 5. Preserve current AIStudio selection behavior inside the new shell.
+6. Keep the left explorer/list mechanism app-owned rather than moving it into the shell contract.
 
 **Done when:**
 - AIStudio uses the shared hybrid shell.
 - The old fixed three-panel layout is gone.
 - Current selection/header behavior still works inside the new shell.
+- The shared shell remains a layout/tab mechanism only.
 
 ---
 
@@ -174,7 +178,7 @@ Constraints:
 
 ## [ ] Step 3 — Middle panel with SQLite-backed UX/spec row list
 
-**Goal:** The middle panel shows rows from `SqliteStore` for the selected UX/spec catalog, with search and an add button.
+**Goal:** The middle panel shows rows from `SqliteStore` for the selected UX/spec catalog, with search and a draft-first add/new action.
 
 **Files to change:**
 - `lib/app/aistudio/aistudio.dart`
@@ -185,14 +189,14 @@ Constraints:
 2. When `_selectedCatalog` changes, call `SqliteStore.listRows(catalogName)`.
 3. Display rows as a `ListView` showing `n` (name) and `i` (id).
 4. Add a search `TextField` at the top — filter displayed rows by `n`.
-5. Add an "Add" `IconButton` in the header for UX/spec catalogs — calls `SqliteStore.upsertRow` with a new empty row.
+5. Add a "New" `IconButton` in the header for UX/spec catalogs — create a local draft row with `i = 0` instead of inserting immediately.
 6. Add an `onTap` to each row item that sets `_selectedRowId`.
 7. Place the collection UI inside the active major-tab content after the hybrid shell is in place.
 
 **Done when:**
 - Middle panel shows rows from SQLite for the selected catalog.
 - Search filters by name.
-- Add button creates a new row.
+- Add/New opens a draft row with `i = 0`.
 - Tapping a row selects it (for the future right panel).
 - `flutter analyze` passes.
 - `flutter test` passes.
