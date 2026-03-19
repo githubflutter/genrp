@@ -12,6 +12,41 @@ import 'package:provider/provider.dart';
 
 void main() {
   group('DynamicSpecBody boilerplate generator', () {
+    testWidgets('routes numeric bodyId first', (tester) async {
+      final spec = {
+        'initialBody': 1,
+        'bodies': {
+          'wrongString': {'bodyId': 2, 'type': 'text', 'text': 'Wrong Body'},
+          'correctBody': {'bodyId': 1, 'type': 'text', 'text': 'Correct Numeric Body'},
+        },
+        'registry': {
+          'bodies': [
+            {'id': 1, 'name': 'correctBody'},
+            {'id': 2, 'name': 'wrongString'},
+          ]
+        }
+      };
+
+      await tester.pumpWidget(
+        ChangeNotifierProvider<AutopilotGo>(
+          create: (_) => AutopilotGo()..configureSpec(spec),
+          child: MaterialApp(
+            home: Scaffold(
+              body: Builder(
+                builder: (context) {
+                  final autopilot = Provider.of<AutopilotGo>(context);
+                  return DynamicSpecBody(spec: spec, autopilot: autopilot);
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Correct Numeric Body'), findsOneWidget);
+      expect(find.text('Wrong Body'), findsNothing);
+    });
+
     testWidgets('routes to form template', (tester) async {
       final spec = {
         'initialBody': 'test',

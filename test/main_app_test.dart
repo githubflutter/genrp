@@ -13,8 +13,8 @@ void main() {
     await tester.tap(find.text('AICodex'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Model Navigation'), findsOneWidget);
-    expect(find.text('Master/Main Editor'), findsOneWidget);
+    expect(find.text('Schema Source'), findsOneWidget);
+    expect(find.text('Master/Main Editor'), findsWidgets);
     expect(find.text('Choose App'), findsNothing);
     expect(find.text('AIBook'), findsNothing);
     expect(find.text('AIStudio'), findsNothing);

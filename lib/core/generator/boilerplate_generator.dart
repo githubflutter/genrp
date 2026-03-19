@@ -18,15 +18,12 @@ class DynamicSpecBody extends StatelessWidget {
     final registry = UxRegistry.fromSpec(spec);
     final initialBodyValue = spec['initialBody'];
     final currentBodyValue = autopilot.resolve('ux.currentBody') ?? initialBodyValue;
-    final initialBody = initialBodyValue is num
-        ? registry.bodyName(initialBodyValue.toInt()) ?? 'editor'
-        : initialBodyValue?.toString() ?? 'editor';
-    final currentBodyStr = currentBodyValue is num
-        ? registry.bodyName(currentBodyValue.toInt()) ?? initialBody
-        : currentBodyValue?.toString() ?? initialBody;
+
     final bodies = Map<String, dynamic>.from(spec['bodies'] as Map? ?? const {});
 
     Map<String, dynamic> bodySpec = {};
+
+    // 1. Try numeric resolution first (Primary Path)
     if (currentBodyValue is num) {
       final targetId = currentBodyValue.toInt();
       for (final value in bodies.values) {
@@ -37,13 +34,25 @@ class DynamicSpecBody extends StatelessWidget {
       }
     }
 
-    if (bodySpec.isEmpty) {
+    // 2. Fallback to string lookup
+    if (bodySpec.isEmpty && currentBodyValue != null) {
+      final currentBodyStr = currentBodyValue.toString();
       bodySpec = Map<String, dynamic>.from(bodies[currentBodyStr] as Map? ?? const {});
     }
+
+    // 3. If still empty, try initialBody string fallback
+    if (bodySpec.isEmpty && initialBodyValue != null) {
+      final initialBodyStr = initialBodyValue.toString();
+      bodySpec = Map<String, dynamic>.from(bodies[initialBodyStr] as Map? ?? const {});
+    }
+
+    // 4. Default to empty if nothing matched
     final resolvedBodySpec = <String, dynamic>{
       ...spec,
       ...bodySpec,
     };
+
+    // Template resolution: numeric-first, string fallback
     final templateId = (bodySpec['templateId'] as num?)?.toInt();
     final template = registry.templateName(templateId) ?? bodySpec['template']?.toString() ?? 'basic';
 
