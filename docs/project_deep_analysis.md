@@ -14,7 +14,7 @@ GenRP is a **Flutter monolith** containing **three distinct applications** insid
 | App | Role | Maturity |
 |---|---|---|
 | **AIBook** | Runtime reader / preview flow (function-driven business-data consumer) | ~80% beta; Step 2 done, Step 3 pending |
-| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | Step 2 done; Step 3 pending |
+| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | Step 3 done; Step 4 pending |
 | **AICodex** | Sensitive data-model CRUD + schema-application surface | Step 3 done; Step 4 pending |
 
 The apps share a common orchestration engine (`Autopilot`), data models, UX spec models, a JSON-driven UI composition system, and a local SQLite persistence layer. The repo now also has a shared DB contract/admin-client scaffold for PostgreSQL, SQLite, and web action payloads. The architecture is intentionally lean, performance-first, and optimized for compact numeric transport.
@@ -163,9 +163,9 @@ graph TB
 | Metric | Value |
 |---|---|
 | **Source files** (`lib/`) | 59 Dart files |
-| **Source LOC** (`lib/`) | ~5,910 lines |
-| **Test files** (`test/`) | 16 Dart files |
-| **Test LOC** (`test/`) | ~1,835 lines |
+| **Source LOC** (`lib/`) | ~6,164 lines |
+| **Test files** (`test/`) | 17 Dart files |
+| **Test LOC** (`test/`) | ~2,058 lines |
 | **Asset JSON files** | 3 files |
 | **Doc files** (`docs/`) | 10 markdown files |
 | **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
@@ -187,7 +187,7 @@ genrp/
 │   │   ├── aicodex/
 │   │   │   └── aicodex.dart              # AICodex Step 3 shell (SQLite-backed master/detail editor)
 │   │   └── aistudio/
-│   │       └── aistudio.dart             # AIStudio Step 2 shell (UX/spec explorer + selection state)
+│   │       └── aistudio.dart             # AIStudio Step 3 shell (SQLite-backed UX/spec row list + draft selection)
 │   └── core/
 │       ├── agent/
 │       │   ├── action.dart               # Action + Todo models
@@ -229,7 +229,7 @@ genrp/
 │       ├── theme/
 │       │   └── genrp_theme.dart          # Shared Material 3 dark theme + layout constants
 │       └── widgets/                      # 6 shared shell/control widgets
-├── test/                                 # 16 test files
+├── test/                                 # 17 test files
 ├── assets/json/                          # 3 JSON spec/registry files
 ├── docs/                                 # 10 documentation files
 └── pubspec.yaml
@@ -429,7 +429,7 @@ flowchart LR
 | Table | Purpose | Key |
 |---|---|---|
 | `app_kv` | JSON key/value storage | `k TEXT PRIMARY KEY` |
-| `catalog_row` | Generic catalog row storage | `(catalog, i) COMPOSITE PK`, seeded with default `System` metadata |
+| `catalog_row` | Generic catalog row storage | `(catalog, i) COMPOSITE PK`, seeded with default `System` metadata and used by AIStudio/AICodex local authoring flows |
 
 `SqliteCatalogRow` mirrors the common model shape (`i, a, d, e, t, n, s`) plus `catalog`, `payload` (JSON), `updatedAt`.
 
@@ -476,15 +476,16 @@ flowchart LR
 - **Action execution**: Handles `saveBook` specially (saves `X` row via MockTransport), then iterates `Todo` list for state mutations
 - **Near-term gap**: shared `WebClient` payload scaffolding exists, but real HTTP transport is still pending
 
-#### AIStudio (Step 2 done)
+#### AIStudio (Step 3 done)
 - **Entry**: `AIStudioApp` → shared hybrid shell with two minor tabs and three major tabs
 - Minor panel: `Catalogs` + `Context`
 - Major panel: `Single`, `Dual`, `Equal`
 - Visual baseline: shared dark Material 3 theme, centralized toolbar/status sizing, no scaffold FAB
-- Local state: `_selectedCatalog`, `_selectedRowId`
+- Local state: `_selectedCatalog`, `_selectedRowId`, `_draftRow`, search text, loaded rows
 - Explorer boundary: current left catalog list is app-owned and should stay decoupled from the shell widget
 - Current direction: AIStudio is now narrowed to the UX/spec explorer path only
-- Shared DB builders exist, but SQLite wiring and remaining UX/spec editor work are still pending
+- Current snapshot: SQLite-backed middle-panel row loading is working, including search, draft-first add/new, and row selection
+- Remaining next step: right-side generic editor for common UX/spec row fields
 
 #### AICodex (Step 3 done)
 - **Entry**: `AICodexApp` → shared hybrid shell with two minor tabs and three major tabs
@@ -578,7 +579,7 @@ The planned backend is a **C# ASP.NET Core Minimal Web API** with a PostgreSQL b
 | `Todo` | A single step within an `Action` |
 | `slot` | Direct index into `X.v[]` for field binding resolution |
 | `src` | Binding source: `0` = state, `1` = dataSource, `2` = dataSet |
-| `i/a/d/e/t/n/s` | Common model field abbreviations for the generic row models (id, active, last date, last editor, type, readable name, system name). In `base`, `bschema`, and `uschema`, `i` and `e` stay `int4` and new `i` uses `max(i)+1`. Schema-side `e` points to `UsrModel.i`; data-side `e` points to `UserModel.i`. |
+| `i/a/d/e/t/n/s` | Common model field abbreviations for the generic row models (id, active, last date, last editor, type, readable name, system name). In `base`, `bschema`, and `uschema`, drafts start with `i = 0`, Save decides insert vs update, persisted `i/e` stay `int4`, and first insert allocates `max(i)+1`. Schema-side `e` points to `UsrModel.i`; data-side `e` points to `UserModel.i`. |
 | `sys-get / sys-set / jss-get / jss-set / biz-get / biz-set` | Function type vocabulary carried by `FunctionModel.t` |
 | `ei` | Output entity foreign key used by `FunctionModel` |
 | `tis` | Table ID array used by `FunctionModel` and `EntityModel` for zero/one/many table dependencies |
@@ -586,6 +587,7 @@ The planned backend is a **C# ASP.NET Core Minimal Web API** with a PostgreSQL b
 | `s0 / s1 / s2 / s3 / s4 / s5 / s6 / s7` | Current remembered physical DB aliases: `s0 = usr`, `s1 = systemmodel`, `s2 = table`, `s3 = column`, `s4 = function`, `s5 = param`, `s6 = entity`, `s7 = field` |
 | `t0` | Current remembered business-table entrypoint: `UserModel` |
 | `fi` | Function ID foreign key used by `ParameterModel` |
+| `draft row` | A local unsaved row with `i = 0`; first Save allocates a real id and persists it |
 
 ---
 
@@ -630,14 +632,19 @@ Defines **identity registries** — maps numeric IDs to names:
 | Test File | Coverage Target |
 |---|---|
 | `aibook_app_test.dart` | AIBook app widget test |
+| `aicodex_app_test.dart` | AICodex draft-first save/delete widget flow |
+| `aistudio_app_test.dart` | AIStudio SQLite-backed list/search/draft widget flow |
 | `autopilot_slot_test.dart` | Slot-first read/write for base `X` |
+| `bdata_user_model_test.dart` | Business `UserModel` serialization + copyWith |
 | `boilerplate_generator_test.dart` | DynamicSpecBody routing |
 | `db_clients_test.dart` | DB admin/client builders + system entrypoint seeds |
 | `main_app_test.dart` | Main launcher widget test |
 | `mock_transport_test.dart` | Mock transport save behavior |
+| `parameter_model_test.dart` | Bschema relation/serialization regressions |
 | `sqlite_store_test.dart` | SQLite store CRUD + KV |
 | `system_model_test.dart` | SystemModel structural metadata serialization |
 | `template_runtime_test.dart` | TemplateRuntime node rendering |
+| `usr_model_test.dart` | Base `UsrModel` serialization + copyWith |
 | `validation_test.dart` | Current spec validation coverage |
 | `x_button_test.dart` | XButton widget behavior |
 | `x_input_controls_test.dart` | XTextBox + XCheckBox widget behavior |
@@ -677,8 +684,8 @@ Defines **identity registries** — maps numeric IDs to names:
 | SQLite not wired into AIBook | Medium | Store exists but AIBook doesn't use it for cache |
 | Validation still partial | Medium | Key references are checked, but deeper consistency/body-template validation is still missing |
 | Shared DB builders not wired into app flows yet | Medium | Contract/admin/client scaffolding exists, but app-level integration is still pending |
-| AIStudio only has local selection state | Medium | UX/spec catalog selection exists; SQLite list/editor flow is still missing |
-| AIStudio not wired to SQLite | Medium | Left panel lists exist but no UX/spec persistence yet |
+| AIStudio generic editor still missing | Medium | Row list/search/draft selection works; Save/Delete editor is the next step |
+| AIStudio payload-specific UX/spec editing still missing | Medium | Common row editor comes first; catalog-specific payload editing remains after that |
 | AICodex DDL flow still missing | Medium | Right-side editing now works, but schema generation/apply preview is still pending |
 | Preview selection is debug-only | Low | Long-press in debug mode only |
 | `datasource_helper.dart` is empty | Low | Reserved placeholder |
@@ -756,9 +763,9 @@ Based on the existing handover docs and code analysis:
 4. **Wire SQLite into AIBook** — cache spec and/or `X` row data locally
 
 ### Phase 2: Continue AIStudio
-5. **Build middle panel** — SQLite-backed row list for selected UX/spec catalog
-6. **Build right panel** — UX/spec editor for common `i/a/d/e/t/n/s` shape + JSON payload
-7. **Add AIStudio test coverage** — panel behavior + SQLite CRUD flow
+5. **Build right panel** — UX/spec editor for common `i/a/d/e/t/n/s` shape
+6. **Add catalog-specific payload editor** — JSON/payload editing for rows that need more than the common shape
+7. **Extend AIStudio test coverage** — save/delete/editor flow on top of the current list/search/draft tests
 
 ### Phase 3: Continue AICodex
 8. **Add DDL generation** — create/drop/function SQL + `vfun` script preview

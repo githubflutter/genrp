@@ -10,7 +10,7 @@ Index of documentation files in `docs/`:
 
 Current next steps in this snapshot:
 - `AIBook` — Step 3
-- `AIStudio` — Step 3
+- `AIStudio` — Step 4
 - `AICodex` — Step 4
 
 Current UI baseline in this snapshot:

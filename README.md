@@ -7,7 +7,7 @@ A Flutter monolith with three apps sharing a common core engine.
 | App | Role | Entry | Status |
 |---|---|---|---|
 | **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta; Step 2 done, Step 3 pending |
-| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | `lib/app/aistudio/aistudio.dart` | Step 2 done; Step 3 pending |
+| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | `lib/app/aistudio/aistudio.dart` | Step 3 done; Step 4 pending |
 | **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 3 done; Step 4 pending |
 
 ## Quick Start

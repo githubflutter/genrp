@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
-**Current status:** Step 2 is done, and the shared hybrid shell is in place — shared dark Material 3 theme, minor panel with two tabs, major panel with three tabs, UX/spec catalog navigation, local selection state, full UX/spec catalog list, and major-panel content placeholders are all in place. Step 3 is next.
+**Current status:** Step 3 is done, and the shared hybrid shell is in place — shared dark Material 3 theme, minor panel with two tabs, major panel with three tabs, UX/spec catalog navigation, local selection state, full UX/spec catalog list, SQLite-backed middle-panel row loading, search, draft-first add/new flow, and major-panel placeholders are all in place. Step 4 is next.
 
-**Current next step:** Step 3 — Middle panel with SQLite-backed UX/spec row list.
+**Current next step:** Step 4 — Right panel generic editor for UX/spec rows.
 
 **Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio is now narrowed to UX/spec CRUD and should stay on that path.
 
@@ -54,7 +54,12 @@ flutter test
 - [x] Shared dark Material 3 theme + centralized chrome sizing
 - [x] Bottom status bar
 - [x] No scaffold FAB; future actions should live in header/panel content
-- [x] `SqliteStore` shared foundation (not wired to AIStudio yet)
+- [x] SQLite-backed middle-panel row list for selected UX/spec catalog
+- [x] Search filter by `n`
+- [x] Draft-first add/new flow with local `i = 0` rows
+- [x] Right-side placeholder reacts to draft-vs-selected row state
+- [x] Dedicated AIStudio widget coverage for list/search/draft behavior
+- [x] `SqliteStore` shared foundation wired into AIStudio list flow
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
 
 ## [x] UI convergence prerequisite — Hybrid shell
@@ -176,7 +181,9 @@ Constraints:
 
 ---
 
-## [ ] Step 3 — Middle panel with SQLite-backed UX/spec row list
+## [x] Step 3 — Middle panel with SQLite-backed UX/spec row list
+
+**Status:** Done in the current repo snapshot.
 
 **Goal:** The middle panel shows rows from `SqliteStore` for the selected UX/spec catalog, with search and a draft-first add/new action.
 
@@ -201,31 +208,12 @@ Constraints:
 - `flutter analyze` passes.
 - `flutter test` passes.
 
-**Copy-paste prompt:**
-```text
-Continue in `/Users/Shared/dev/git/genrp`.
-You are working on AIStudio Step 3: Middle panel with SQLite-backed row list.
-
-Current state:
-- Step 2 is done — full UX/spec catalog list + selection state.
-- `SqliteStore` exists at `lib/core/db/sqlite_store.dart` with `listRows`, `upsertRow`, `getRow`, `deleteRow`.
-- `SqliteCatalogRow` has fields: catalog, i, a, d, e, t, n, s, payload, updatedAt.
-- Shared DB builders exist, but AIStudio should stay on UX/spec CRUD rather than business-action paths or sensitive data-model CRUD.
-
-Task:
-- Init SqliteStore in AIStudio.
-- Load rows by selected catalog.
-- Display as ListView (show name + id).
-- Add search TextField (filter by n).
-- Add "Add" button (upsert empty row) for UX/spec catalogs.
-- Wire row tap → _selectedRowId.
-
-Constraints:
-- Use SqliteStore.instance.
-- Treat sensitive data-model CRUD as out of scope for AIStudio.
-- Do not add Provider or other state management — keep setState for now.
-- Keep analyzer and tests green.
-```
+**Snapshot notes:**
+- `AIStudio` now initializes `SqliteStore` and loads rows for the selected UX/spec catalog.
+- Search filters the visible rows by `n`.
+- Add/New creates a local draft row with `i = 0` instead of inserting immediately.
+- Selecting a row updates right-panel placeholder state for the future editor step.
+- Basic widget coverage exists in `test/aistudio_app_test.dart`.
 
 ---
 
@@ -237,7 +225,7 @@ Constraints:
 - `lib/app/aistudio/aistudio.dart`
 
 **What to do:**
-1. When `_selectedRowId` is set, load the row via `SqliteStore.getRow(catalog, id)`.
+1. When `_selectedRowId` is set, load the row via `SqliteStore.getRow(catalog, id)` for persisted rows, but use the local draft row directly when `i = 0`.
 2. Show `TextField` widgets for each common field: `n` (readable name), `s` (system name, prefer lower snake_case).
 3. Show `Switch` or `Checkbox` for `a` (active).
 4. Show read-only display for `i`, `d`, `e`, `t`.
@@ -246,6 +234,7 @@ Constraints:
 7. After save or delete, refresh the middle panel list.
 8. If a sensitive data-model catalog is selected, show a note that editing for that catalog belongs in AICodex instead of AIStudio.
 9. Keep the editor inside the active major-tab workspace area of the hybrid shell.
+10. Follow the same draft-first rule as AICodex: if the current row has `i = 0`, Save allocates `max(i) + 1`; if `i > 0`, Save updates in place.
 
 **Done when:**
 - Selecting a row in the middle panel loads it in the right panel editor.
@@ -262,6 +251,7 @@ You are working on AIStudio Step 4: Right panel generic editor.
 Current state:
 - Step 3 is done — middle panel shows SQLite-backed rows.
 - _selectedRowId is set when a row is tapped.
+- Draft rows can already be created locally with `i = 0`; the right panel still needs the real save/delete editor.
 
 Task:
 - Load the selected row via SqliteStore.getRow.
@@ -323,15 +313,15 @@ Constraints:
 
 ## [ ] Step 6 — AIStudio test coverage
 
-**Goal:** Add dedicated tests for AIStudio panel behavior and SQLite CRUD flow.
+**Goal:** Extend the existing AIStudio widget coverage to include full editor save/delete behavior and deeper SQLite CRUD flow.
 
 **Files to change:**
-- `test/aistudio_test.dart` (new)
+- `test/aistudio_app_test.dart`
 
 **What to do:**
 1. Test: selecting a UX/spec catalog updates the middle-panel header.
 2. Test: selecting a catalog loads rows from SQLite.
-3. Test: adding a row creates it in SQLite and appears in the list.
+3. Test: adding a draft row keeps `i = 0` locally, and saving it creates the persisted SQLite row.
 4. Test: editing a row and saving persists the change.
 5. Test: deleting a row removes it from SQLite and the list.
 
