@@ -31,6 +31,17 @@ class _FakeSqliteStore extends SqliteStore {
   }
 
   @override
+  Future<int> nextRowId(String catalog) async {
+    var maxId = 0;
+    for (final row in _rows.values) {
+      if (row.catalog == catalog && row.i > maxId) {
+        maxId = row.i;
+      }
+    }
+    return maxId + 1;
+  }
+
+  @override
   Future<List<SqliteCatalogRow>> listRows(String catalog) async {
     final rows = _rows.values
         .where((row) => row.catalog == catalog)
@@ -69,6 +80,56 @@ void main() {
 
   Finder detailByKey(String key) =>
       find.byKey(ValueKey<String>(key), skipOffstage: false);
+
+  testWidgets('AICodex keeps a new row as draft until save', (tester) async {
+    final store = _FakeSqliteStore();
+
+    await tester.pumpWidget(AICodexApp(store: store));
+    await pumpUi(tester);
+
+    await tester.tap(find.text('Entity'));
+    await pumpUi(tester);
+
+    await tester.tap(find.byKey(const ValueKey<String>('aicodex_add_button')));
+    await pumpUi(tester);
+
+    expect(await store.listRows('Entity'), isEmpty);
+    expect(find.text('0 (draft)'), findsOneWidget);
+
+    await tester.enterText(
+      detailByKey('aicodex_detail_name_field'),
+      'Draft Book',
+    );
+    await tester.enterText(
+      detailByKey('aicodex_detail_system_field'),
+      'Draft Book',
+    );
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pump();
+    await tester.scrollUntilVisible(
+      detailByKey('aicodex_detail_save_button'),
+      200,
+      scrollable: detailScrollable(),
+    );
+    final saveButton = tester.widget<FilledButton>(
+      detailByKey('aicodex_detail_save_button'),
+    );
+    saveButton.onPressed?.call();
+    await tester.pump();
+    await pumpUi(tester);
+
+    final rows = await store.listRows('Entity');
+    expect(rows, hasLength(1));
+    expect(rows.first.i, 1);
+    expect(rows.first.n, 'Draft Book');
+    expect(rows.first.s, 'draft_book');
+    expect(
+      find.byKey(const ValueKey<String>('aicodex_row_Entity_1')),
+      findsOneWidget,
+    );
+
+    await store.close();
+  });
 
   testWidgets('AICodex edits and saves a selected catalog row', (tester) async {
     final store = _FakeSqliteStore();
@@ -139,9 +200,7 @@ void main() {
       200,
       scrollable: detailScrollable(),
     );
-    await tester.ensureVisible(
-      detailByKey('aicodex_detail_save_button'),
-    );
+    await tester.ensureVisible(detailByKey('aicodex_detail_save_button'));
 
     await tester.tap(detailByKey('aicodex_detail_save_button'));
     await pumpUi(tester);
@@ -189,9 +248,7 @@ void main() {
       200,
       scrollable: detailScrollable(),
     );
-    await tester.ensureVisible(
-      detailByKey('aicodex_detail_delete_button'),
-    );
+    await tester.ensureVisible(detailByKey('aicodex_detail_delete_button'));
     await tester.drag(detailScrollable(), const Offset(0, -80));
     await pumpUi(tester);
 

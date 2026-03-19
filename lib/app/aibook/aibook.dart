@@ -103,10 +103,6 @@ class _AIBookHomeState extends State<_AIBookHome> {
                 title: Text(toolbar['title']?.toString() ?? 'AIBook'),
               ),
               body: DynamicSpecBody(spec: spec, autopilot: autopilot),
-              floatingActionButton: FloatingActionButton(
-                onPressed: () => autopilot.triggerAction('showPreview'),
-                child: const Icon(Icons.book),
-              ),
               bottomNavigationBar: BottomAppBar(
                 child: Row(
                   children: [

@@ -13,6 +13,12 @@ Current next steps in this snapshot:
 - `AIStudio` — Step 3
 - `AICodex` — Step 4
 
+Current UI baseline in this snapshot:
+- Shared dark Material 3 theme across launcher and apps
+- AIStudio and AICodex share one hybrid shell
+- Dual authoring mode currently uses a `20 / 60 / 20` layout
+- Scaffold FABs are gone; actions should live in headers or active panel content
+
 Current ownership reminder:
 - `AIStudio` owns UX/spec CRUD.
 - `AICodex` owns sensitive data-model CRUD plus schema apply/generation work.

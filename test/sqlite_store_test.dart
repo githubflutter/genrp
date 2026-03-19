@@ -59,6 +59,8 @@ void main() {
       expect(vfunRows.first['tis'], '[2,3]');
       expect(vfunRows.first['sql1'], 'select 1;');
 
+      expect(await store.nextRowId('entity'), 1);
+
       const row = SqliteCatalogRow(
         catalog: 'entity',
         i: 1,
@@ -79,6 +81,7 @@ void main() {
       expect(rows.first.catalog, 'entity');
       expect(rows.first.i, 1);
       expect(rows.first.payload['fields'], 2);
+      expect(await store.nextRowId('entity'), 2);
 
       final loaded = await store.getRow('entity', 1);
       expect(loaded, isNotNull);

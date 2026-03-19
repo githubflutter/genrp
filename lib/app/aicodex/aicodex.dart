@@ -157,11 +157,9 @@ class _AICodexHomeState extends State<AICodexHome> {
     if (modelType == null) return;
 
     final now = DateTime.now().millisecondsSinceEpoch;
-    final nextId =
-        _rows.fold<int>(0, (maxId, row) => row.i > maxId ? row.i : maxId) + 1;
-    final newRow = SqliteCatalogRow(
+    final draftRow = SqliteCatalogRow(
       catalog: modelType,
-      i: nextId,
+      i: 0,
       a: true,
       d: now,
       e: 0,
@@ -171,13 +169,13 @@ class _AICodexHomeState extends State<AICodexHome> {
       updatedAt: 0,
     );
 
-    await _store.upsertRow(newRow);
-    await _loadRows();
-    if (!mounted) return;
     setState(() {
-      _selectedRowId = nextId;
+      _selectedRowId = 0;
+      _selectedRow = draftRow;
+      _detailError = null;
+      _isLoadingDetail = false;
     });
-    await _loadSelectedRow();
+    _applyDetailEditors(draftRow);
   }
 
   void _onSearchChanged(String value) {
@@ -222,6 +220,13 @@ class _AICodexHomeState extends State<AICodexHome> {
     return _prettyJsonEncoder.convert(payload);
   }
 
+  void _applyDetailEditors(SqliteCatalogRow row) {
+    _detailNameController.text = row.n;
+    _detailSystemNameController.text = row.s;
+    _detailPayloadController.text = _formatPayload(row.payload);
+    _detailActive = row.a;
+  }
+
   Future<void> _loadSelectedRow() async {
     final modelType = _selectedModelType;
     final rowId = _selectedRowId;
@@ -233,6 +238,16 @@ class _AICodexHomeState extends State<AICodexHome> {
         _isLoadingDetail = false;
       });
       _clearDetailEditors();
+      return;
+    }
+
+    if (rowId == 0 && _selectedRow?.i == 0) {
+      final draftRow = _selectedRow!;
+      _applyDetailEditors(draftRow);
+      setState(() {
+        _detailError = null;
+        _isLoadingDetail = false;
+      });
       return;
     }
 
@@ -259,13 +274,10 @@ class _AICodexHomeState extends State<AICodexHome> {
         return;
       }
 
-      _detailNameController.text = row.n;
-      _detailSystemNameController.text = row.s;
-      _detailPayloadController.text = _formatPayload(row.payload);
+      _applyDetailEditors(row);
 
       setState(() {
         _selectedRow = row;
-        _detailActive = row.a;
         _isLoadingDetail = false;
       });
     } catch (_) {
@@ -328,7 +340,7 @@ class _AICodexHomeState extends State<AICodexHome> {
 
     try {
       final now = DateTime.now().millisecondsSinceEpoch;
-      final updatedRow = selectedRow.copyWith(
+      var updatedRow = selectedRow.copyWith(
         a: _detailActive,
         d: now,
         n: normalizedName,
@@ -336,10 +348,15 @@ class _AICodexHomeState extends State<AICodexHome> {
         payload: payload,
         updatedAt: 0,
       );
+      if (updatedRow.i == 0) {
+        final nextId = await _store.nextRowId(modelType);
+        updatedRow = updatedRow.copyWith(i: nextId);
+      }
       await _store.upsertRow(updatedRow);
       await _loadRows();
       if (!mounted) return;
       setState(() {
+        _selectedRowId = updatedRow.i;
         _selectedRow = updatedRow;
       });
       await _loadSelectedRow();
@@ -365,6 +382,20 @@ class _AICodexHomeState extends State<AICodexHome> {
     final modelType = _selectedModelType;
     final rowId = _selectedRowId;
     if (modelType == null || rowId == null) return;
+
+    if (rowId == 0 || _selectedRow?.i == 0) {
+      _clearDetailEditors();
+      setState(() {
+        _selectedRowId = null;
+        _selectedRow = null;
+        _detailError = null;
+        _isLoadingDetail = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Draft discarded.')));
+      return;
+    }
 
     setState(() {
       _isSavingDetail = true;
@@ -495,7 +526,7 @@ class _AICodexHomeState extends State<AICodexHome> {
               ),
               IconButton(
                 key: const ValueKey<String>('aicodex_add_button'),
-                tooltip: 'Add row',
+                tooltip: 'New draft',
                 onPressed: canAdd ? _addRow : null,
                 icon: const Icon(Icons.add),
               ),
@@ -640,7 +671,7 @@ class _AICodexHomeState extends State<AICodexHome> {
           _buildReadOnlyField(
             key: const ValueKey<String>('aicodex_detail_id_field'),
             label: 'ID',
-            value: row.i.toString(),
+            value: row.i == 0 ? '0 (draft)' : row.i.toString(),
           ),
           const SizedBox(height: 12),
           _buildReadOnlyField(label: 'Last date', value: row.d.toString()),
@@ -764,10 +795,6 @@ class _AICodexHomeState extends State<AICodexHome> {
         ],
         buildMidPanel: (_, mode) => _buildMidPanel(mode),
         buildRightPanel: (_, mode) => _buildRightPanel(mode),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.add),
       ),
       bottomNavigationBar: BottomAppBar(
         child: Row(

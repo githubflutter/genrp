@@ -2,7 +2,7 @@
 
 Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and schema-application surface.
 
-**Current status:** Step 3 is done, and the shared hybrid shell is in place — minor panel with two tabs, major panel with three tabs, grouped model navigation, SQLite-backed master list, search, add-row action, row selection, and the right-side detail editor are all in place. Step 4 is next.
+**Current status:** Step 3 is done, and the shared hybrid shell is in place — shared dark Material 3 theme, minor panel with two tabs, major panel with three tabs, grouped model navigation, SQLite-backed master list, search, add-row action, row selection, and the right-side detail editor are all in place. Step 4 is next.
 
 **Current next step:** Step 4 — DDL and function-script generation display.
 
@@ -12,7 +12,7 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 
 **Authority rule:** The data-model layer is the foundation schema layer of the whole system. It is the single origin, single source of truth, and single-user/admin-side editing surface. Multi-user concurrent schema editing is intentionally unsupported.
 
-**ID rule:** For `base`, `bschema`, and `uschema`, `i` and `e` stay `int4`. New rows allocate `i` with `max(i) + 1`. `d` is the last date/time integer, usually UTC epoch milliseconds, and stays web-safe `int^53` / PostgreSQL `bigint`. Because this layer is single-user/admin-side only, `max(i) + 1` is acceptable for model-definition ID allocation.
+**ID rule:** For `base`, `bschema`, and `uschema`, `i` and `e` stay `int4`. New drafts start with `i = 0`, and save/edit decides insert vs update: `i = 0` allocates `max(i) + 1`, while `i > 0` updates in place. `d` is the last date/time integer, usually UTC epoch milliseconds, and stays web-safe `int^53` / PostgreSQL `bigint`. Because this layer is single-user/admin-side only, `max(i) + 1` is acceptable for model-definition ID allocation.
 
 **Convergent UI rule:** AICodex should use the same hybrid shell as AIStudio:
 - left side = **minor panel**
@@ -22,6 +22,8 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 - major tab 1 = single mid panel only
 - major tab 2 = larger mid + smaller right
 - major tab 3 = equal mid + right
+- current shell width baseline = `20%` minor + `80%` major
+- current dual-mode working split = `20 / 60 / 20`
 - functional data-model CRUD and schema work should now continue inside that shared shell
 
 ---
@@ -45,16 +47,18 @@ flutter test
 
 ## What is already done
 
-- [x] Three-panel layout skeleton inside one `Scaffold.body`
+- [x] Shared hybrid shell inside one `Scaffold.body`
 - [x] Left panel navigation with grouped model types
 - [x] Local selection state for model type and selected row
 - [x] Middle panel header reflects the selected model type
 - [x] Middle panel: SQLite-backed master list for the selected model type
 - [x] Search box filters rows by `n`
-- [x] Add button creates a new row in the selected catalog
+- [x] Add/New button opens an unsaved draft row (`i = 0`) in the selected catalog
 - [x] Row selection highlighting in the master list
 - [x] Right panel: detail editor with save/delete flow
-- [x] FAB and bottom status bar
+- [x] Shared dark Material 3 theme + centralized chrome sizing
+- [x] Bottom status bar
+- [x] No scaffold FAB; add/save/delete actions live in header/panel content
 - [x] `SqliteStore` shared foundation exists
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
 - [x] Core models exist, with `ActionModel` now treated as UX-side metadata under `lib/core/model/uschema`
@@ -205,7 +209,7 @@ Constraints:
 **Done when:**
 - Middle panel shows SQLite rows for the selected model type.
 - Search filters rows by name.
-- Add button creates a new row.
+- Add/New button opens an unsaved draft row (`i = 0`).
 - Tapping a row selects it.
 - Empty state shows "No rows" message.
 - `flutter analyze` passes.
@@ -226,7 +230,7 @@ Task:
 - Load rows when _selectedModelType changes.
 - Show as ListView: name, id, active badge.
 - Add search TextField (filter by n).
-- Add button for a new row in the selected catalog.
+- Add/New button for a new draft row (`i = 0`) in the selected catalog.
 - Tap to select → _selectedRowId.
 - Show empty state when no rows.
 
@@ -300,7 +304,7 @@ Constraints:
 
 **Goal:** Add schema action buttons and SQL/script preview to the detail panel after the row editing surface exists. This is what makes AICodex different from AIStudio — it both owns sensitive data-model CRUD and shows the generated table DDL and function/`vfun` scripts for the selected model.
 
-**Current state:** Step 3 is done — selected rows now load into the right panel, `n/s/a/payload` can be edited, and save/delete already round-trip through SQLite with widget coverage.
+**Current state:** Step 3 is done — selected rows now load into the right panel, `n/s/a/payload` can be edited, new rows start as unsaved drafts with `i = 0`, and save/delete already round-trip through SQLite with widget coverage.
 
 **Files to change:**
 - `lib/app/aicodex/aicodex.dart`

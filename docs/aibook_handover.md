@@ -269,7 +269,7 @@ Constraints:
 **What to do:**
 1. Create distinct error views for: malformed spec, malformed registry, transport failure, empty data.
 2. Each error view should show the error type, a short description, and a retry action.
-3. Ensure the FAB and bottom bar are hidden during error states.
+3. Ensure extra chrome and the bottom bar are hidden during error states.
 
 **Done when:**
 - Each failure type has a recognizable error view with retry.
@@ -285,7 +285,7 @@ Constraints:
 **What to do:**
 1. If **keeping debug-only**: no code change needed, just document it clearly in comments.
 2. If **promoting to production**: 
-   - Add a toggle button in the toolbar or FAB menu.
+   - Add a toggle button in the toolbar.
    - Show a clear visual indicator when preview mode is active.
    - Add an exit path (tap outside, or a clear "Exit Preview" button).
    - Add a test for the toggle behavior.

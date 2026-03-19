@@ -19,9 +19,11 @@ GenRP is a **Flutter monolith** containing **three distinct applications** insid
 
 The apps share a common orchestration engine (`Autopilot`), data models, UX spec models, a JSON-driven UI composition system, and a local SQLite persistence layer. The repo now also has a shared DB contract/admin-client scaffold for PostgreSQL, SQLite, and web action payloads. The architecture is intentionally lean, performance-first, and optimized for compact numeric transport.
 
-The current UI direction is to keep `AIStudio` and `AICodex` converged on one **hybrid authoring shell**: a left-side minor panel plus a right-side major panel. The major panel changes between one-panel and two-panel modes through tabs, so the apps differ by domain responsibility rather than by inventing different outer layouts.
+The current UI direction is to keep `AIStudio` and `AICodex` converged on one **hybrid authoring shell**: a left-side minor panel plus a right-side major panel. The major panel changes between one-panel and two-panel modes through tabs, so the apps differ by domain responsibility rather than by inventing different outer layouts. The current working split is `20 / 60 / 20` in dual mode, with the left minor panel and right detail panel intentionally matching widths.
 
-The data-model layer is the foundation of the whole system because it is the actual schema side: the sitting table/function definitions from which runtime and UX layers are derived. That layer is intentionally single origin, single source of truth, and single user under `AICodex`.
+The current visual baseline is a shared **dark Material 3 theme** with centralized typography and chrome sizing. Launcher, AIBook, AIStudio, and AICodex now share the same theme rules, toolbar height, and bottom status-bar height, and scaffold-level FABs have been removed in favor of in-panel or header actions.
+
+The data-model layer is the foundation of the whole system because it is the actual schema side: the sitting table/function definitions from which runtime and UX layers are derived. That layer is intentionally single origin, single source of truth, and single user under `AICodex`. On authoring surfaces, new schema-side rows should begin as drafts with `i = 0`; save/edit then decides insert vs update and allocates `max(i) + 1` only when the draft is first persisted.
 
 ---
 
@@ -160,10 +162,10 @@ graph TB
 
 | Metric | Value |
 |---|---|
-| **Source files** (`lib/`) | 58 Dart files |
-| **Source LOC** (`lib/`) | ~5,076 lines |
-| **Test files** (`test/`) | 14 Dart files |
-| **Test LOC** (`test/`) | ~1,418 lines |
+| **Source files** (`lib/`) | 59 Dart files |
+| **Source LOC** (`lib/`) | ~5,910 lines |
+| **Test files** (`test/`) | 16 Dart files |
+| **Test LOC** (`test/`) | ~1,835 lines |
 | **Asset JSON files** | 3 files |
 | **Doc files** (`docs/`) | 10 markdown files |
 | **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
@@ -224,8 +226,10 @@ genrp/
 │       ├── runtime/
 │       │   └── template_runtime.dart     # JSON→Widget runtime renderer
 │       ├── template/                     # 4 template widgets
+│       ├── theme/
+│       │   └── genrp_theme.dart          # Shared Material 3 dark theme + layout constants
 │       └── widgets/                      # 6 shared shell/control widgets
-├── test/                                 # 13 test files
+├── test/                                 # 16 test files
 ├── assets/json/                          # 3 JSON spec/registry files
 ├── docs/                                 # 10 documentation files
 └── pubspec.yaml
@@ -452,6 +456,14 @@ flowchart LR
   - tab 1 = single mid-only surface
   - tab 2 = larger mid + smaller right
   - tab 3 = equal mid + right
+- Current width baseline:
+  - minor panel = `20%`
+  - major panel = `80%`
+- Current dual-mode working split = `20 / 60 / 20`
+- Shared visual baseline:
+  - dark Material 3 theme
+  - centralized font sizes and toolbar/status heights
+  - no scaffold FABs
 - This keeps the apps visually and behaviorally aligned while still letting `AIStudio` own UX/spec rows and `AICodex` own sensitive data-model rows plus schema actions.
 
 #### AIBook (~80% beta)
@@ -465,6 +477,7 @@ flowchart LR
 - **Entry**: `AIStudioApp` → shared hybrid shell with two minor tabs and three major tabs
 - Minor panel: `Catalogs` + `Context`
 - Major panel: `Single`, `Dual`, `Equal`
+- Visual baseline: shared dark Material 3 theme, centralized toolbar/status sizing, no scaffold FAB
 - Local state: `_selectedCatalog`, `_selectedRowId`
 - Current direction: AIStudio is now narrowed to the UX/spec explorer path only
 - Shared DB builders exist, but SQLite wiring and remaining UX/spec editor work are still pending
@@ -473,6 +486,7 @@ flowchart LR
 - **Entry**: `AICodexApp` → shared hybrid shell with two minor tabs and three major tabs
 - Minor panel: `Catalogs` + `Context`
 - Major panel: `Single`, `Dual`, `Equal`
+- Visual baseline: shared dark Material 3 theme, centralized toolbar/status sizing, no scaffold FAB
 - Current direction: AICodex owns the data-model explorer/collection path plus sensitive data-model CRUD and schema generation/apply work
 - Current snapshot: SQLite-backed master/detail editing is working, including payload editing and save/delete flow for selected rows
 - Remaining next step: DDL and function-script generation display
@@ -533,7 +547,7 @@ The planned backend is a **C# ASP.NET Core Minimal Web API** with a PostgreSQL b
 | **Foundation CRUD** | Direct CRUD is allowed |
 | **Business CRUD** | Function-style actions only |
 | **Schema authority** | Data-model layer is single origin / single source of truth / single user |
-| **Schema integer split** | `base`, `bschema`, and `uschema` use `int4` for `i/e` and `max(i)+1` for new rows; `d` remains web-safe `int^53` / PostgreSQL `bigint` |
+| **Schema integer split** | `base`, `bschema`, and `uschema` use `int4` for `i/e`; new drafts start with `i = 0`, and first save allocates `max(i)+1`; `d` remains web-safe `int^53` / PostgreSQL `bigint` |
 | **Business/UX data integer rule** | `bdata` and future `udata` use web-safe `int^53` for `i/e` and new rows follow the epoch-ms-plus-suffix allocator |
 | **Runtime integer rule** | Web/JSON-crossing runtime integers stay within 53-bit safe range; PostgreSQL may store them as `bigint` |
 | **Base X ID rule** | `Xi` uses `max(i) + 1`; richer `X` variants use epoch-ms-based IDs with bounded suffix |
@@ -641,6 +655,9 @@ Defines **identity registries** — maps numeric IDs to names:
 | Body routing (hybrid numeric + string) | ✅ Partial |
 | Debug selection highlighting | ✅ Working |
 | SQLite store (shared foundation) | ✅ Working |
+| Shared dark Material 3 theme | ✅ Working |
+| Centralized toolbar/status sizing | ✅ Working |
+| Shared hybrid authoring shell (`20 / 60 / 20` dual mode) | ✅ Working |
 | Spec validation (duplicate IDs + key references) | ✅ Working |
 | flutter analyze | ✅ Passes |
 | flutter test | ✅ Passes |
@@ -751,7 +768,7 @@ Based on the existing handover docs and code analysis:
 
 ## 15. File Reference
 
-### Source Files (`lib/` — 55 files)
+### Source Files (`lib/` — 59 files)
 
 | Category | Files |
 |---|---|
@@ -760,15 +777,17 @@ Based on the existing handover docs and code analysis:
 | **AICodex app** | [aicodex.dart](lib/app/aicodex/aicodex.dart) |
 | **AIStudio app** | [aistudio.dart](lib/app/aistudio/aistudio.dart) |
 | **Agent/Orchestration** | [autopilot.dart](lib/core/agent/autopilot.dart), [copilot_data.dart](lib/core/agent/copilot_data.dart), [copilot_ux.dart](lib/core/agent/copilot_ux.dart), [data_set.dart](lib/core/agent/data_set.dart), [state_set.dart](lib/core/agent/state_set.dart), [action_set.dart](lib/core/agent/action_set.dart), [action.dart](lib/core/agent/action.dart), [mock_transport.dart](lib/core/agent/mock_transport.dart) |
-| **Base transport + registries** | [x.dart](lib/core/base/x.dart), [data_type.dart](lib/core/base/data_type.dart), [converter.dart](lib/core/base/converter.dart), [systable.dart](lib/core/base/systable.dart), [sysfunc.dart](lib/core/base/sysfunc.dart), [systype.dart](lib/core/base/systype.dart) |
+| **Base transport + registries** | [bootstrap.dart](lib/core/base/bootstrap.dart), [x.dart](lib/core/base/x.dart), [data_type.dart](lib/core/base/data_type.dart), [converter.dart](lib/core/base/converter.dart), [systable.dart](lib/core/base/systable.dart), [sysfunc.dart](lib/core/base/sysfunc.dart), [systype.dart](lib/core/base/systype.dart) |
 | **Persistence** | [sqlite_store.dart](lib/core/db/sqlite_store.dart), [db_contract.dart](lib/core/db/db_contract.dart), [pgsqladmin.dart](lib/core/db/pgsqladmin.dart), [pgsqlclient.dart](lib/core/db/pgsqlclient.dart), [sqliteadmin.dart](lib/core/db/sqliteadmin.dart), [sqliteclient.dart](lib/core/db/sqliteclient.dart), [webclient.dart](lib/core/db/webclient.dart), [datasource_helper.dart](lib/core/db/datasource_helper.dart) |
 | **Generator** | [boilerplate_generator.dart](lib/core/generator/boilerplate_generator.dart) |
+| **Model barrel** | [models.dart](lib/core/model/models.dart) |
 | **BSchema models** (7) | [entity_model.dart](lib/core/model/bschema/entity_model.dart), [field_model.dart](lib/core/model/bschema/field_model.dart), [relation_model.dart](lib/core/model/bschema/relation_model.dart), [function_model.dart](lib/core/model/bschema/function_model.dart), [parameter_model.dart](lib/core/model/bschema/parameter_model.dart), [table_model.dart](lib/core/model/bschema/table_model.dart), [column_model.dart](lib/core/model/bschema/column_model.dart) |
 | **Base models** (2) | [system_model.dart](lib/core/model/base/system_model.dart), [usr_model.dart](lib/core/model/base/usr_model.dart) |
 | **BData models** (1) | [user_model.dart](lib/core/model/bdata/user_model.dart) |
 | **USchema models** (6) | [action_model.dart](lib/core/model/uschema/action_model.dart), [ux_button_model.dart](lib/core/model/uschema/ux_button_model.dart), [ux_text_box_model.dart](lib/core/model/uschema/ux_text_box_model.dart), [ux_checkbox_model.dart](lib/core/model/uschema/ux_checkbox_model.dart), [ux_registry.dart](lib/core/model/uschema/ux_registry.dart), [ux_spec_mapper.dart](lib/core/model/uschema/ux_spec_mapper.dart) |
 | **Runtime** | [template_runtime.dart](lib/core/runtime/template_runtime.dart) |
 | **Templates** (4) | [form_template.dart](lib/core/template/form_template.dart), [checkbox_form_template.dart](lib/core/template/checkbox_form_template.dart), [collection_template.dart](lib/core/template/collection_template.dart), [detail_template.dart](lib/core/template/detail_template.dart) |
+| **Theme** | [genrp_theme.dart](lib/core/theme/genrp_theme.dart) |
 | **Widgets** (6) | [hybrid_authoring_shell.dart](lib/core/widgets/hybrid_authoring_shell.dart), [x_button.dart](lib/core/widgets/x_button.dart), [x_text_box.dart](lib/core/widgets/x_text_box.dart), [x_checkbox.dart](lib/core/widgets/x_checkbox.dart), [bound_text_field.dart](lib/core/widgets/bound_text_field.dart), [bound_checkbox.dart](lib/core/widgets/bound_checkbox.dart) |
 
 ### Documentation (`docs/` — 10 files)

@@ -181,10 +181,6 @@ class _AIStudioHomeState extends State<AIStudioHome> {
         buildMidPanel: (_, mode) => _buildMidPanel(mode),
         buildRightPanel: (_, mode) => _buildRightPanel(mode),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.edit),
-      ),
       bottomNavigationBar: BottomAppBar(
         child: Row(
           children: [

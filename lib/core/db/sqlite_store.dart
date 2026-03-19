@@ -147,6 +147,17 @@ class SqliteStore {
     return SqliteCatalogRow.fromMap(Map<String, Object?>.from(rows.first));
   }
 
+  Future<int> nextRowId(String catalog) async {
+    final db = await database;
+    final rows = await db.rawQuery(
+      'SELECT COALESCE(MAX(i), 0) AS max_i FROM catalog_row WHERE catalog = ?',
+      <Object?>[catalog],
+    );
+    if (rows.isEmpty) return 1;
+    final maxId = (rows.first['max_i'] as num?)?.toInt() ?? 0;
+    return maxId + 1;
+  }
+
   Future<void> upsertRow(SqliteCatalogRow row) async {
     final db = await database;
     final updatedRow = row.copyWith(

@@ -2,7 +2,7 @@
 
 Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
-**Current status:** Step 2 is done, and the shared hybrid shell is in place — minor panel with two tabs, major panel with three tabs, UX/spec catalog navigation, local selection state, full UX/spec catalog list, and major-panel content placeholders are all in place. Step 3 is next.
+**Current status:** Step 2 is done, and the shared hybrid shell is in place — shared dark Material 3 theme, minor panel with two tabs, major panel with three tabs, UX/spec catalog navigation, local selection state, full UX/spec catalog list, and major-panel content placeholders are all in place. Step 3 is next.
 
 **Current next step:** Step 3 — Middle panel with SQLite-backed UX/spec row list.
 
@@ -20,6 +20,8 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 - major tab 1 = single mid panel only
 - major tab 2 = larger mid + smaller right
 - major tab 3 = equal mid + right
+- current shell width baseline = `20%` minor + `80%` major
+- current dual-mode working split = `20 / 60 / 20`
 - functional UX/spec work should now continue inside that shared shell
 
 ---
@@ -41,13 +43,15 @@ flutter test
 
 ## What is already done
 
-- [x] Three-panel shell inside one `Scaffold.body`
+- [x] Shared hybrid shell inside one `Scaffold.body`
 - [x] Left panel with UX/spec catalog navigation
 - [x] UX/spec list: Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node
 - [x] Local selection state for selected catalog and selected row
 - [x] Middle panel header updates from the selected catalog
 - [x] Selected catalog is visually highlighted
-- [x] FAB and bottom status bar
+- [x] Shared dark Material 3 theme + centralized chrome sizing
+- [x] Bottom status bar
+- [x] No scaffold FAB; future actions should live in header/panel content
 - [x] `SqliteStore` shared foundation (not wired to AIStudio yet)
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
 

@@ -53,7 +53,10 @@ Current semantic split
   - `t0` = `UserModel`
 - Multi-user concurrent schema editing is intentionally unsupported because schema/model definitions are dangerous to edit collaboratively.
 - For `base`, `bschema`, and `uschema`, `i` and `e` should stay `int4`.
-- New rows in `base`, `bschema`, and `uschema` should allocate `i` with `max(i) + 1`.
+- New authoring drafts in `base`, `bschema`, and `uschema` should start with `i = 0`.
+- Save/edit is what decides insert vs update:
+  - `i = 0` means insert, and save allocates `max(i) + 1`
+  - `i > 0` means update
 - For data-model tables, primary IDs and explicit structural foreign keys should stay `int4`.
 - Everywhere in the model and transport vocabulary, `d` is the last date/time field and usually uses UTC epoch milliseconds.
 - In that same shared vocabulary, `e` is the last editor reference.
@@ -85,10 +88,18 @@ Convergent shell design
   - **major panel** on the right
 - The **minor panel** is the left-side support area and should have **two tabs**.
 - The **major panel** is the working area and should have **three tabs**.
+- Current width baseline:
+  - minor panel = about `20%` of total width
+  - major panel = about `80%` of total width
 - The major tabs define the body layout mode:
   - **major tab 1** = single-panel mode, with only the mid panel visible
   - **major tab 2** = asymmetric dual-panel mode, with a larger mid panel and a smaller right panel
   - **major tab 3** = symmetric dual-panel mode, with mid and right panels split equally
+- Current dual-mode working ratio is effectively `20 / 60 / 20`:
+  - left minor panel = `20%`
+  - mid working panel = `60%`
+  - right detail panel = `20%`
+- In dual mode, the right panel should visually match the left minor panel width.
 - The convergent rule is structural first:
   - `AIStudio` and `AICodex` should share the same minor/major shell
   - app differences should happen inside the tab contents, not by inventing different outer layouts
@@ -102,6 +113,23 @@ Convergent shell design
   - `AIStudio` content focuses on UX/spec rows
   - `AICodex` content focuses on data-model rows and schema actions
 - Search, add/create, editor tools, and schema tools should live inside the active major-tab content rather than inside the minor panel.
+
+Shared visual baseline
+- The launcher and all three apps should use the shared Material 3 dark theme from `lib/core/theme/genrp_theme.dart`.
+- Font sizes should be anchored through the shared `TextTheme`, not ad-hoc per widget.
+- Current centralized values are:
+  - `fontXl = 15`
+  - `fontLl = 13`
+  - `fontNm = 12`
+  - `fontXs = 11`
+- Toolbar/header height should be shared:
+  - desktop = `36`
+  - mobile/tablet = `48`
+- Bottom status-bar height should be shared:
+  - desktop = `32`
+  - mobile/tablet = `36`
+- Top app bar, hybrid-shell tab bars, and custom header bars should all use the shared toolbar height.
+- Scaffold-level FABs are intentionally removed; app actions should live in the active header or panel content instead.
 
 Backend transport contract
 - The server layer is a C# ASP.NET Core Minimal Web API with a single endpoint URL.
@@ -224,7 +252,8 @@ Each app:
 
 - Is a minimal `MaterialApp` with `debugShowCheckedModeBanner: false`.
 - Exposes a top-level widget (`AIBookApp`, `AICodexApp`, `AIStudioApp`) under its own app directory — no `main()` inside these files.
-- Shows a `FloatingActionButton` (FAB) for a sample action.
+- Uses the shared Material 3 dark theme and centralized shell sizing.
+- Does not rely on a scaffold-level FAB; actions should be surfaced inside the current toolbar/header or active panel content.
 - Shows a right-aligned bottom status bar in the `BottomAppBar` containing:
 
   `<AppName>:<number>/<f>/<v>`
@@ -246,7 +275,7 @@ flutter run -t lib/main.dart
 
 **Customization notes**
 
-- Change FAB behavior by editing the `floatingActionButton.onPressed` in the relevant file.
+- Add or move actions by editing the current app header or active panel content in the relevant file.
 - Modify status format by editing the `BottomAppBar` text in the app's file.
 
 **Next steps**

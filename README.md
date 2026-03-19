@@ -18,6 +18,12 @@ flutter run -t lib/main.dart
 
 A one-way launcher appears — pick AIBook, AICodex, or AIStudio.
 
+Current UI baseline:
+- Shared dark Material 3 theme across all apps
+- AIStudio and AICodex use the same hybrid authoring shell
+- Dual authoring mode currently resolves to `20 / 60 / 20` (minor / mid / right)
+- Scaffold-level FABs are removed; actions now live in headers or active panel content
+
 ## Project Layout
 
 ```
@@ -30,11 +36,10 @@ lib/
     ├── base/              # X transport classes, DataType, sys registries
     ├── db/                # SQLite store + generic PG/SQLite/Web DB builders
     ├── generator/         # DynamicSpecBody (body router)
-    ├── model/bschema/     # 7 bschema models (Entity, Field, Table, etc.)
-    ├── model/bdata/       # business data models (current: UserModel)
-    ├── model/uschema/     # UX spec models + registry + mapper
+    ├── model/             # base, bschema, bdata, uschema + barrel export
     ├── runtime/           # TemplateRuntime (JSON → Flutter widgets)
     ├── template/          # 4 template widgets (form, detail, collection, checkboxForm)
+    ├── theme/             # shared Material 3 theme + layout constants
     └── widgets/           # 6 shared widgets (including hybrid shell + X controls)
 ```
 
