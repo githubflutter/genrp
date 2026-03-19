@@ -1,236 +1,327 @@
-# aibook_handover
+# AIBook Handover
 
-Current AIBook status and ordered handover plan for reaching a constrained beta.
+Progressive step-by-step plan to reach constrained AIBook beta.
 
-Current status
-- Roughly `80%` of a constrained `AIBook` beta.
-- Current status is beyond placeholder/demo level and is now an internal vertical slice.
-- The app shell is stable with a single `Scaffold` and body swap only.
-- The runtime is mostly numeric already, but still hybrid in a few important places.
-- UX/UI composition and registry loading are working from `assets/json`.
-- Preview selection/highlighting infrastructure exists and the wrapped controls can set selected identity in debug mode via long-press.
-- Current verification status: `flutter analyze` passed and `flutter test` passed.
+**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime.
 
-Implemented now
-- `lib/app/aibook/aibook.dart`
-  Loads spec through `MockTransport`, shows loading and error states, and shows validation errors returned by `AutopilotGo`.
-- `lib/app/aibook/autopilotgo.dart`
-  Configures field bindings, initial state, initial data, action registration, basic spec validation, and mock save behavior.
-- `lib/core/agent/autopilot.dart`
-  Owns binding resolution, binding updates, action dispatch, selected preview identity, and slot-first `X.v[index]` binding for business-bound data.
-- `lib/core/agent/mock_transport.dart`
-  Provides the current mock fetch/save loop for spec loading and row saving.
-- `lib/core/db/sqlite_store.dart`
-  Provides the current local SQLite foundation for catalog rows and JSON key/value storage.
-  This is currently shared infrastructure; future `AIBook`-specific db code should live under `lib/core/db/aibook/`.
+---
+
+## How to use this document
+
+1. Find your current step (the first unchecked `[ ]` box).
+2. Read only that step's section.
+3. Complete the step, run the quality gate, check the box.
+4. Move to the next step.
+
+**Quality gate** (run after every step):
+```bash
+flutter analyze
+flutter test
+```
+
+---
+
+## What is already done
+
+- [x] App shell with single `Scaffold`, body swap, loading/error states
+- [x] `AutopilotGo` with spec configuration, field bindings, action registration
+- [x] `Autopilot` with dual binding (slot-first `X.v[index]` + path fallback)
+- [x] `MockTransport` loads merged spec/registry from `assets/json`
+- [x] `DynamicSpecBody` routes to `FormTemplate`, `CheckboxFormTemplate`, `CollectionTemplate`, `DetailTemplate`
+- [x] `TemplateRuntime` renders `column`, `spacer`, `textField`, `button`, `text` nodes
+- [x] `XButton`, `XTextBox`, `XCheckBox` with binding + debug selection highlight
+- [x] `UxRegistry` maps numeric IDs → names for host/body/template/type/widget
+- [x] `UxSpecMapper` converts JSON nodes → typed UX models
+- [x] Basic spec validation (duplicate IDs in bodies and widgets)
+- [x] `SqliteStore` shared foundation (not wired to AIBook yet)
+- [x] Tests: slot binding, validation, mock transport, body routing, widget behavior
+
+---
+
+## Step 1 — Numeric-only body routing
+
+**Goal:** Remove string-driven body lookup from the runtime hot path. Numeric `bodyId` becomes the primary lookup; string name is fallback only.
+
+**Files to change:**
 - `lib/core/generator/boilerplate_generator.dart`
-  Chooses the current body template and routes to predefined templates.
-- `lib/core/runtime/template_runtime.dart`
-  Renders the current small runtime set for predefined UX node types.
-- `lib/core/widgets/x_button.dart`
-  Wrapped button implementation with action dispatch and optional selected highlight.
-- `lib/core/widgets/x_text_box.dart`
-  Wrapped text input implementation with binding and optional selected highlight.
-- `lib/core/widgets/x_checkbox.dart`
-  Wrapped checkbox implementation with binding and optional selected highlight.
-- `assets/json/aibook_spec.json`
-  Focused on body composition.
-- `assets/json/aibook_registry.json`
-  Holds hosts, bodies, templates, types, widgets, fieldBindings, and actions, including slot metadata for business-bound bindings.
-- `test/autopilot_slot_test.dart`
-  Covers slot-first read and write behavior for base `X`.
-- `test/validation_test.dart`
-  Covers current basic duplicate-id validation behavior.
-- `test/mock_transport_test.dart`
-  Covers current mock transport save behavior.
+- `lib/core/model/ux/ux_registry.dart` (if needed)
 
-Architecture direction now locked in
-- `Autopilot` remains the only orchestrator.
-- `CopilotData` and `CopilotUX` remain separate.
-- `body` means only the swapped `Scaffold.body` content region.
-- `Ux*Model` means definition-side UI/UX data.
-- `X*` under `lib/core/widgets` means wrapped implementation controls.
-- Base `X` / `Xi` / `Xia` / `Xiad` / `Xiade` in `lib/core/base/x.dart` means business-bound transport/data shape.
-- UX/UI composition data can come from the web as normal JSON.
-- Business-bound runtime data should prefer base `X` transport.
-- Binding direction should prefer slot/index access into `X.v`, with path lookup kept only as migration fallback.
-- Under `lib/core/db`, app-facing db code should move toward app-specific directories such as `lib/core/db/aibook/`.
+**What to do:**
+1. In `DynamicSpecBody.build()`, resolve `currentBody` to an `int` first.
+2. Search `bodies` map values by matching `bodyId` as the primary path.
+3. Only fall back to string key lookup if no `bodyId` match is found.
+4. Resolve `templateId` → template name via `UxRegistry` as primary; `template` string as fallback.
+5. Add a test in `test/boilerplate_generator_test.dart` confirming numeric-only routing works.
 
-What is still not beta-ready
-- Body routing is still partly string-driven at runtime.
-- There is still a compatibility mix of slot binding and path binding at runtime.
-- The transport/load/save loop is still mock-only, not a real web/API path yet.
-- Local SQLite support exists, but it is not yet wired into the `AIBook` runtime path for cache or offline behavior.
-- Spec/registry validation exists only in a basic form and is not yet comprehensive.
-- Preview selection is available mainly as a debug-time inspection path, not yet as a full production preview workflow.
-- Failure states are better than before, but still minimal for malformed registry references, action mismatches, and transport failures beyond the mock layer.
-
-Beta target for this handover
-- One real `AIBook` editor and preview flow.
-- UX/UI composition loaded from web JSON.
-- Business-bound data loaded and saved as base `X` transport.
-- Numeric runtime path finished for body/template/type/widget/action/binding identity.
-- Startup validation for malformed spec/registry data.
-- Optional preview selection usable when enabled.
-- `flutter analyze` and `flutter test` staying green.
-
-Ordered handover plan
-1. Freeze the runtime contract.
-   Keep normal JSON for UX/UI composition and base `X` transport for business-bound data.
-2. Finish the migration from hybrid binding to slot-first binding.
-   Keep current path lookup only as fallback while validating all active business-bound bindings against `slot` metadata.
-3. Keep base `X` row storage stable on the data side.
-   Continue using the current `x_row` runtime shape and remove accidental drift back toward human-readable runtime keys.
-4. Finish numeric-only body routing.
-   Remove runtime dependence on body string names in `lib/core/generator/boilerplate_generator.dart` except for migration fallback.
-5. Expand spec and registry validation.
-   Validate duplicate ids, missing ids, bad binding references, bad action/template/type/widget references, and body/template mismatches before runtime render.
-6. Replace mock transport with real transport for business data.
-   Load composition JSON from web, load base `X` business data, save edited base `X` business data, and patch returned results into runtime state.
-7. Decide whether local SQLite cache is needed in the `AIBook` runtime path.
-   If needed, use `SqliteStore` for spec cache or local base `X` cache without changing the transport contract.
-8. Decide whether preview selection stays debug-only or becomes an explicit preview mode feature.
-   If kept for production use, give it a clear trigger and clear exit path.
-9. Harden failure states.
-   Add clear views for malformed spec, malformed registry, transport failure, load failure, save failure, and empty data.
-10. Expand tests only around the beta path.
-   Add focused tests for index-based binding, validation, one full editor to preview flow, and one transport failure case.
-
-Immediate next recommended step
-- Finish numeric-only body routing first.
-- After that, replace `MockTransport` with a real transport boundary.
-
-Files expected to change next
-- `lib/core/generator/boilerplate_generator.dart`
-- `lib/core/model/ux/ux_registry.dart`
-- `lib/app/aibook/aibook.dart`
-- `lib/core/agent/mock_transport.dart`
-- `lib/core/db/aibook/` once `AIBook` gets app-specific db wiring
-- optionally `lib/core/db/sqlite_store.dart` while shared foundation is still being used
-- integration tests for body routing and real transport behavior
-
-Handover cautions
-- Do not redesign architecture.
-- Do not add route navigation.
-- Do not merge `CopilotData` and `CopilotUX`.
-- Keep the implementation incremental and backward-compatible while migration fallback still exists.
-- Prefer numeric identity and flat transport over human-readable runtime keys.
-
-Copy-paste prompt
-
-```text
-Continue in `/Users/Shared/dev/git/genrp`.
-
-You are working on `AIBook`.
-
-Current architecture state:
-- Flutter app with single `Scaffold`, no route stack, body swap only.
-- `Autopilot` is the orchestrator.
-- `CopilotData` and `CopilotUX` remain separate.
-- Runtime is moving incrementally from string-driven spec to numeric registry-driven identity.
-- Performance and efficiency come first. Prefer flat JSON, low-overhead lookups, and minimal abstraction.
-
-Important naming decisions:
-- `body` means only the swapped `Scaffold.body` content region.
-- `Ux*Model` = definition/model side for UI/UX data.
-- `X*` under `lib/core/widgets` = wrapped implementation controls.
-- Base `X` / `Xi` / `Xia` / `Xiad` / `Xiade` under `lib/core/base/x.dart` = business-bound transport/data shape.
-- Do not use `widget` or `row` loosely in architecture language.
-
-Current transport direction:
-- UX/UI composition data can come from the web as normal JSON.
-- Business-bound runtime data should prefer base `X` transport.
-- Binding direction should prefer slot/index access into `X.v`.
-- Human-readable path binding is migration fallback only.
-
-Current implemented state:
-- `assets/json/aibook_spec.json` focuses on UI composition.
-- `assets/json/aibook_registry.json` contains:
-  - `hosts`
-  - `bodies`
-  - `templates`
-  - `types`
-  - `widgets`
-  - `fieldBindings`
-  - `actions`
-- `fieldBindings` now support `slot` metadata for business-bound bindings.
-- `AIBook` currently loads spec through `MockTransport` and shows load/validation errors in `lib/app/aibook/aibook.dart`.
-- `AutopilotGo` loads `fieldBindings` from merged spec data, converts initial `x_row` JSON into base `X`, performs basic validation, and handles current mock save behavior.
-- Numeric support exists with string fallback for:
-  - `actionId`
-  - `src + fieldId`
-  - `templateId`
-  - `typeId`
-  - `bodyId`
-  - `widgetId`
-  - `hostId`
-- `UxRegistry` resolves host/body/template/type/widget names.
-- `UxSpecMapper` maps node JSON into `UxButtonModel`, `UxTextBoxModel`, and `UxCheckBoxModel`.
-- `TemplateRuntime` uses `XButton` and `XTextBox`.
-- `CheckboxFormTemplate` uses `XCheckBox`.
-- `X*` controls use stable keys scoped by `hostId + bodyId + widgetId`.
-- Optional preview selection/highlighting infrastructure exists using `hostId + bodyId + widgetId`.
-- Wrapped controls can set selection in debug mode via long-press.
-- `Autopilot` now resolves and updates business-bound values by `X.v[index]` first when slot metadata exists.
-- Current mock transport can fetch merged spec and clone-save a base `X` row.
-- A generic local SQLite foundation now exists in `lib/core/db/sqlite_store.dart`.
-- Under `lib/core/db`, future app-facing db code should live under `lib/core/db/aibook/` for `AIBook`.
-
-Relevant files:
-- `lib/app/aibook/aibook.dart`
-- `lib/app/aibook/autopilotgo.dart`
-- `lib/core/agent/autopilot.dart`
-- `lib/core/agent/action_set.dart`
-- `lib/core/agent/mock_transport.dart`
-- `lib/core/db/sqlite_store.dart`
-- future `AIBook`-specific db files under `lib/core/db/aibook/`
-- `lib/core/generator/boilerplate_generator.dart`
-- `lib/core/runtime/template_runtime.dart`
-- `lib/core/model/ux/ux_registry.dart`
-- `lib/core/model/ux/ux_spec_mapper.dart`
-- `lib/core/model/ux/ux_button_model.dart`
-- `lib/core/model/ux/ux_text_box_model.dart`
-- `lib/core/model/ux/ux_checkbox_model.dart`
-- `lib/core/widgets/x_button.dart`
-- `lib/core/widgets/x_text_box.dart`
-- `lib/core/widgets/x_checkbox.dart`
-- `lib/core/base/x.dart`
-- `assets/json/aibook_spec.json`
-- `assets/json/aibook_registry.json`
-- `docs/aibook_handover.md`
-- `docs/lib_app_readme.md`
-- `test/autopilot_slot_test.dart`
-- `test/validation_test.dart`
-- `test/mock_transport_test.dart`
-
-Current quality status:
+**Done when:**
+- Body routing works when `initialBody` and `currentBody` are integers.
+- String body name still works as fallback.
 - `flutter analyze` passes.
 - `flutter test` passes.
 
-Current gap to beta:
-- Body routing is still partly string-driven at runtime.
-- Binding now supports slot-first `X.v[index]`, but the runtime is still hybrid because path fallback remains active.
-- Transport/load/save is still mock-only, not a real web/API path yet.
-- SQLite support exists, but it is not yet wired into the `AIBook` runtime path for cache or offline behavior.
-- Validation exists, but only in a basic form.
-- Selection highlight exists and can be triggered in debug mode, but it is not yet a polished production preview flow.
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIBook Step 1: Numeric-only body routing.
 
-Immediate next recommended step:
-- Finish numeric-only body routing in `lib/core/generator/boilerplate_generator.dart`.
+Current state:
+- `DynamicSpecBody` in `lib/core/generator/boilerplate_generator.dart` already tries numeric bodyId lookup first, but the logic is mixed with string fallback in several places.
+- `UxRegistry` already has `bodyName(int id)` and `templateName(int id)`.
 
-Ordered next steps:
-1. Finish numeric-only body routing and reduce string body lookup to fallback only.
-2. Expand validation beyond duplicate ids into reference validation and body/template consistency checks.
-3. Replace `MockTransport` with the real transport/load/save loop for composition JSON and base `X` business data.
-4. Decide whether local SQLite cache should be wired into `AIBook` for spec or base `X` cache behavior.
-5. Decide whether preview selection remains debug-only or becomes a real preview feature.
-6. Harden failure states and focused beta-path tests.
+Task:
+- Clean up `DynamicSpecBody.build()` so numeric bodyId is the clear primary path.
+- String name lookup should be explicit fallback only.
+- Keep template resolution numeric-first via `templateId` → `UxRegistry.templateName()`.
+- Add or update test in `test/boilerplate_generator_test.dart`.
 
 Constraints:
-- Do not redesign architecture.
+- Do not change spec/registry JSON structure.
+- Do not change Autopilot or action plumbing.
+- Keep analyzer and tests green.
+```
+
+---
+
+## Step 2 — Validate binding references
+
+**Goal:** Expand spec validation beyond duplicate IDs. Catch broken references before runtime render.
+
+**Files to change:**
+- `lib/app/aibook/autopilotgo.dart` (`_validateSpec`)
+
+**What to do:**
+1. Validate that every `fieldBinding` has both `src` and `fieldId`.
+2. Validate that `actionId` references in body widgets match an action in the `actions` list.
+3. Validate that `templateId` in body specs matches a template in the `templates` list.
+4. Validate that `typeId` in body node children matches a type in the `types` list.
+5. Return the first validation error found (keep it simple).
+6. Add tests in `test/validation_test.dart` for missing action ref, bad template ref, bad type ref.
+
+**Done when:**
+- `AutopilotGo` returns a clear `specError` for bad references.
+- All new validation cases have tests.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIBook Step 2: Validate binding references.
+
+Current state:
+- `_validateSpec` in `lib/app/aibook/autopilotgo.dart` currently only checks duplicate IDs in `bodiesRegistry` and `widgets`.
+- The spec uses `actionId`, `templateId`, `typeId` in body definitions and child nodes.
+- The registry has `actions`, `templates`, `types` lists.
+
+Task:
+- Expand `_validateSpec` to check cross-references:
+  - `fieldBindings` must have `src` + `fieldId`.
+  - `actionId` in body children must match an `actions` entry.
+  - `templateId` in body must match a `templates` entry.
+  - `typeId` in body children must match a `types` entry.
+- Return first error string found.
+- Add test cases in `test/validation_test.dart`.
+
+Constraints:
+- Keep validation simple — first-error-wins, no error list.
+- Do not change body routing or binding resolution.
+- Keep analyzer and tests green.
+```
+
+---
+
+## Step 3 — Clean slot-first binding path
+
+**Goal:** Ensure all business-bound runtime reads and writes go through slot-first resolution. Path binding should only activate when slot metadata is missing.
+
+**Files to change:**
+- `lib/core/agent/autopilot.dart` (review `resolveFieldBinding` / `updateFieldBinding`)
+- `lib/app/aibook/autopilotgo.dart` (review `_configureFieldBindings`)
+
+**What to do:**
+1. Verify `_configureFieldBindings` registers slot for every business-bound binding entry that has one.
+2. In `resolveFieldBinding`, confirm slot resolution is attempted before path resolution.
+3. In `updateFieldBinding`, confirm slot write is attempted before path write.
+4. Add a test that confirms: when slot is registered, path is NOT used even if present.
+5. Add a test that confirms: when slot is NOT registered, path IS used as fallback.
+
+**Done when:**
+- Slot-first resolution is verified by tests.
+- No regressions in existing binding behavior.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIBook Step 3: Clean slot-first binding path.
+
+Current state:
+- `Autopilot.resolveFieldBinding` and `updateFieldBinding` in `lib/core/agent/autopilot.dart` already try slot first, then fall back to path.
+- `_configureFieldBindings` in `autopilotgo.dart` registers both slot and path from `fieldBindings` array.
+- `test/autopilot_slot_test.dart` tests basic slot read/write.
+
+Task:
+- Verify the slot-first logic is clean and correct.
+- Add a test that confirms path is NOT used when slot exists.
+- Add a test that confirms path IS used when slot is missing.
+
+Constraints:
+- Do not remove path fallback — it is needed for migration.
+- Do not change the Action/Todo system.
+- Keep analyzer and tests green.
+```
+
+---
+
+## Step 4 — Real transport boundary
+
+**Goal:** Replace `MockTransport` with a real HTTP transport boundary for loading composition JSON and saving base `X` business data.
+
+**Files to change:**
+- `lib/core/agent/mock_transport.dart` → rename/refactor to `lib/core/agent/transport.dart`
+- `lib/app/aibook/aibook.dart`
+- `lib/app/aibook/autopilotgo.dart`
+
+**What to do:**
+1. Create a `Transport` class with `fetchSpec(String url)` and `saveRow(String url, X row)`.
+2. Use `dart:io` `HttpClient` or add `http` package for POST requests.
+3. Keep `MockTransport` available as a static fallback for local/offline development.
+4. Update `AIBook` to accept a configurable base URL (can default to mock).
+5. Follow the backend contract: POST body = `{"a": <actionId>, "u": "...", "p": "...", "data": {...}}`.
+6. Add a test for transport failure handling (simulated network error).
+
+**Done when:**
+- AIBook can switch between mock and real transport.
+- The real transport follows the planned backend contract.
+- A transport failure shows a clear error state.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIBook Step 4: Real transport boundary.
+
+Current state:
+- `MockTransport` in `lib/core/agent/mock_transport.dart` loads spec from `assets/json` and simulates save.
+- The planned backend is a C# ASP.NET Core Minimal API.
+- POST body: `{"a": <actionId>, "u": "...", "p": "...", "data": {...}}`.
+- PostgreSQL returns JSON directly via C# passthrough.
+
+Task:
+- Create `Transport` class alongside `MockTransport`.
+- Implement `fetchSpec(url)` and `saveRow(url, X row)` with HTTP POST.
+- Update `AIBook` to use transport (default to mock for now).
+- Add transport failure test.
+
+Constraints:
+- Do not break the current mock-only path — it must remain usable.
+- Follow the existing backend contract from `docs/lib_app_readme.md`.
+- Keep analyzer and tests green.
+```
+
+---
+
+## Step 5 — Local SQLite cache for AIBook
+
+**Goal:** Wire `SqliteStore` into the AIBook runtime path so specs and/or `X` row data can be cached locally.
+
+**Files to change:**
+- `lib/core/db/aibook/` (new directory)
+- `lib/app/aibook/autopilotgo.dart`
+- `lib/app/aibook/aibook.dart`
+
+**What to do:**
+1. Create `lib/core/db/aibook/aibook_cache.dart` wrapping `SqliteStore` for AIBook concerns.
+2. Cache the last-fetched spec JSON via `putJsonValue` / `getJsonValue`.
+3. If transport fetch fails, try loading from cache before showing an error.
+4. Optionally cache the last-saved `X` row for offline resilience.
+5. Add a test for cache-hit-on-failure scenario.
+
+**Done when:**
+- AIBook loads from cache when transport is unavailable.
+- Fresh transport data overwrites cached data.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+---
+
+## Step 6 — Harden failure states
+
+**Goal:** Replace basic error text with clear, user-friendly failure views.
+
+**Files to change:**
+- `lib/app/aibook/aibook.dart`
+
+**What to do:**
+1. Create distinct error views for: malformed spec, malformed registry, transport failure, empty data.
+2. Each error view should show the error type, a short description, and a retry action.
+3. Ensure the FAB and bottom bar are hidden during error states.
+
+**Done when:**
+- Each failure type has a recognizable error view with retry.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+---
+
+## Step 7 — Preview mode decision
+
+**Goal:** Decide whether debug-only selection highlighting becomes a production feature or stays debug-only.
+
+**What to do:**
+1. If **keeping debug-only**: no code change needed, just document it clearly in comments.
+2. If **promoting to production**: 
+   - Add a toggle button in the toolbar or FAB menu.
+   - Show a clear visual indicator when preview mode is active.
+   - Add an exit path (tap outside, or a clear "Exit Preview" button).
+   - Add a test for the toggle behavior.
+
+**Done when:**
+- Decision is documented.
+- If promoted: toggle, indicator, and exit are implemented and tested.
+
+---
+
+## Step 8 — Beta-path test expansion
+
+**Goal:** Add focused tests that cover the full beta editor-to-preview flow.
+
+**Files to change:**
+- `test/` (new and existing test files)
+
+**What to do:**
+1. Integration test: load spec → render editor → type in text field → press save → switch to preview → verify title shows.
+2. Test: transport failure shows error state and retry works.
+3. Test: malformed spec validation catches bad references.
+4. Test: slot-first binding round-trip (edit → save → reload → verify slot value).
+
+**Done when:**
+- All four test scenarios pass.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+---
+
+## Architecture constraints (apply to all steps)
+
+- Do not redesign the architecture.
 - Do not add route navigation.
 - Do not merge `CopilotData` and `CopilotUX`.
-- Keep analyzer clean after each step.
-- If adding more registry/support JSON, put it under `assets/json`.
-- Prefer incremental compatibility paths over sudden rewrites.
-```
+- Keep implementation incremental and backward-compatible.
+- Prefer numeric identity over human-readable runtime keys.
+- Keep analyzer and tests green after every step.
+- If adding registry/support JSON, put it under `assets/json`.
+
+## Vocabulary quick reference
+
+| Term | Meaning |
+|---|---|
+| `body` | Swapped `Scaffold.body` content region |
+| `Ux*Model` | Definition-side UX/UI data |
+| `X*` (widgets/) | Wrapped implementation controls |
+| `X` / `Xi` / `Xia` / `Xiad` / `Xiade` (base/) | Business-bound transport shape |
+| `slot` | Direct index into `X.v[]` |
+| `src` | Binding source: 0=state, 1=dataSource, 2=dataSet |
+| `i/a/d/e/t/n/s` | id, active, date, entity, type, name, secondary |

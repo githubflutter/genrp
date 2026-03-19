@@ -1,237 +1,314 @@
-# aistudio_handover
+# AIStudio Handover
 
-Current AIStudio status and ordered handover plan.
+Progressive step-by-step plan to build the AIStudio model-row editing surface.
 
-Current status
-- Roughly `35%` of the intended `AIStudio` shell.
-- `AIStudio` is no longer a placeholder-only screen.
-- A three-panel shell exists inside one `Scaffold.body`.
-- The left panel already has `Data` and `UX/Spec` tabs.
-- The middle and right panels are still placeholders.
-- The left-panel catalog lists are still incomplete.
-- A reusable local SQLite foundation now exists and is ready for `AIStudio` catalog persistence.
-- Under `lib/core/db`, future `AIStudio` db code should live under `lib/core/db/aistudio/`.
-- Current verification status: `flutter analyze` passed and `flutter test` passed.
+**Current status:** ~35% — three-panel shell exists, left panel has partial catalog lists, middle/right are placeholders.
 
-Implemented now
+---
+
+## How to use this document
+
+1. Find your current step (the first unchecked `[ ]` box).
+2. Read only that step's section.
+3. Complete the step, run the quality gate, check the box.
+4. Move to the next step.
+
+**Quality gate** (run after every step):
+```bash
+flutter analyze
+flutter test
+```
+
+---
+
+## What is already done
+
+- [x] Three-panel shell inside one `Scaffold.body`
+- [x] Left panel with `Data` tab and `UX/Spec` tab
+- [x] `Data` tab lists: Entity, Field, Relation, Action, Function
+- [x] `UX/Spec` tab lists: Host, Body, Template, Type, Widget
+- [x] FAB and bottom status bar
+- [x] `SqliteStore` shared foundation (not wired to AIStudio yet)
+
+---
+
+## Step 1 — Add local selection state
+
+**Goal:** Track what the user has selected so the middle and right panels can respond.
+
+**Files to change:**
 - `lib/app/aistudio/aistudio.dart`
-  Provides:
-  - one `Scaffold`
-  - left panel with `Data` and `UX/Spec` tabs
-  - middle placeholder panel
-  - right placeholder panel
-  - existing FAB and bottom status bar
-- `lib/core/db/sqlite_store.dart`
-  Provides a generic local SQLite store suitable for `AIStudio` catalog rows and JSON key/value storage.
-  This is shared infrastructure; `AIStudio`-specific db code should move under `lib/core/db/aistudio/`.
 
-Current left-panel content
-- `Data`
-  - `Entity`
-  - `Field`
-  - `Relation`
-  - `Action`
-  - `Function`
-- `UX/Spec`
-  - `Host`
-  - `Body`
-  - `Template`
-  - `Type`
-  - `Widget`
+**What to do:**
+1. Convert `AIStudioApp` to use a `StatefulWidget` for the home scaffold.
+2. Add state fields:
+   - `int _activeTab` (0 = Data, 1 = UX/Spec)
+   - `String? _selectedCatalog` (e.g., `'Entity'`, `'Host'`)
+   - `int? _selectedRowId`
+   - `String _searchText` (default `''`)
+3. When a left-panel `ListTile` is tapped, set `_selectedCatalog` to that item's name.
+4. Show the selected catalog name as a header in the middle panel (replace placeholder text).
+5. Keep right panel as placeholder for now.
 
-What is still missing
-- No persistent local state for:
-  - active tab
-  - selected catalog
-  - selected row id
-  - search/filter
-- No real middle-panel list for the selected catalog.
-- No real right-panel editor/inspector.
-- No actual `AIStudio` wiring to the new SQLite store yet.
-- No complete `Data` catalog coverage yet.
-- No complete `UX/Spec` catalog coverage yet.
-- No row-level CRUD flow yet.
-- No dedicated `AIStudio` test coverage yet.
+**Done when:**
+- Tapping a left-panel item updates the middle panel header.
+- Tab switching between Data and UX/Spec works.
+- `_selectedCatalog` resets when switching tabs.
+- `flutter analyze` passes.
+- `flutter test` passes.
 
-Architecture direction
-- Keep one `Scaffold` and put everything in `Scaffold.body`.
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIStudio Step 1: Add local selection state.
+
+Current state:
+- `lib/app/aistudio/aistudio.dart` has a three-panel static layout.
+- Left panel has Data and UX/Spec tabs with ListTiles.
+- Middle and right panels are placeholder text.
+
+Task:
+- Make the home a StatefulWidget.
+- Add state: _activeTab, _selectedCatalog, _selectedRowId, _searchText.
+- Wire ListTile taps to set _selectedCatalog.
+- Show selected catalog name in middle panel header.
+- Keep right panel placeholder.
+
+Constraints:
+- Do not touch AIBook or AICodex code.
 - Do not add route navigation.
-- Keep `AIStudio` as the model-row editing surface.
-- Keep `AIBook` as the runtime consumer.
-- Prefer row-level save units for UX/spec authoring, not one giant primary JSON blob.
-- Keep implementation direct and incremental.
-- Under `lib/core/db`, app-facing db code should move toward app-specific directories such as `lib/core/db/aistudio/`.
+- Keep one Scaffold.
+- Keep analyzer green.
+```
 
-Ordered handover plan
-1. Add local `AIStudio` state in `lib/app/aistudio/aistudio.dart`.
-   Track active tab, selected catalog, selected row id, and optional search/filter text.
-2. Finish the left-panel catalog lists.
-   Add the missing `Data` entries:
+---
+
+## Step 2 — Complete left-panel catalog lists
+
+**Goal:** Add all missing catalog entries to both tabs.
+
+**Files to change:**
+- `lib/app/aistudio/aistudio.dart`
+
+**What to do:**
+1. Add missing `Data` tab entries:
    - `Parameter`
    - `Table`
    - `Column`
    - `System`
    - `User`
-   Add the missing `UX/Spec` entries:
+2. Add missing `UX/Spec` tab entries:
    - `FieldBinding`
    - `UX Action`
    - `Body Spec Node`
-3. Make the middle panel respond to selected catalog and load rows from `SqliteStore`.
-   Show current catalog name, search, add button, and SQLite-backed rows.
-4. Build the right panel as a generic editor shell and save rows back through `SqliteStore`.
-   Start with the common `i/a/d/e/t/n/s` shape plus optional JSON `payload`.
-5. Add row-level UX/spec editing shapes after the shell is stable.
-6. Add dedicated `AIStudio` tests for panel switching, row selection, and SQLite-backed CRUD flow.
-7. Add real remote load/save transport only after local SQLite-backed editing structure is solid.
+3. Add a visual indicator (e.g., background color or leading icon) for the currently selected catalog.
 
-Immediate next recommended step
-- Add local `AIStudio` state and make the middle panel load rows by selected catalog from `SqliteStore`.
+**Done when:**
+- `Data` tab shows: Entity, Field, Relation, Action, Function, Parameter, Table, Column, System, User.
+- `UX/Spec` tab shows: Host, Body, Template, Type, Widget, FieldBinding, UX Action, Body Spec Node.
+- Selected catalog is visually highlighted.
+- `flutter analyze` passes.
+- `flutter test` passes.
 
-Files expected to change next
-- `lib/app/aistudio/aistudio.dart`
-- `lib/core/db/aistudio/` for `AIStudio`-specific db wiring
-- `lib/core/db/sqlite_store.dart` only while shared low-level SQLite foundation is still being reused
-- future tests for `AIStudio` panel, selection, and SQLite CRUD behavior
-
-Handover cautions
-- Do not redesign `AIBook`.
-- Do not redesign `AICodex`.
-- Do not add route navigation.
-- Keep the app runnable after each step.
-- Keep analyzer clean after each step.
-
-Copy-paste prompt
-
+**Copy-paste prompt:**
 ```text
 Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIStudio Step 2: Complete left-panel catalog lists.
 
-You are working on `AIStudio`.
+Current state:
+- Step 1 is done — local selection state exists.
+- Data tab has: Entity, Field, Relation, Action, Function.
+- UX/Spec tab has: Host, Body, Template, Type, Widget.
 
-Current app state:
-- `AIStudio` now has an initial three-panel shell in `lib/app/aistudio/aistudio.dart`.
-- The left panel already has `Data` and `UX/Spec` tabs.
-- The middle and right panels are still placeholders.
-- The left-panel catalog lists are only partial right now.
-- A reusable local SQLite foundation now exists in `lib/core/db/sqlite_store.dart`.
-- Under `lib/core/db`, future `AIStudio` db code should live under `lib/core/db/aistudio/`.
+Task:
+- Add Data entries: Parameter, Table, Column, System, User.
+- Add UX/Spec entries: FieldBinding, UX Action, Body Spec Node.
+- Highlight the selected catalog visually (e.g., selected ListTile color).
 
-Role of AIStudio:
-- `AIStudio` is the model-row editing surface.
-- It should edit stored model-definition rows for both data-side models and UX/spec-side models.
-- `AIBook` remains the runtime consumer.
-- `AICodex` remains the configurator/schema-application surface.
-
-Requested target layout:
-- Build `AIStudio` as a three-panel setup inside one `Scaffold.body`.
-- Left panel = navigation only.
-- Middle panel = list for the selected model/spec type.
-- Right panel = editor/inspector for the selected row.
-
-Left panel requirement:
-- Left panel must have two tabs:
-  1. `Data`
-  2. `UX/Spec`
-
-Left panel tab contents:
-- `Data` tab should list model types under `lib/core/model/data`, especially:
-  - `Entity`
-  - `Field`
-  - `Relation`
-  - `Action`
-  - `Function`
-  - `Parameter`
-  - `Table`
-  - `Column`
-  - `System`
-  - `User`
-- `UX/Spec` tab should list the UX/spec units that need to be saved in database, especially:
-  - `Host`
-  - `Body`
-  - `Template`
-  - `Type`
-  - `Widget`
-  - `FieldBinding`
-  - `UX Action`
-  - `Body Spec Node`
-
-Current implemented shell state:
-- Left panel exists with:
-  - `Data` tab
-  - `UX/Spec` tab
-- Current `Data` list is only:
-  - `Entity`
-  - `Field`
-  - `Relation`
-  - `Action`
-  - `Function`
-- Current `UX/Spec` list is only:
-  - `Host`
-  - `Body`
-  - `Template`
-  - `Type`
-  - `Widget`
-- Middle panel is currently placeholder text.
-- Right panel is currently placeholder text.
-- No dedicated `AIStudio` state model or selection flow exists yet.
-- No actual `AIStudio` wiring to the SQLite store exists yet.
-
-Architecture direction:
-- Keep the UI simple and efficient.
-- Do not introduce route navigation for this.
-- Keep one `Scaffold` and put the three-panel setup inside `Scaffold.body`.
-- Prefer direct implementation and minimal abstraction.
-- Treat `Ux*Model` as definition-side UX/UI data.
-- If UX/spec is persisted, prefer row-level save units rather than one giant primary JSON blob.
-
-Recommended panel responsibilities:
-- Left panel:
-  - tab switcher
-  - catalog list
-- Middle panel:
-  - current catalog header
-  - search/filter
-  - add button
-  - list of rows for the selected catalog
-- Right panel:
-  - editor for selected row
-  - save/delete/clone actions
-  - optional raw JSON preview for debugging
-
-Recommended build order:
-1. Keep the existing three-panel shell and add local `AIStudio` state for:
-   - active left tab
-   - selected catalog type
-   - selected row id
-   - optional search/filter text
-2. Finish the left panel catalog lists so they cover the intended data and UX/spec units.
-3. Build the middle panel next with SQLite-backed rows, current-catalog header, search, and selection.
-4. Build the right panel next with a generic editor for the common `i/a/d/e/t/n/s` shape and save back to SQLite.
-5. After shell interaction feels right, add the missing `UX/Spec` catalog set and row-level editing shapes.
-6. Add dedicated `AIStudio` tests for panel and SQLite CRUD behavior.
-7. Only after that, add real remote load/save transport.
-
-Important constraints:
-- Do not redesign `AIBook`.
-- Do not redesign `AICodex`.
-- Do not add route navigation.
-- Keep implementation incremental.
-- Keep the app runnable after each step.
-- Keep analyzer clean after each step.
-
-Immediate next recommended step:
-- Implement Phase 2:
-  - local `AIStudio` selection state
-  - complete left-panel catalog lists
-  - middle panel that changes based on selected catalog and reads rows from SQLite
-  - keep right panel simple placeholder if needed for this step
-
-Relevant files:
-- `lib/app/aistudio/aistudio.dart`
-- `lib/core/db/sqlite_store.dart`
-- future `AIStudio`-specific db files under `lib/core/db/aistudio/`
-- `lib/core/model/data/entity_model.dart`
-- `lib/core/model/data/field_model.dart`
-- `lib/core/model/data/action_model.dart`
-- `lib/core/model/models.dart`
-- `docs/lib_app_readme.md`
+Constraints:
+- Do not touch AIBook or AICodex code.
+- Keep analyzer green.
 ```
+
+---
+
+## Step 3 — Middle panel with SQLite-backed row list
+
+**Goal:** The middle panel shows rows from `SqliteStore` for the selected catalog, with search and an add button.
+
+**Files to change:**
+- `lib/app/aistudio/aistudio.dart`
+- possibly `lib/core/db/sqlite_store.dart` (if minor changes needed)
+
+**What to do:**
+1. Initialize `SqliteStore` when AIStudio loads (use `SqliteStore.instance`).
+2. When `_selectedCatalog` changes, call `SqliteStore.listRows(catalogName)`.
+3. Display rows as a `ListView` showing `n` (name) and `i` (id).
+4. Add a search `TextField` at the top — filter displayed rows by `n`.
+5. Add an "Add" `IconButton` in the header — calls `SqliteStore.upsertRow` with a new empty row.
+6. Add an `onTap` to each row item that sets `_selectedRowId`.
+
+**Done when:**
+- Middle panel shows rows from SQLite for the selected catalog.
+- Search filters by name.
+- Add button creates a new row.
+- Tapping a row selects it (for the future right panel).
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIStudio Step 3: Middle panel with SQLite-backed row list.
+
+Current state:
+- Step 2 is done — full catalog lists + selection state.
+- `SqliteStore` exists at `lib/core/db/sqlite_store.dart` with `listRows`, `upsertRow`, `getRow`, `deleteRow`.
+- `SqliteCatalogRow` has fields: catalog, i, a, d, e, t, n, s, payload, updatedAt.
+
+Task:
+- Init SqliteStore in AIStudio.
+- Load rows by selected catalog.
+- Display as ListView (show name + id).
+- Add search TextField (filter by n).
+- Add "Add" button (upsert empty row).
+- Wire row tap → _selectedRowId.
+
+Constraints:
+- Use SqliteStore.instance.
+- Do not add Provider or other state management — keep setState for now.
+- Keep analyzer and tests green.
+```
+
+---
+
+## Step 4 — Right panel generic editor
+
+**Goal:** The right panel shows a form editor for the selected row and saves changes back to SQLite.
+
+**Files to change:**
+- `lib/app/aistudio/aistudio.dart`
+
+**What to do:**
+1. When `_selectedRowId` is set, load the row via `SqliteStore.getRow(catalog, id)`.
+2. Show `TextField` widgets for each common field: `n` (name), `s` (secondary).
+3. Show `Switch` or `Checkbox` for `a` (active).
+4. Show read-only display for `i`, `d`, `e`, `t`.
+5. Add a "Save" button that calls `SqliteStore.upsertRow` with updated data.
+6. Add a "Delete" button that calls `SqliteStore.deleteRow`.
+7. After save or delete, refresh the middle panel list.
+
+**Done when:**
+- Selecting a row in the middle panel loads it in the right panel editor.
+- Editing `n`, `s`, `a` and pressing Save persists the changes.
+- Delete removes the row and refreshes the list.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+**Copy-paste prompt:**
+```text
+Continue in `/Users/Shared/dev/git/genrp`.
+You are working on AIStudio Step 4: Right panel generic editor.
+
+Current state:
+- Step 3 is done — middle panel shows SQLite-backed rows.
+- _selectedRowId is set when a row is tapped.
+
+Task:
+- Load the selected row via SqliteStore.getRow.
+- Show editor fields: n (text), s (text), a (checkbox).
+- Show read-only: i, d, e, t.
+- Add Save button → upsertRow.
+- Add Delete button → deleteRow.
+- Refresh middle panel after save/delete.
+
+Constraints:
+- Start with the common shape only — no catalog-specific fields yet.
+- Keep it direct — no complex form framework.
+- Keep analyzer and tests green.
+```
+
+---
+
+## Step 5 — Catalog-specific field editing (payload)
+
+**Goal:** Add optional JSON payload editing for catalog-specific fields that don't fit the common `i/a/d/e/t/n/s` shape.
+
+**Files to change:**
+- `lib/app/aistudio/aistudio.dart`
+
+**What to do:**
+1. Add a collapsible "Payload" section in the right panel editor.
+2. Show the JSON payload as editable text (or a simple key-value editor).
+3. Validate that the payload is valid JSON before saving.
+4. Save the payload via the `payload` field of `SqliteCatalogRow`.
+
+**Done when:**
+- The right panel shows payload editing below the common fields.
+- Invalid JSON shows a validation error.
+- Valid payload saves correctly.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+---
+
+## Step 6 — AIStudio test coverage
+
+**Goal:** Add dedicated tests for AIStudio panel behavior and SQLite CRUD flow.
+
+**Files to change:**
+- `test/aistudio_test.dart` (new)
+
+**What to do:**
+1. Test: switching tabs changes available catalog list.
+2. Test: selecting a catalog loads rows from SQLite.
+3. Test: adding a row creates it in SQLite and appears in the list.
+4. Test: editing a row and saving persists the change.
+5. Test: deleting a row removes it from SQLite and the list.
+
+**Done when:**
+- All five test scenarios pass.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+---
+
+## Step 7 — Remote transport (after local is solid)
+
+**Goal:** Add remote load/save transport for AIStudio model rows, using the same backend contract as AIBook.
+
+**What to do:**
+1. Reuse the `Transport` class from AIBook Step 4 (or create a shared one).
+2. Add load-from-server for selected catalog rows.
+3. Add save-to-server when a row is saved locally.
+4. Keep local SQLite as the primary store — remote is sync, not replacement.
+5. Handle transport failures gracefully (show error, keep local data).
+
+**Done when:**
+- AIStudio can sync rows with a remote server.
+- Local SQLite remains the source of truth.
+- Transport failures don't lose local data.
+- `flutter analyze` passes.
+- `flutter test` passes.
+
+---
+
+## Architecture constraints (apply to all steps)
+
+- Do not redesign AIBook or AICodex.
+- Do not add route navigation.
+- Keep one `Scaffold`, everything in `Scaffold.body`.
+- AIStudio is the **model-row editing surface** — it edits definitions, not runtime data.
+- AIBook is the **runtime consumer** — it uses those definitions.
+- Prefer row-level save units, not one giant JSON blob.
+- Keep implementation direct and incremental.
+- Keep analyzer and tests green after every step.
+
+## Vocabulary quick reference
+
+| Term | Meaning |
+|---|---|
+| `catalog` | A model type category (e.g., "Entity", "Field", "Host") |
+| `i/a/d/e/t/n/s` | id, active, date, entity, type, name, secondary |
+| `payload` | JSON blob for catalog-specific fields beyond the common shape |
+| `SqliteCatalogRow` | The generic persisted row shape in SQLite |
