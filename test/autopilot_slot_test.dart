@@ -34,4 +34,36 @@ void main() {
     expect(updatedX.v.length, 3);
     expect(updatedX.v[2], 'Extended');
   });
+
+  test('Autopilot uses path fallback when slot is missing', () {
+    final autopilot = AutopilotGo();
+    autopilot.registerFieldPath(1, 101, 'data.custom_field');
+    autopilot.copilotData.setValue('custom_field', 'Path Value');
+
+    // Read by path fallback
+    final value = autopilot.resolveFieldBinding(src: 1, fieldId: 101);
+    expect(value, 'Path Value');
+
+    // Update by path fallback
+    autopilot.updateFieldBinding(src: 1, fieldId: 101, value: 'New Path Value');
+    expect(autopilot.copilotData.getValue('custom_field'), 'New Path Value');
+  });
+
+  test('Autopilot ignores path when slot exists', () {
+    final autopilot = AutopilotGo();
+    autopilot.registerFieldSlot(1, 101, 0);
+    autopilot.registerFieldPath(1, 101, 'data.custom_field');
+    autopilot.copilotData.setValue('x_row', X(v: ['Slot Value']));
+    autopilot.copilotData.setValue('custom_field', 'Path Value');
+
+    // Read prefers slot over path
+    final value = autopilot.resolveFieldBinding(src: 1, fieldId: 101);
+    expect(value, 'Slot Value');
+
+    // Update prefers slot over path
+    autopilot.updateFieldBinding(src: 1, fieldId: 101, value: 'New Slot Value');
+    final updatedX = autopilot.copilotData.getValue('x_row') as X;
+    expect(updatedX.v[0], 'New Slot Value');
+    expect(autopilot.copilotData.getValue('custom_field'), 'Path Value'); // Path should not be updated
+  });
 }
