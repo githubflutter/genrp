@@ -6,56 +6,106 @@ class AIStudioApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AIStudio',
-      home: Scaffold(
-        appBar: AppBar(title: const Text('AIStudio')),
-        body: Row(
+      home: AIStudioHome(),
+    );
+  }
+}
+
+class AIStudioHome extends StatefulWidget {
+  const AIStudioHome({super.key});
+
+  @override
+  State<AIStudioHome> createState() => _AIStudioHomeState();
+}
+
+class _AIStudioHomeState extends State<AIStudioHome> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  int _activeTab = 0;
+  String? _selectedCatalog;
+  // ignore: unused_field
+  int? _selectedRowId;
+  // ignore: unused_field
+  final String _searchText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging && _activeTab != _tabController.index) {
+        setState(() {
+          _activeTab = _tabController.index;
+          _selectedCatalog = null;
+          _selectedRowId = null;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onCatalogTapped(String catalog) {
+    setState(() {
+      _selectedCatalog = catalog;
+      _selectedRowId = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('AIStudio')),
+      body: Row(
           children: [
             Expanded(
               flex: 2,
               child: Container(
                 color: Colors.grey.shade100,
-                child: DefaultTabController(
-                  length: 2,
-                  child: Column(
-                    children: [
-                      const TabBar(
-                        labelColor: Colors.black87,
-                        unselectedLabelColor: Colors.grey,
-                        indicatorColor: Colors.blue,
-                        tabs: [
-                          Tab(text: 'Data'),
-                          Tab(text: 'UX/Spec'),
+                child: Column(
+                  children: [
+                    TabBar(
+                      controller: _tabController,
+                      labelColor: Colors.black87,
+                      unselectedLabelColor: Colors.grey,
+                      indicatorColor: Colors.blue,
+                      tabs: const [
+                        Tab(text: 'Data'),
+                        Tab(text: 'UX/Spec'),
+                      ],
+                    ),
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          ListView(
+                            children: [
+                              ListTile(title: const Text('Entity'), onTap: () => _onCatalogTapped('Entity')),
+                              ListTile(title: const Text('Field'), onTap: () => _onCatalogTapped('Field')),
+                              ListTile(title: const Text('Relation'), onTap: () => _onCatalogTapped('Relation')),
+                              ListTile(title: const Text('Action'), onTap: () => _onCatalogTapped('Action')),
+                              ListTile(title: const Text('Function'), onTap: () => _onCatalogTapped('Function')),
+                            ],
+                          ),
+                          ListView(
+                            children: [
+                              ListTile(title: const Text('Host'), onTap: () => _onCatalogTapped('Host')),
+                              ListTile(title: const Text('Body'), onTap: () => _onCatalogTapped('Body')),
+                              ListTile(title: const Text('Template'), onTap: () => _onCatalogTapped('Template')),
+                              ListTile(title: const Text('Type'), onTap: () => _onCatalogTapped('Type')),
+                              ListTile(title: const Text('Widget'), onTap: () => _onCatalogTapped('Widget')),
+                            ],
+                          ),
                         ],
                       ),
-                      Expanded(
-                        child: TabBarView(
-                          children: [
-                            ListView(
-                              children: const [
-                                ListTile(title: Text('Entity')),
-                                ListTile(title: Text('Field')),
-                                ListTile(title: Text('Relation')),
-                                ListTile(title: Text('Action')),
-                                ListTile(title: Text('Function')),
-                              ],
-                            ),
-                            ListView(
-                              children: const [
-                                ListTile(title: Text('Host')),
-                                ListTile(title: Text('Body')),
-                                ListTile(title: Text('Template')),
-                                ListTile(title: Text('Type')),
-                                ListTile(title: Text('Widget')),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -64,7 +114,22 @@ class AIStudioApp extends StatelessWidget {
               flex: 5,
               child: Container(
                 color: Colors.white,
-                child: const Center(child: Text('Master/Main Editor')),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: Colors.grey.shade200,
+                      width: double.infinity,
+                      child: Text(
+                        _selectedCatalog ?? 'Master/Main Editor',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const Expanded(
+                      child: Center(child: Text('Master/Main Editor')),
+                    )
+                  ],
+                ),
               ),
             ),
             const VerticalDivider(width: 1, thickness: 1),
@@ -93,7 +158,6 @@ class AIStudioApp extends StatelessWidget {
             ),
           ),
         ),
-      ),
     );
   }
 }
