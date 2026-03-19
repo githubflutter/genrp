@@ -21,43 +21,42 @@ class AIStudioHome extends StatefulWidget {
   State<AIStudioHome> createState() => _AIStudioHomeState();
 }
 
-class _AIStudioHomeState extends State<AIStudioHome>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  int _activeTab = 0;
+class _AIStudioHomeState extends State<AIStudioHome> {
+  static const List<String> _uxCatalogs = <String>[
+    'Host',
+    'Body',
+    'Template',
+    'Type',
+    'Widget',
+    'UX Action',
+    'FieldBinding',
+    'Body Spec Node',
+  ];
+
   String? _selectedCatalog;
   // ignore: unused_field
   int? _selectedRowId;
-  // ignore: unused_field
-  final String _searchText = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      if (!_tabController.indexIsChanging &&
-          _activeTab != _tabController.index) {
-        setState(() {
-          _activeTab = _tabController.index;
-          _selectedCatalog = null;
-          _selectedRowId = null;
-        });
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
 
   void _onCatalogTapped(String catalog) {
     setState(() {
       _selectedCatalog = catalog;
       _selectedRowId = null;
     });
+  }
+
+  Widget _buildCatalogItem(String catalog) {
+    final isSelected = _selectedCatalog == catalog;
+    return ListTile(
+      title: Text(
+        catalog,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      selected: isSelected,
+      selectedTileColor: Colors.blue.withValues(alpha: 0.1),
+      onTap: () => _onCatalogTapped(catalog),
+    );
   }
 
   @override
@@ -71,70 +70,24 @@ class _AIStudioHomeState extends State<AIStudioHome>
             child: Container(
               color: Colors.grey.shade100,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: Colors.black87,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: Colors.blue,
-                    tabs: const [
-                      Tab(text: 'Data'),
-                      Tab(text: 'UX/Spec'),
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Text(
+                      'UX/Spec',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
                   ),
                   Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        ListView(
-                          children: [
-                            ListTile(
-                              title: const Text('Entity'),
-                              onTap: () => _onCatalogTapped('Entity'),
-                            ),
-                            ListTile(
-                              title: const Text('Field'),
-                              onTap: () => _onCatalogTapped('Field'),
-                            ),
-                            ListTile(
-                              title: const Text('Relation'),
-                              onTap: () => _onCatalogTapped('Relation'),
-                            ),
-                            ListTile(
-                              title: const Text('Function'),
-                              onTap: () => _onCatalogTapped('Function'),
-                            ),
-                          ],
-                        ),
-                        ListView(
-                          children: [
-                            ListTile(
-                              title: const Text('Host'),
-                              onTap: () => _onCatalogTapped('Host'),
-                            ),
-                            ListTile(
-                              title: const Text('Body'),
-                              onTap: () => _onCatalogTapped('Body'),
-                            ),
-                            ListTile(
-                              title: const Text('Template'),
-                              onTap: () => _onCatalogTapped('Template'),
-                            ),
-                            ListTile(
-                              title: const Text('Type'),
-                              onTap: () => _onCatalogTapped('Type'),
-                            ),
-                            ListTile(
-                              title: const Text('Widget'),
-                              onTap: () => _onCatalogTapped('Widget'),
-                            ),
-                            ListTile(
-                              title: const Text('UX Action'),
-                              onTap: () => _onCatalogTapped('UX Action'),
-                            ),
-                          ],
-                        ),
-                      ],
+                    child: ListView(
+                      children: _uxCatalogs
+                          .map<Widget>(_buildCatalogItem)
+                          .toList(growable: false),
                     ),
                   ),
                 ],
@@ -153,7 +106,7 @@ class _AIStudioHomeState extends State<AIStudioHome>
                     color: Colors.grey.shade200,
                     width: double.infinity,
                     child: Text(
-                      _selectedCatalog ?? 'Master/Main Editor',
+                      _selectedCatalog ?? 'UX/Spec Explorer',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

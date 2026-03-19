@@ -10,7 +10,7 @@ Index of documentation files in `docs/`:
 
 Current next steps in this snapshot:
 - `AIBook` — Step 3
-- `AIStudio` — Step 2
+- `AIStudio` — Step 3
 - `AICodex` — paused after Step 1; resume from Step 2 later
 
 Current ownership reminder:

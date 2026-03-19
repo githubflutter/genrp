@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
-**Current status:** Step 1 is done — three-panel shell, tabbed catalog navigation, local selection state, and middle-panel header updates are in place. Step 2 is next. Shared DB scaffolding exists, but AIStudio UI wiring is still Step 3+ work.
+**Current status:** Step 2 is done — three-panel shell, UX/spec catalog navigation, local selection state, full UX/spec catalog list, selection highlighting, and middle-panel header updates are in place. Step 3 is next. Shared DB scaffolding exists, but AIStudio UI wiring is still Step 3+ work.
 
-**Current next step:** Step 2 — Complete left-panel catalog lists.
+**Current next step:** Step 3 — Middle panel with SQLite-backed UX/spec row list.
 
 **Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio should focus on UX/spec CRUD. If data-model catalogs remain visible in the shell, they should be treated as secondary/reference paths until the UI is narrowed further.
 
@@ -30,12 +30,11 @@ flutter test
 ## What is already done
 
 - [x] Three-panel shell inside one `Scaffold.body`
-- [x] Left panel with `Data` tab and `UX/Spec` tab
-- [x] `Data` tab lists: Entity, Field, Relation, Function
-- [x] `UX/Spec` tab lists: Host, Body, Template, Type, Widget, UX Action
-- [x] Local selection state for active tab, selected catalog, and selected row
+- [x] Left panel with UX/spec catalog navigation
+- [x] UX/spec list: Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node
+- [x] Local selection state for selected catalog and selected row
 - [x] Middle panel header updates from the selected catalog
-- [x] Selected catalog resets when switching tabs
+- [x] Selected catalog is visually highlighted
 - [x] FAB and bottom status bar
 - [x] `SqliteStore` shared foundation (not wired to AIStudio yet)
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
@@ -54,18 +53,14 @@ flutter test
 **What to do:**
 1. Convert `AIStudioApp` to use a `StatefulWidget` for the home scaffold.
 2. Add state fields:
-   - `int _activeTab` (0 = Data, 1 = UX/Spec)
-   - `String? _selectedCatalog` (e.g., `'Entity'`, `'Host'`)
+   - `String? _selectedCatalog` (e.g., `'Host'`)
    - `int? _selectedRowId`
-   - `String _searchText` (default `''`)
 3. When a left-panel `ListTile` is tapped, set `_selectedCatalog` to that item's name.
 4. Show the selected catalog name as a header in the middle panel (replace placeholder text).
 5. Keep right panel as placeholder for now.
 
 **Done when:**
 - Tapping a left-panel item updates the middle panel header.
-- Tab switching between Data and UX/Spec works.
-- `_selectedCatalog` resets when switching tabs.
 - `flutter analyze` passes.
 - `flutter test` passes.
 
@@ -76,12 +71,12 @@ You are working on AIStudio Step 1: Add local selection state.
 
 Current state:
 - `lib/app/aistudio/aistudio.dart` has a three-panel static layout.
-- Left panel has Data and UX/Spec tabs with ListTiles.
+- Left panel is intended to hold the UX/spec collection list.
 - Middle and right panels are placeholder text.
 
 Task:
 - Make the home a StatefulWidget.
-- Add state: _activeTab, _selectedCatalog, _selectedRowId, _searchText.
+- Add state: _selectedCatalog, _selectedRowId.
 - Wire ListTile taps to set _selectedCatalog.
 - Show selected catalog name in middle panel header.
 - Keep right panel placeholder.
@@ -95,28 +90,24 @@ Constraints:
 
 ---
 
-## [ ] Step 2 — Complete left-panel catalog lists
+## [x] Step 2 — Complete left-panel UX/spec catalog list
 
-**Goal:** Add all missing catalog entries to both tabs.
+**Status:** Done in the current repo snapshot.
+
+**Goal:** Finish the UX/spec explorer list and make the current selection visually obvious.
 
 **Files to change:**
 - `lib/app/aistudio/aistudio.dart`
 
 **What to do:**
-1. Add missing `Data` tab entries:
-   - `Parameter`
-   - `Table`
-   - `Column`
-   - `System`
-   - `User`
-2. Add missing `UX/Spec` tab entries:
+1. Add missing UX/spec entries:
    - `FieldBinding`
    - `Body Spec Node`
-3. Add a visual indicator (e.g., background color or leading icon) for the currently selected catalog.
+2. Add a visual indicator (e.g., background color or leading icon) for the currently selected catalog.
+3. Keep AIStudio focused on UX/spec collection/explorer behavior; sensitive data-model catalogs belong to AICodex.
 
 **Done when:**
-- `Data` tab shows: Entity, Field, Relation, Function, Parameter, Table, Column, System, User.
-- `UX/Spec` tab shows: Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node.
+- Left panel shows: Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node.
 - Selected catalog is visually highlighted.
 - `flutter analyze` passes.
 - `flutter test` passes.
@@ -124,20 +115,19 @@ Constraints:
 **Copy-paste prompt:**
 ```text
 Continue in `/Users/Shared/dev/git/genrp`.
-You are working on AIStudio Step 2: Complete left-panel catalog lists.
+You are working on AIStudio Step 2: Complete left-panel UX/spec catalog list.
 
 Current state:
 - Step 1 is done — local selection state exists.
-- Data tab has: Entity, Field, Relation, Function.
-- UX/Spec tab has: Host, Body, Template, Type, Widget, UX Action.
+- AIStudio should focus on UX/spec.
+- Current list has: Host, Body, Template, Type, Widget, UX Action.
 
 Task:
-- Add Data entries: Parameter, Table, Column, System, User.
 - Add UX/Spec entries: FieldBinding, Body Spec Node.
 - Highlight the selected catalog visually (e.g., selected ListTile color).
 
 Constraints:
-- Do not touch AIBook or AICodex code.
+- Do not move sensitive data-model browsing back into AIStudio.
 - Keep analyzer green.
 ```
 
@@ -173,7 +163,7 @@ Continue in `/Users/Shared/dev/git/genrp`.
 You are working on AIStudio Step 3: Middle panel with SQLite-backed row list.
 
 Current state:
-- Step 2 is done — full catalog lists + selection state.
+- Step 2 is done — full UX/spec catalog list + selection state.
 - `SqliteStore` exists at `lib/core/db/sqlite_store.dart` with `listRows`, `upsertRow`, `getRow`, `deleteRow`.
 - `SqliteCatalogRow` has fields: catalog, i, a, d, e, t, n, s, payload, updatedAt.
 - Shared DB builders exist, but AIStudio should stay on UX/spec CRUD rather than business-action paths or sensitive data-model CRUD.

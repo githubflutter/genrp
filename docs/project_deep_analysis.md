@@ -14,7 +14,7 @@ GenRP is a **Flutter monolith** containing **three distinct applications** insid
 | App | Role | Maturity |
 |---|---|---|
 | **AIBook** | Runtime reader / preview flow (function-driven business-data consumer) | ~80% beta; Step 2 done, Step 3 pending |
-| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | Step 1 done; Step 2 pending |
+| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | Step 2 done; Step 3 pending |
 | **AICodex** | Sensitive data-model CRUD + schema-application surface | Step 1 done; paused before Step 2 |
 
 The apps share a common orchestration engine (`Autopilot`), data models, UX spec models, a JSON-driven UI composition system, and a local SQLite persistence layer. The repo now also has a shared DB contract/admin-client scaffold for PostgreSQL, SQLite, and web action payloads. The architecture is intentionally lean, performance-first, and optimized for compact numeric transport.
@@ -180,7 +180,7 @@ genrp/
 │   │   ├── aicodex/
 │   │   │   └── aicodex.dart              # AICodex Step 1 shell (currently paused before Step 2)
 │   │   └── aistudio/
-│   │       └── aistudio.dart             # AIStudio Step 1 shell (tabs + selection state)
+│   │       └── aistudio.dart             # AIStudio Step 2 shell (UX/spec explorer + selection state)
 │   └── core/
 │       ├── agent/
 │       │   ├── action.dart               # Action + Todo models
@@ -390,10 +390,10 @@ flowchart LR
 - **Action execution**: Handles `saveBook` specially (saves `X` row via MockTransport), then iterates `Todo` list for state mutations
 - **Near-term gap**: shared `WebClient` payload scaffolding exists, but real HTTP transport is still pending
 
-#### AIStudio (Step 1 done)
-- **Entry**: `AIStudioApp` → three-panel shell with tabbed left navigation
-- Left panel: `Data` tab (Entity, Field, Relation, Function) + `UX/Spec` tab (Host, Body, Template, Type, Widget, UX Action)
-- Local state: `_activeTab`, `_selectedCatalog`, `_selectedRowId`
+#### AIStudio (Step 2 done)
+- **Entry**: `AIStudioApp` → three-panel shell with UX/spec left navigation
+- Left panel: UX/spec explorer list (Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node)
+- Local state: `_selectedCatalog`, `_selectedRowId`
 - Middle panel: selected catalog header + placeholder body
 - Right panel: placeholder
 - Current direction: AIStudio should focus on UX/spec CRUD; any remaining data-model catalogs in the shell are transitional/reference only until the UI is narrowed further
@@ -578,9 +578,8 @@ Defines **identity registries** — maps numeric IDs to names:
 | SQLite not wired into AIBook | Medium | Store exists but AIBook doesn't use it for cache |
 | Validation still partial | Medium | Key references are checked, but deeper consistency/body-template validation is still missing |
 | Shared DB builders not wired into app flows yet | Medium | Contract/admin/client scaffolding exists, but app-level integration is still pending |
-| AIStudio only has local selection state | Medium | Tab state + catalog selection exist; SQLite list/editor flow is still missing |
+| AIStudio only has local selection state | Medium | UX/spec catalog selection exists; SQLite list/editor flow is still missing |
 | AIStudio not wired to SQLite | Medium | Left panel lists exist but no UX/spec persistence yet |
-| AIStudio incomplete catalog lists | Low | Missing: Parameter, Table, Column, System, User, FieldBinding, Body Spec Node; some data-side entries may later be removed from AIStudio scope |
 | AICodex paused after Step 1 | Medium | Middle/right panels are still placeholders; resume directly when ready because it now owns sensitive data-model CRUD |
 | Preview selection is debug-only | Low | Long-press in debug mode only |
 | `datasource_helper.dart` is empty | Low | Reserved placeholder |
@@ -657,10 +656,9 @@ Based on the existing handover docs and code analysis:
 4. **Wire SQLite into AIBook** — cache spec and/or `X` row data locally
 
 ### Phase 2: Continue AIStudio
-5. **Complete left panel** — add missing UX/spec entries first and decide whether remaining data-side entries stay visible as reference
-6. **Build middle panel** — SQLite-backed row list for selected UX/spec catalog
-7. **Build right panel** — UX/spec editor for common `i/a/d/e/t/n/s` shape + JSON payload
-8. **Add AIStudio test coverage** — panel behavior + SQLite CRUD flow
+5. **Build middle panel** — SQLite-backed row list for selected UX/spec catalog
+6. **Build right panel** — UX/spec editor for common `i/a/d/e/t/n/s` shape + JSON payload
+7. **Add AIStudio test coverage** — panel behavior + SQLite CRUD flow
 
 ### Phase 3: Resume AICodex
 9. **Build master list from SQLite** — rows for the selected data-model type plus add entrypoint
