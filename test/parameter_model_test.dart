@@ -1,8 +1,8 @@
-import 'package:genrp/core/model/data/entity_model.dart';
-import 'package:genrp/core/model/data/field_model.dart';
+import 'package:genrp/core/model/bschema/entity_model.dart';
+import 'package:genrp/core/model/bschema/field_model.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genrp/core/model/data/function_model.dart';
-import 'package:genrp/core/model/data/parameter_model.dart';
+import 'package:genrp/core/model/bschema/function_model.dart';
+import 'package:genrp/core/model/bschema/parameter_model.dart';
 
 void main() {
   test('ParameterModel uses fi as function id and accepts legacy t JSON', () {

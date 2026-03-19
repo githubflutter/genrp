@@ -11,7 +11,7 @@ Index of documentation files in `docs/`:
 Current next steps in this snapshot:
 - `AIBook` — Step 3
 - `AIStudio` — Step 3
-- `AICodex` — paused after Step 1; resume from Step 2 later
+- `AICodex` — Step 4
 
 Current ownership reminder:
 - `AIStudio` owns UX/spec CRUD.
@@ -28,10 +28,10 @@ Current ownership reminder:
 - `lib_core_base_data_type_readme.md` — docs for `lib/core/base/data_type.dart` (DataType + TypeMapper).
 - `lib_core_base_x_readme.md` — docs for `lib/core/base/x.dart` (base X transport hierarchy).
 - `lib_core_db_sqlite_store_readme.md` — docs for `lib/core/db/sqlite_store.dart` (SQLite store).
-- `lib_core_model_data_readme.md` — docs for `lib/core/model/data` models (shared structural vocabulary).
+- `lib_core_model_bschema_readme.md` — docs for `lib/core/model/bschema` models, with notes about special base models now living under `lib/core/model/base`.
 
 ## Guidelines
 
-- Use snake_case filenames derived from the directory path (e.g., `lib_core_model_data_readme.md`).
+- Use snake_case filenames derived from the directory path (e.g., `lib_core_model_bschema_readme.md`).
 - Keep docs short and point to code locations.
 - Update handover docs after completing each step.

@@ -95,7 +95,19 @@ class DbFunctionSpec {
     this.language = 'sql',
     this.replace = true,
     this.kind = DbTargetKind.foundation,
-    this.virtualTableName = 'virtualfun',
+    this.virtualTableName = 'vfun',
+    this.i = 0,
+    this.a = true,
+    this.d = 0,
+    this.e = 0,
+    this.ei = 0,
+    this.t = 0,
+    this.tis = const <int>[0],
+    this.n = '',
+    this.s = '',
+    this.sql1 = '',
+    this.sql2 = '',
+    this.sql3 = '',
   });
 
   final String name;
@@ -107,15 +119,32 @@ class DbFunctionSpec {
   final bool replace;
   final DbTargetKind kind;
   final String virtualTableName;
+  final int i;
+  final bool a;
+  final int d;
+  final int e;
+  final int ei;
+  final int t;
+  final List<int> tis;
+  final String n;
+  final String s;
+  final String sql1;
+  final String sql2;
+  final String sql3;
 
   Map<String, Object?> toVirtualFunRow() => <String, Object?>{
-    'schema_name': schema ?? '',
-    'function_name': name,
-    'returns_type': returns,
-    'language': language,
-    'target_kind': kind.name,
-    'parameter_json': parameters.map((item) => item.toMap()).toList(),
-    'script_body': body,
+    'i': i,
+    'a': a,
+    'd': d,
+    'e': e,
+    'ei': ei,
+    't': t,
+    'n': n.isEmpty ? name : n,
+    's': s.isEmpty ? name : s,
+    'tis': tis.isEmpty ? const <int>[0] : tis,
+    'sql1': sql1.isEmpty ? body : sql1,
+    'sql2': sql2,
+    'sql3': sql3,
   };
 }
 

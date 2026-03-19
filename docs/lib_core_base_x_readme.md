@@ -32,3 +32,12 @@ Notes
 - In binding-oriented runtime flows, `src + fieldId` should preferably resolve to slot/index access into `v`.
 - Human-readable dotted paths are acceptable as migration fallback, but they are not the preferred long-term transport contract for dynamic business data.
 - This `base X` family is separate from `X*` wrapped Flutter controls under `lib/core/widgets`.
+- `Xi` uses a simple `max(i) + 1` allocation strategy.
+- The richer variants (`Xia`, `Xiad`, `Xiade`) are intended to use epoch-millisecond-based IDs rather than `max(i) + 1`.
+- Planned formula direction for those richer variants is:
+  - `epochMs * 10/100/1000 + suffix`
+  - where the suffix stays inside `0..999`
+- Keep those runtime/business integers within signed 53-bit safe range for Flutter web / JSON transport even if PostgreSQL stores them as `bigint`.
+- In practice, `Xiad.d` and `Xiade.d/e` are part of that web-safe `int^53` / PostgreSQL `bigint` rule.
+- In business/data-side transport, `Xiade.e` should be treated as the last editor reference and point to `UserModel.i`.
+- Prefer a deterministic per-millisecond suffix allocator over uncontrolled random collision risk when implementing the `0..999` part.

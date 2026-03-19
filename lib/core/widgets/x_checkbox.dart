@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/ux/ux_checkbox_model.dart';
+import 'package:genrp/core/model/uschema/ux_checkbox_model.dart';
 
 class XCheckBox extends StatelessWidget {
   const XCheckBox({required this.model, required this.autopilot, super.key});

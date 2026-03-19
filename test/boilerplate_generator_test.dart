@@ -6,6 +6,7 @@ import 'package:genrp/core/template/checkbox_form_template.dart';
 import 'package:genrp/core/template/collection_template.dart';
 import 'package:genrp/core/template/detail_template.dart';
 import 'package:genrp/core/template/form_template.dart';
+import 'package:genrp/core/theme/genrp_theme.dart';
 import 'package:genrp/core/widgets/x_checkbox.dart';
 import 'package:genrp/core/widgets/x_text_box.dart';
 import 'package:provider/provider.dart';
@@ -17,14 +18,18 @@ void main() {
         'initialBody': 1,
         'bodies': {
           'wrongString': {'bodyId': 2, 'type': 'text', 'text': 'Wrong Body'},
-          'correctBody': {'bodyId': 1, 'type': 'text', 'text': 'Correct Numeric Body'},
+          'correctBody': {
+            'bodyId': 1,
+            'type': 'text',
+            'text': 'Correct Numeric Body',
+          },
         },
         'registry': {
           'bodies': [
             {'id': 1, 'name': 'correctBody'},
             {'id': 2, 'name': 'wrongString'},
-          ]
-        }
+          ],
+        },
       };
 
       await tester.pumpWidget(
@@ -265,7 +270,7 @@ void main() {
       );
 
       final textWidget = tester.widget<Text>(find.text('Headline'));
-      expect(textWidget.style?.fontSize, 20);
+      expect(textWidget.style?.fontSize, GenrpTheme.fontXl);
       expect(textWidget.style?.fontWeight, FontWeight.bold);
     });
 

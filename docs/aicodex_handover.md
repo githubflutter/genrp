@@ -2,13 +2,27 @@
 
 Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and schema-application surface.
 
-**Current status:** Paused after Step 1 — grouped model navigation, local selection state, and middle-panel header updates are in place. Middle and right panels are still placeholders.
+**Current status:** Step 3 is done, and the shared hybrid shell is in place — minor panel with two tabs, major panel with three tabs, grouped model navigation, SQLite-backed master list, search, add-row action, row selection, and the right-side detail editor are all in place. Step 4 is next.
 
-**Current next step:** Paused for now. When resumed, continue with Step 2 — Master list from SQLite.
+**Current next step:** Step 4 — DDL and function-script generation display.
 
 **Role:** AICodex is the **sensitive data-model CRUD and schema configurator**. It owns CRUD for model definitions such as Entity, Field, Table, Column, Function, and related rows because those edits can require database recreation or schema regeneration. It also applies those definitions as **create, drop, and function/script** operations against the PostgreSQL backend and SQLite foundation. It does not consume runtime row data the way AIBook does.
 
-**Database rule:** PostgreSQL and SQLite are not mirror backends. PostgreSQL can use real foundation/business functions. SQLite should represent function-like behavior through a `virtualfun` table/model that stores scripts to run. Foundation tables allow direct CRUD; business tables go through function/script paths only. `ALTER TABLE` is not part of this project.
+**Database rule:** PostgreSQL and SQLite are not mirror backends. PostgreSQL can use real foundation/business functions. SQLite should represent function-like behavior through a `vfun` table/model that stores scripts to run. Foundation tables allow direct CRUD; business tables go through function/script paths only. `ALTER TABLE` is not part of this project. If `vfun` blocks current implementation progress, it can be deferred temporarily.
+
+**Authority rule:** The data-model layer is the foundation schema layer of the whole system. It is the single origin, single source of truth, and single-user/admin-side editing surface. Multi-user concurrent schema editing is intentionally unsupported.
+
+**ID rule:** For `base`, `bschema`, and `uschema`, `i` and `e` stay `int4`. New rows allocate `i` with `max(i) + 1`. `d` is the last date/time integer, usually UTC epoch milliseconds, and stays web-safe `int^53` / PostgreSQL `bigint`. Because this layer is single-user/admin-side only, `max(i) + 1` is acceptable for model-definition ID allocation.
+
+**Convergent UI rule:** AICodex should use the same hybrid shell as AIStudio:
+- left side = **minor panel**
+- right side = **major panel**
+- minor panel has **two tabs**
+- major panel has **three tabs**
+- major tab 1 = single mid panel only
+- major tab 2 = larger mid + smaller right
+- major tab 3 = equal mid + right
+- functional data-model CRUD and schema work should now continue inside that shared shell
 
 ---
 
@@ -35,13 +49,39 @@ flutter test
 - [x] Left panel navigation with grouped model types
 - [x] Local selection state for model type and selected row
 - [x] Middle panel header reflects the selected model type
-- [x] Middle panel: "Master/Main Editor" placeholder
-- [x] Right panel: "Property Editor" placeholder
+- [x] Middle panel: SQLite-backed master list for the selected model type
+- [x] Search box filters rows by `n`
+- [x] Add button creates a new row in the selected catalog
+- [x] Row selection highlighting in the master list
+- [x] Right panel: detail editor with save/delete flow
 - [x] FAB and bottom status bar
 - [x] `SqliteStore` shared foundation exists
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
-- [x] Core models exist, with `ActionModel` now treated as UX-side metadata under `lib/core/model/ux`
+- [x] Core models exist, with `ActionModel` now treated as UX-side metadata under `lib/core/model/uschema`
 - [x] Backend contract documented (single POST endpoint, JSON passthrough, PG router function)
+
+## [x] UI convergence prerequisite — Hybrid shell
+
+**Status:** Done in the current repo snapshot.
+
+**Goal:** Replace the earlier fixed three-panel shell with the shared hybrid minor/major shell before continuing feature steps.
+
+**What to do:**
+1. Convert the current body layout into:
+   - left minor panel
+   - right major panel
+2. Add **two tabs** to the minor panel.
+3. Add **three tabs** to the major panel.
+4. Implement the three major layout modes:
+   - tab 1: single mid only
+   - tab 2: larger mid + smaller right
+   - tab 3: equal mid + right
+5. Preserve current AICodex navigation/master-list behavior inside the new shell.
+
+**Done when:**
+- AICodex uses the shared hybrid shell.
+- The old fixed three-panel layout is gone.
+- Current navigation/master-list behavior still works inside the new shell.
 
 ---
 
@@ -65,9 +105,10 @@ flutter test
 
 | Panel | Purpose |
 |---|---|
-| **Left** (Navigation) | Pick the model type to work with (Entity, Table, Function, etc.) |
-| **Middle** (Master) | Browse model-definition rows for the selected type from SQLite |
-| **Right** (Detail) | Edit the selected row and run schema actions (create/drop/function scripts) |
+| **Minor** (Left) | Support area with two tabs |
+| **Major / Tab 1** | Single mid-only working surface |
+| **Major / Tab 2** | Larger mid + smaller right |
+| **Major / Tab 3** | Equal mid + right working split |
 
 ---
 
@@ -118,8 +159,8 @@ You are working on AICodex Step 1: Navigation panel with model type list.
 
 Current state:
 - `lib/app/aicodex/aicodex.dart` is a static three-panel layout. All panels are placeholders.
-- 9 data models exist under `lib/core/model/data/`.
-- `ActionModel` now lives under `lib/core/model/ux/`.
+- 7 regular bschema models exist under `lib/core/model/bschema/`, and 2 special base models (`SystemModel`, `UsrModel`) now live under `lib/core/model/base/`.
+- `ActionModel` now lives under `lib/core/model/uschema/`.
 
 Task:
 - Make home a StatefulWidget.
@@ -140,7 +181,9 @@ Constraints:
 
 ---
 
-## [ ] Step 2 — Master list from SQLite
+## [x] Step 2 — Master list from SQLite
+
+**Status:** Done in the current repo snapshot.
 
 **Goal:** The middle panel shows model-definition rows from `SqliteStore` for the selected model type and supports the first CRUD entrypoint into that catalog.
 
@@ -157,6 +200,7 @@ Constraints:
 5. Add an "Add" button in the header that creates a new empty row for the selected catalog.
 6. Tapping a row sets `_selectedRowId`.
 7. Highlight the selected row.
+8. Place the collection UI inside the active major-tab content after the hybrid shell is in place.
 
 **Done when:**
 - Middle panel shows SQLite rows for the selected model type.
@@ -195,9 +239,11 @@ Constraints:
 
 ---
 
-## [ ] Step 3 — Detail panel with data-model editor
+## [x] Step 3 — Detail panel with data-model editor
 
-**Goal:** The right panel shows the selected model-definition row in editable form so AICodex can own sensitive data-model CRUD locally before schema generation.
+**Status:** Done in the current repo snapshot.
+
+**Goal:** The right-side workspace inside the active major tab shows the selected model-definition row in editable form so AICodex can own sensitive data-model CRUD locally before schema generation.
 
 **Files to change:**
 - `lib/app/aicodex/aicodex.dart`
@@ -211,15 +257,16 @@ Constraints:
 3. Display read-only or lightly editable handling for structural fields such as `i`, `d`, `e`, `t`, and `payload` as appropriate for the selected catalog.
 4. Add a "Save" button that calls `SqliteStore.upsertRow` with the edited row.
 5. Add a "Delete" button that calls `SqliteStore.deleteRow` for the selected row.
-6. If `_selectedModelType` is `Entity`, also show a summary line: "Fields: N" (count of Field rows where `e == this entity's id`).
-7. If `_selectedModelType` is `Table`, also show a summary line: "Columns: N" (count of Column rows where `e == this table's id`).
-8. Show "No row selected" when nothing is selected.
+6. Show "No row selected" when nothing is selected.
+7. Keep the editor and schema actions inside the active major-tab workspace area of the hybrid shell.
+8. If a relationship summary cannot be derived cleanly from the current model contract, show a deferral note instead of reusing stale assumptions.
 
 **Done when:**
 - Selecting a row in the master list loads it in the right panel editor.
 - Save persists the row back to SQLite.
 - Delete removes the row from SQLite and refreshes the master list.
-- Related child count is shown for Entity and Table types.
+- Structural fields are visible and the JSON payload is editable.
+- Narrow dual-pane layouts still keep the action area usable.
 - Empty state shows "No row selected."
 - `flutter analyze` passes.
 - `flutter test` passes.
@@ -239,9 +286,8 @@ Task:
 - Show structural fields and payload in a simple direct editor/read-only layout as appropriate.
 - Add Save button -> upsertRow.
 - Add Delete button -> deleteRow.
-- For Entity type: show "Fields: N" (count Field rows where e matches).
-- For Table type: show "Columns: N" (count Column rows where e matches).
 - Show "No row selected" empty state.
+- If relationship counts are not valid under the current model rules, show a deferral note instead of inventing a stale mapping.
 
 Constraints:
 - AICodex owns sensitive data-model CRUD for these catalogs.
@@ -252,7 +298,9 @@ Constraints:
 
 ## [ ] Step 4 — DDL and function-script generation display
 
-**Goal:** Add schema action buttons and SQL/script preview to the detail panel after the row editing surface exists. This is what makes AICodex different from AIStudio — it both owns sensitive data-model CRUD and shows the generated table DDL and function/`virtualfun` scripts for the selected model.
+**Goal:** Add schema action buttons and SQL/script preview to the detail panel after the row editing surface exists. This is what makes AICodex different from AIStudio — it both owns sensitive data-model CRUD and shows the generated table DDL and function/`vfun` scripts for the selected model.
+
+**Current state:** Step 3 is done — selected rows now load into the right panel, `n/s/a/payload` can be edited, and save/delete already round-trip through SQLite with widget coverage.
 
 **Files to change:**
 - `lib/app/aicodex/aicodex.dart`
@@ -268,7 +316,7 @@ Constraints:
 4. Implement `generateCreateFunction(...)` for PostgreSQL foundation/business function SQL.
    - Treat `Parameter` rows as input-only parameters.
    - Treat returned business shape as field/result structure rather than `OUT` or `INOUT` parameters.
-5. Implement `generateVirtualFun(...)` for SQLite `virtualfun` payload/script generation where function behavior needs local representation.
+5. Implement `generateVirtualFun(...)` for SQLite `vfun` payload/script generation where function behavior needs local representation.
 6. In the detail panel, show three buttons: **Create Table**, **Create Function**, **Drop Table**.
 7. When pressed, display the generated SQL/script in a read-only code block below the buttons.
 8. Add a "Copy" button to copy the SQL/script to clipboard.
@@ -276,7 +324,7 @@ Constraints:
 **Done when:**
 - Selecting an Entity and pressing "Create Table" shows a valid `CREATE TABLE` statement.
 - PostgreSQL types are resolved from `TypeMapper`.
-- "Create Function" shows appropriate function SQL or SQLite `virtualfun` script output.
+- "Create Function" shows appropriate function SQL or SQLite `vfun` script output.
 - "Drop Table" shows a `DROP TABLE` statement.
 - "Copy" copies the generated SQL/script text.
 - `flutter analyze` passes.
@@ -297,7 +345,7 @@ Task:
 - generateCreate(entity, fields) → CREATE TABLE SQL using TypeMapper for column types.
 - generateDrop(entity) → DROP TABLE IF EXISTS SQL.
 - generateCreateFunction(...) → function SQL for PostgreSQL.
-- generateVirtualFun(...) → SQLite `virtualfun` script/payload for function-like behavior.
+- generateVirtualFun(...) → SQLite `vfun` script/payload for function-like behavior.
 - Add three buttons in detail panel: Create Table, Create Function, Drop Table.
 - Show generated SQL/script in a read-only code block.
 - Add Copy to clipboard button.
@@ -340,7 +388,7 @@ Constraints:
 
 ## [ ] Step 6 — Foundation and business function scripts
 
-**Goal:** Extend generation beyond tables to support PostgreSQL foundation/business functions and SQLite `virtualfun` records.
+**Goal:** Extend generation beyond tables to support PostgreSQL foundation/business functions and SQLite `vfun` records.
 
 **Files to change:**
 - `lib/core/generator/ddl_generator.dart`
@@ -349,12 +397,12 @@ Constraints:
 1. `generateCreateFunction(function, parameters)` → `CREATE OR REPLACE FUNCTION` SQL for PostgreSQL.
 2. Use `TypeMapper` for input parameter types and field/result return types.
 3. `generateDropFunction(function)` → `DROP FUNCTION IF EXISTS` SQL.
-4. `generateVirtualFun(function, script)` → SQLite `virtualfun` row payload/script.
-5. In the detail panel, show function SQL or `virtualfun` output when `_selectedModelType` is `Function`.
+4. `generateVirtualFun(function, script)` → SQLite `vfun` row payload/script.
+5. In the detail panel, show function SQL or `vfun` output when `_selectedModelType` is `Function`.
  
 **Done when:**
 - Function SQL generation works with input parameters and field/result return shape.
-- SQLite `virtualfun` payload generation works for local function-like behavior.
+- SQLite `vfun` payload generation works for local function-like behavior.
 - Detail panel shows appropriate SQL/script output for Function model type.
 - `flutter analyze` passes.
 - `flutter test` passes.
@@ -391,7 +439,7 @@ Constraints:
 - AICodex **generates and applies** schema operations — create, drop, and function/script actions.
 - Do not introduce `ALTER TABLE`.
 - PostgreSQL can use real functions.
-- SQLite function behavior should be represented via `virtualfun` records/scripts.
+- SQLite function behavior should be represented via `vfun` records/scripts.
 - Do not redesign AIBook or AIStudio.
 - Do not add route navigation.
 - Keep one `Scaffold`, everything in `Scaffold.body`.
@@ -414,6 +462,6 @@ AICodex ──(CRUD + schema apply)──► Data Model Definitions ──(gener
 | DDL | Data Definition Language — CREATE, DROP, and related function/script statements |
 | Schema Source | App-facing models: Entity, Field, Relation, Function, Parameter |
 | Schema Target | Physical models: Table, Column, System, User |
-| `virtualfun` | SQLite-side script store used when function behavior needs local representation |
+| `vfun` | SQLite-side script store used when function behavior needs local representation |
 | `TypeMapper` | Maps type ID → PostgreSQL/Dart/SQLite/JSON type names |
-| `i/a/d/e/t/n/s` | id, active, date, entity, type, readable name, system name |
+| `i/a/d/e/t/n/s` | id, active, last date, editor, type, readable name, system name |

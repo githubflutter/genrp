@@ -36,10 +36,11 @@ Current schema
   - generic row storage for catalog-based editing
   - primary key is `(catalog, i)`
   - currently seeds one default `System` row on first create
-- `virtualfun` (planned/admin-generated)
+- `vfun` (admin-generated)
   - SQLite-side substitute for database functions in this architecture
-  - stored as a shared table spec today, but not yet provisioned by `SqliteStore`
-  - stores scripts/payloads to run when function-like behavior is needed locally
+  - now provisioned by `SqliteStore`
+  - mirrors `FunctionModel` storage (`i, a, d, e, ei, t, n, s, tis`) and adds `sql1`, `sql2`, `sql3` for relevant SQLite-side script storage
+  - can be deferred temporarily if it blocks current app-level progress
 
 Main types
 - `SqliteCatalogRow`
@@ -73,7 +74,8 @@ Platform direction
 Planned divergence from PostgreSQL
 - SQLite is local foundation/cache infrastructure, not a mirror of PostgreSQL function support.
 - PostgreSQL can use real foundation and business functions.
-- SQLite should represent that function layer through a `virtualfun` table/model rather than direct database functions.
+- SQLite should represent that function layer through a `vfun` table/model rather than direct database functions.
+- If `vfun` becomes a blocker for current UI/data work, it can be skipped temporarily and resumed later.
 - Direct CRUD is acceptable for foundation tables.
 - Business data should stay function/script-driven rather than relying on generic direct table CRUD.
 - The shared create-table builders currently emit `NOT NULL` for every generated column.
@@ -84,10 +86,10 @@ Current intended usage
   - may read some data-model rows for context, but sensitive data-model CRUD belongs to `AICodex`
 - `AIBook`
   - local cache for spec data or base `X` business data when needed
-  - may later cache `virtualfun` records/scripts when function-like behavior needs local representation
+  - may later cache `vfun` records/scripts when function-like behavior needs local representation
 - `AICodex`
   - owns local CRUD for sensitive data-model rows
-  - may later generate/store SQLite-side `virtualfun` scripts
+  - may later generate/store SQLite-side `vfun` scripts
 - `catalog_row` is a shared starting point, not the final direct-access pattern for business tables
 - Future app-specific db code should sit under the matching app db directory rather than accumulating in the db root.
 

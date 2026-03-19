@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genrp/app/aibook/autopilotgo.dart';
-import 'package:genrp/core/model/ux/ux_checkbox_model.dart';
-import 'package:genrp/core/model/ux/ux_text_box_model.dart';
+import 'package:genrp/core/model/uschema/ux_checkbox_model.dart';
+import 'package:genrp/core/model/uschema/ux_text_box_model.dart';
 import 'package:genrp/core/widgets/x_checkbox.dart';
 import 'package:genrp/core/widgets/x_text_box.dart';
 

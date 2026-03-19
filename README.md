@@ -8,7 +8,7 @@ A Flutter monolith with three apps sharing a common core engine.
 |---|---|---|---|
 | **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta; Step 2 done, Step 3 pending |
 | **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | `lib/app/aistudio/aistudio.dart` | Step 2 done; Step 3 pending |
-| **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 1 done; paused before Step 2 |
+| **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 3 done; Step 4 pending |
 
 ## Quick Start
 
@@ -30,11 +30,12 @@ lib/
     ├── base/              # X transport classes, DataType, sys registries
     ├── db/                # SQLite store + generic PG/SQLite/Web DB builders
     ├── generator/         # DynamicSpecBody (body router)
-    ├── model/data/        # 9 data models (Entity, Field, Table, etc.)
-    ├── model/ux/          # UX spec models + registry + mapper
+    ├── model/bschema/     # 7 bschema models (Entity, Field, Table, etc.)
+    ├── model/bdata/       # business data models (current: UserModel)
+    ├── model/uschema/     # UX spec models + registry + mapper
     ├── runtime/           # TemplateRuntime (JSON → Flutter widgets)
     ├── template/          # 4 template widgets (form, detail, collection, checkboxForm)
-    └── widgets/           # 5 wrapped controls (XButton, XTextBox, XCheckBox, etc.)
+    └── widgets/           # 6 shared widgets (including hybrid shell + X controls)
 ```
 
 ## Documentation

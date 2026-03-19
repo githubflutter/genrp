@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/ux/ux_registry.dart';
-import 'package:genrp/core/model/ux/ux_spec_mapper.dart';
+import 'package:genrp/core/model/uschema/ux_registry.dart';
+import 'package:genrp/core/model/uschema/ux_spec_mapper.dart';
+import 'package:genrp/core/theme/genrp_theme.dart';
 import 'package:genrp/core/widgets/x_button.dart';
 import 'package:genrp/core/widgets/x_text_box.dart';
 
-typedef RuntimeNodeBuilder = Widget Function(
-  Map<String, dynamic> node,
-  Autopilot autopilot,
-  Widget Function(Map<String, dynamic> childNode) renderChild,
-);
+typedef RuntimeNodeBuilder =
+    Widget Function(
+      Map<String, dynamic> node,
+      Autopilot autopilot,
+      Widget Function(Map<String, dynamic> childNode) renderChild,
+    );
 
 /// Runtime that renders the current small widget set from JSON nodes.
 class TemplateRuntime {
@@ -18,23 +20,15 @@ class TemplateRuntime {
   static const UxSpecMapper _mapper = UxSpecMapper();
 
   static final Map<String, RuntimeNodeBuilder> _builders = {
-    'column': (node, autopilot, renderChild) => _RuntimeColumn(
-          node: node,
-          renderChild: renderChild,
-        ),
+    'column': (node, autopilot, renderChild) =>
+        _RuntimeColumn(node: node, renderChild: renderChild),
     'spacer': (node, autopilot, renderChild) => _RuntimeSpacer(node: node),
-    'textField': (node, autopilot, renderChild) => _RuntimeTextField(
-          node: node,
-          autopilot: autopilot,
-        ),
-    'button': (node, autopilot, renderChild) => _RuntimeButton(
-          node: node,
-          autopilot: autopilot,
-        ),
-    'text': (node, autopilot, renderChild) => _RuntimeText(
-          node: node,
-          autopilot: autopilot,
-        ),
+    'textField': (node, autopilot, renderChild) =>
+        _RuntimeTextField(node: node, autopilot: autopilot),
+    'button': (node, autopilot, renderChild) =>
+        _RuntimeButton(node: node, autopilot: autopilot),
+    'text': (node, autopilot, renderChild) =>
+        _RuntimeText(node: node, autopilot: autopilot),
   };
 
   Widget render(
@@ -45,7 +39,8 @@ class TemplateRuntime {
     int bodyId = 0,
   }) {
     final typeId = (node['typeId'] as num?)?.toInt();
-    final type = registry?.typeName(typeId) ?? node['type']?.toString() ?? 'text';
+    final type =
+        registry?.typeName(typeId) ?? node['type']?.toString() ?? 'text';
     final builder = _builders[type] ?? _builders['text']!;
     final scopedNode = <String, dynamic>{
       ...node,
@@ -55,16 +50,19 @@ class TemplateRuntime {
     return builder(
       scopedNode,
       autopilot,
-      (childNode) => render(childNode, autopilot, registry: registry, hostId: hostId, bodyId: bodyId),
+      (childNode) => render(
+        childNode,
+        autopilot,
+        registry: registry,
+        hostId: hostId,
+        bodyId: bodyId,
+      ),
     );
   }
 }
 
 class _RuntimeColumn extends StatelessWidget {
-  const _RuntimeColumn({
-    required this.node,
-    required this.renderChild,
-  });
+  const _RuntimeColumn({required this.node, required this.renderChild});
 
   final Map<String, dynamic> node;
   final Widget Function(Map<String, dynamic> childNode) renderChild;
@@ -95,10 +93,7 @@ class _RuntimeSpacer extends StatelessWidget {
 }
 
 class _RuntimeTextField extends StatelessWidget {
-  const _RuntimeTextField({
-    required this.node,
-    required this.autopilot,
-  });
+  const _RuntimeTextField({required this.node, required this.autopilot});
 
   final Map<String, dynamic> node;
   final Autopilot autopilot;
@@ -117,10 +112,7 @@ class _RuntimeTextField extends StatelessWidget {
 }
 
 class _RuntimeButton extends StatelessWidget {
-  const _RuntimeButton({
-    required this.node,
-    required this.autopilot,
-  });
+  const _RuntimeButton({required this.node, required this.autopilot});
 
   final Map<String, dynamic> node;
   final Autopilot autopilot;
@@ -139,10 +131,7 @@ class _RuntimeButton extends StatelessWidget {
 }
 
 class _RuntimeText extends StatelessWidget {
-  const _RuntimeText({
-    required this.node,
-    required this.autopilot,
-  });
+  const _RuntimeText({required this.node, required this.autopilot});
 
   final Map<String, dynamic> node;
   final Autopilot autopilot;
@@ -151,7 +140,8 @@ class _RuntimeText extends StatelessWidget {
   Widget build(BuildContext context) {
     final bind = node['bind']?.toString();
     final src = (node['src'] as num?)?.toInt();
-    final fieldId = (node['fieldId'] as num?)?.toInt() ?? (node['f'] as num?)?.toInt();
+    final fieldId =
+        (node['fieldId'] as num?)?.toInt() ?? (node['f'] as num?)?.toInt();
     final resolvedValue = autopilot.resolveFieldBinding(
       src: src,
       fieldId: fieldId,
@@ -161,7 +151,10 @@ class _RuntimeText extends StatelessWidget {
         ? node['text']?.toString() ?? ''
         : '${node['prefix'] ?? ''}${resolvedValue ?? ''}${node['suffix'] ?? ''}';
     final style = node['style'] == 'headline'
-        ? const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+        ? Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontSize: GenrpTheme.fontXl,
+            fontWeight: FontWeight.w700,
+          )
         : null;
     return Padding(
       padding: const EdgeInsets.only(top: 8),

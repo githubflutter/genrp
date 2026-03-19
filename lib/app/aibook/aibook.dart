@@ -4,6 +4,7 @@ import 'package:genrp/meta.dart';
 import 'package:genrp/app/aibook/autopilotgo.dart';
 import 'package:genrp/core/agent/mock_transport.dart';
 import 'package:genrp/core/generator/boilerplate_generator.dart';
+import 'package:genrp/core/theme/genrp_theme.dart';
 import 'package:provider/provider.dart';
 
 class AIBookApp extends StatelessWidget {
@@ -16,6 +17,9 @@ class AIBookApp extends StatelessWidget {
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'AIBook',
+        theme: GenrpTheme.lightTheme(),
+        darkTheme: GenrpTheme.darkTheme(),
+        themeMode: ThemeMode.dark,
         home: const _AIBookHome(),
       ),
     );
@@ -55,7 +59,9 @@ class _AIBookHomeState extends State<_AIBookHome> {
                 body: Center(
                   child: Text(
                     'Failed to load spec:\n${snapshot.error}',
-                    style: const TextStyle(color: Colors.red),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -77,7 +83,9 @@ class _AIBookHomeState extends State<_AIBookHome> {
                 body: Center(
                   child: Text(
                     autopilot.specError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -100,18 +108,12 @@ class _AIBookHomeState extends State<_AIBookHome> {
                 child: const Icon(Icons.book),
               ),
               bottomNavigationBar: BottomAppBar(
-                child: Container(
-                  height: 48,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Text('Status: $status'),
-                      const Spacer(),
-                      Text(
-                        'AIBook:${AppMeta.aibook}/${AppMeta.f}/${AppMeta.v}',
-                      ),
-                    ],
-                  ),
+                child: Row(
+                  children: [
+                    Text('Status: $status'),
+                    const Spacer(),
+                    Text('AIBook:${AppMeta.aibook}/${AppMeta.f}/${AppMeta.v}'),
+                  ],
                 ),
               ),
             );

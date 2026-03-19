@@ -230,6 +230,23 @@ class SqliteStore {
           await db.execute(
             'CREATE INDEX idx_catalog_row_catalog_name ON catalog_row (catalog, n, i)',
           );
+          await db.execute('''
+            CREATE TABLE vfun (
+              i INTEGER NOT NULL PRIMARY KEY,
+              a INTEGER NOT NULL DEFAULT 1,
+              d INTEGER NOT NULL DEFAULT 0,
+              e INTEGER NOT NULL DEFAULT 0,
+              ei INTEGER NOT NULL DEFAULT 0,
+              t INTEGER NOT NULL DEFAULT 0,
+              n TEXT NOT NULL DEFAULT '',
+              s TEXT NOT NULL DEFAULT '',
+              tis TEXT NOT NULL DEFAULT '[0]',
+              sql1 TEXT NOT NULL DEFAULT '',
+              sql2 TEXT NOT NULL DEFAULT '',
+              sql3 TEXT NOT NULL DEFAULT ''
+            )
+          ''');
+          await db.execute('CREATE INDEX idx_vfun_name ON vfun (n, i)');
           await _seedFoundationData(db);
         },
       ),

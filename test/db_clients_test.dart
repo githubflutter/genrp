@@ -36,14 +36,25 @@ void main() {
       expect(tableScript, contains('"n" text NOT NULL'));
     });
 
-    test('SqliteAdmin creates virtualfun insert for create function', () {
+    test('SqliteAdmin creates vfun insert for create function', () {
       const admin = SqliteAdmin();
 
       final script = admin.buildCreateFunction(
         const DbFunctionSpec(
+          i: 7,
+          a: true,
+          d: 1700000000000,
+          e: 4,
+          ei: 9,
+          t: 5,
+          tis: <int>[2, 3],
+          n: 'Edit Book',
+          s: 'edit_book',
           name: 'edit_book',
           returns: 'json',
           body: 'select 1;',
+          sql1: 'update t0 set n = ? where i = ?;',
+          sql2: 'select changes();',
           parameters: <DbFunctionParameterSpec>[
             DbFunctionParameterSpec(name: 'payload', type: 'text'),
           ],
@@ -51,9 +62,18 @@ void main() {
         ),
       );
 
-      expect(script, contains('INSERT INTO "virtualfun"'));
+      expect(
+        script,
+        contains(
+          'INSERT INTO "vfun" ("i", "a", "d", "e", "ei", "t", "n", "s", "tis", "sql1", "sql2", "sql3")',
+        ),
+      );
+      expect(script, contains('(7, 1, 1700000000000, 4, 9, 5, '));
+      expect(script, contains("'Edit Book'"));
       expect(script, contains("'edit_book'"));
-      expect(script, contains("'business'"));
+      expect(script, contains("'[2,3]'"));
+      expect(script, contains("'update t0 set n = ? where i = ?;'"));
+      expect(script, contains("'select changes();'"));
     });
 
     test('PgsqlClient blocks direct business-table CRUD', () {
@@ -112,7 +132,7 @@ void main() {
         );
         expect(
           sysTableEntrypoints.map((entry) => entry.entrypoint),
-          contains('virtualfun'),
+          contains('vfun'),
         );
         expect(
           sysFunctionEntrypoints.map((entry) => entry.entrypoint),
@@ -123,7 +143,10 @@ void main() {
           containsAll(<String>['foundation', 'business']),
         );
         expect(defaultCatalogRowSeedEntries, hasLength(1));
-        expect(defaultCatalogRowSeedEntries.first.catalog, SystemDefaults.catalog);
+        expect(
+          defaultCatalogRowSeedEntries.first.catalog,
+          SystemDefaults.catalog,
+        );
         expect(defaultCatalogRowSeedEntries.first.payload['sid'], 1);
         expect(defaultCatalogRowSeedEntries.first.payload['fv'], 1);
         expect(defaultCatalogRowSeedEntries.first.payload['cv'], 1);

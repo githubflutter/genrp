@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/ux/ux_text_box_model.dart';
+import 'package:genrp/core/model/uschema/ux_text_box_model.dart';
 
 class XTextBox extends StatefulWidget {
   const XTextBox({required this.model, required this.autopilot, super.key});

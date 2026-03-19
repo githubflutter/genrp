@@ -1,6 +1,6 @@
 import 'package:genrp/core/base/bootstrap.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genrp/core/model/data/system_model.dart';
+import 'package:genrp/core/model/base/system_model.dart';
 
 void main() {
   test('SystemModel round-trips structural metadata fields', () {

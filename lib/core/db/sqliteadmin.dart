@@ -25,14 +25,23 @@ class SqliteAdmin {
   String buildCreateFunction(DbFunctionSpec spec) {
     final row = spec.toVirtualFunRow();
     return 'INSERT INTO ${quoteIdentifier(spec.virtualTableName)} '
-        '("schema_name", "function_name", "returns_type", "language", '
-        '"target_kind", "parameter_json", "script_body") VALUES '
-        '(${sqlLiteral(row['schema_name'])}, '
-        '${sqlLiteral(row['function_name'])}, '
-        '${sqlLiteral(row['returns_type'])}, '
-        '${sqlLiteral(row['language'])}, '
-        '${sqlLiteral(row['target_kind'])}, '
-        '${jsonLiteral(row['parameter_json'])}, '
-        '${sqlLiteral(row['script_body'])});';
+        '("i", "a", "d", "e", "ei", "t", "n", "s", "tis", "sql1", "sql2", "sql3") VALUES '
+        '(${_literal(row['i'])}, '
+        '${_literal(row['a'])}, '
+        '${_literal(row['d'])}, '
+        '${_literal(row['e'])}, '
+        '${_literal(row['ei'])}, '
+        '${_literal(row['t'])}, '
+        '${sqlLiteral(row['n'])}, '
+        '${sqlLiteral(row['s'])}, '
+        '${jsonLiteral(row['tis'])}, '
+        '${sqlLiteral(row['sql1'])}, '
+        '${sqlLiteral(row['sql2'])}, '
+        '${sqlLiteral(row['sql3'])});';
+  }
+
+  String _literal(Object? value) {
+    if (value is bool) return value ? '1' : '0';
+    return sqlLiteral(value);
   }
 }

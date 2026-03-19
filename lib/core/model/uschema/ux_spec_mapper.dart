@@ -1,6 +1,6 @@
-import 'package:genrp/core/model/ux/ux_button_model.dart';
-import 'package:genrp/core/model/ux/ux_checkbox_model.dart';
-import 'package:genrp/core/model/ux/ux_text_box_model.dart';
+import 'package:genrp/core/model/uschema/ux_button_model.dart';
+import 'package:genrp/core/model/uschema/ux_checkbox_model.dart';
+import 'package:genrp/core/model/uschema/ux_text_box_model.dart';
 
 class UxSpecMapper {
   const UxSpecMapper();

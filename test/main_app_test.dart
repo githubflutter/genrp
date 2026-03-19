@@ -11,10 +11,10 @@ void main() {
     expect(find.text('AIStudio'), findsOneWidget);
 
     await tester.tap(find.text('AICodex'));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
     expect(find.text('Schema Source'), findsOneWidget);
-    expect(find.text('Master/Main Editor'), findsWidgets);
+    expect(find.text('Master/Main Editor'), findsOneWidget);
     expect(find.text('Choose App'), findsNothing);
     expect(find.text('AIBook'), findsNothing);
     expect(find.text('AIStudio'), findsNothing);

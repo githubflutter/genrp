@@ -50,7 +50,7 @@ flutter test
 
 **Files to change:**
 - `lib/core/generator/boilerplate_generator.dart`
-- `lib/core/model/ux/ux_registry.dart` (if needed)
+- `lib/core/model/uschema/ux_registry.dart` (if needed)
 
 **What to do:**
 1. In `DynamicSpecBody.build()`, resolve `currentBody` to an `int` first.
@@ -337,4 +337,4 @@ Constraints:
 | `X` / `Xi` / `Xia` / `Xiad` / `Xiade` (base/) | Business-bound transport shape |
 | `slot` | Direct index into `X.v[]` |
 | `src` | Binding source: 0=state, 1=dataSource, 2=dataSet |
-| `i/a/d/e/t/n/s` | id, active, date, entity, type, readable name, system name |
+| `i/a/d/e/t/n/s` | id, active, last date, editor, type, readable name, system name |

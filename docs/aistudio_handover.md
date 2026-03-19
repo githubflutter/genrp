@@ -2,13 +2,25 @@
 
 Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
-**Current status:** Step 2 is done — three-panel shell, UX/spec catalog navigation, local selection state, full UX/spec catalog list, selection highlighting, and middle-panel header updates are in place. Step 3 is next. Shared DB scaffolding exists, but AIStudio UI wiring is still Step 3+ work.
+**Current status:** Step 2 is done, and the shared hybrid shell is in place — minor panel with two tabs, major panel with three tabs, UX/spec catalog navigation, local selection state, full UX/spec catalog list, and major-panel content placeholders are all in place. Step 3 is next.
 
 **Current next step:** Step 3 — Middle panel with SQLite-backed UX/spec row list.
 
-**Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio should focus on UX/spec CRUD. If data-model catalogs remain visible in the shell, they should be treated as secondary/reference paths until the UI is narrowed further.
+**Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio is now narrowed to UX/spec CRUD and should stay on that path.
 
-**Special rule:** `System` is not a normal `i/a/d/e/t/n/s` row. `SystemModel` is structural metadata (`sid`, `n`, `fv`, `cv`, `ld`, `lds`, `ldu`, `ctm`, `uxm`, `m1`, `m2`) and belongs to the sensitive data-model side owned by `AICodex`.
+**Special rule:** `System` and `Usr` are base-side models under `lib/core/model/base/`, not normal `i/a/d/e/t/n/s` rows. `SystemModel` is structural metadata (`sid`, `n`, `fv`, `cv`, `ld`, `lds`, `ldu`, `ctm`, `uxm`, `m1`, `m2`) and belongs to the sensitive data-model side owned by `AICodex`.
+
+**UX integer rule:** For `uschema`, `i` and `e` stay `int4`, and new rows allocate `i` with `max(i) + 1`. `d` stays the last date/time integer, usually UTC epoch milliseconds, and should remain web-safe `int^53`. UX rows should not become real database foreign-key owners of the data-model layer.
+
+**Convergent UI rule:** AIStudio should use the same hybrid shell as AICodex:
+- left side = **minor panel**
+- right side = **major panel**
+- minor panel has **two tabs**
+- major panel has **three tabs**
+- major tab 1 = single mid panel only
+- major tab 2 = larger mid + smaller right
+- major tab 3 = equal mid + right
+- functional UX/spec work should now continue inside that shared shell
 
 ---
 
@@ -38,6 +50,29 @@ flutter test
 - [x] FAB and bottom status bar
 - [x] `SqliteStore` shared foundation (not wired to AIStudio yet)
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
+
+## [x] UI convergence prerequisite — Hybrid shell
+
+**Status:** Done in the current repo snapshot.
+
+**Goal:** Replace the earlier fixed three-panel shell with the shared hybrid minor/major shell before continuing feature steps.
+
+**What to do:**
+1. Convert the current body layout into:
+   - left minor panel
+   - right major panel
+2. Add **two tabs** to the minor panel.
+3. Add **three tabs** to the major panel.
+4. Implement the three major layout modes:
+   - tab 1: single mid only
+   - tab 2: larger mid + smaller right
+   - tab 3: equal mid + right
+5. Preserve current AIStudio selection behavior inside the new shell.
+
+**Done when:**
+- AIStudio uses the shared hybrid shell.
+- The old fixed three-panel layout is gone.
+- Current selection/header behavior still works inside the new shell.
 
 ---
 
@@ -148,6 +183,7 @@ Constraints:
 4. Add a search `TextField` at the top — filter displayed rows by `n`.
 5. Add an "Add" `IconButton` in the header for UX/spec catalogs — calls `SqliteStore.upsertRow` with a new empty row.
 6. Add an `onTap` to each row item that sets `_selectedRowId`.
+7. Place the collection UI inside the active major-tab content after the hybrid shell is in place.
 
 **Done when:**
 - Middle panel shows rows from SQLite for the selected catalog.
@@ -187,7 +223,7 @@ Constraints:
 
 ## [ ] Step 4 — Right panel generic editor for UX/spec rows
 
-**Goal:** The right panel shows a form editor for the selected UX/spec row and saves changes back to SQLite.
+**Goal:** The right-side workspace inside the active major tab shows a form editor for the selected UX/spec row and saves changes back to SQLite.
 
 **Files to change:**
 - `lib/app/aistudio/aistudio.dart`
@@ -201,6 +237,7 @@ Constraints:
 6. Add a "Delete" button that calls `SqliteStore.deleteRow`.
 7. After save or delete, refresh the middle panel list.
 8. If a sensitive data-model catalog is selected, show a note that editing for that catalog belongs in AICodex instead of AIStudio.
+9. Keep the editor inside the active major-tab workspace area of the hybrid shell.
 
 **Done when:**
 - Selecting a row in the middle panel loads it in the right panel editor.
@@ -227,7 +264,7 @@ Task:
 - Refresh middle panel after save/delete.
 
 Constraints:
-- Start with the common shape for UX/spec catalogs; sensitive data-model catalogs should redirect conceptually to AICodex.
+- Start with the common shape for UX/spec catalogs only.
 - Keep it direct — no complex form framework.
 - Keep analyzer and tests green.
 ```
@@ -284,7 +321,7 @@ Constraints:
 - `test/aistudio_test.dart` (new)
 
 **What to do:**
-1. Test: switching tabs changes available catalog list.
+1. Test: selecting a UX/spec catalog updates the middle-panel header.
 2. Test: selecting a catalog loads rows from SQLite.
 3. Test: adding a row creates it in SQLite and appears in the list.
 4. Test: editing a row and saving persists the change.
@@ -299,7 +336,7 @@ Constraints:
 
 ## [ ] Step 7 — Remote transport (after local is solid)
 
-**Goal:** Add remote load/save transport for AIStudio model rows, using the same backend contract as AIBook.
+**Goal:** Add remote load/save transport for AIStudio UX/spec rows, using the same backend contract as AIBook.
 
 **What to do:**
 1. Reuse the `Transport` class from AIBook Step 4 (or create a shared one).
@@ -333,7 +370,7 @@ Constraints:
 
 | Term | Meaning |
 |---|---|
-| `catalog` | A model type category (e.g., "Entity", "Field", "Host") |
-| `i/a/d/e/t/n/s` | id, active, date, entity, type, readable name, system name |
+| `catalog` | A model type category (e.g., "Host", "Body", "Template") |
+| `i/a/d/e/t/n/s` | id, active, last date, editor, type, readable name, system name |
 | `payload` | JSON blob for catalog-specific fields beyond the common shape |
 | `SqliteCatalogRow` | The generic persisted row shape in SQLite |

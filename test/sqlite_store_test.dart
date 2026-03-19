@@ -25,6 +25,40 @@ void main() {
       expect(seededSystem.payload['m1'], isEmpty);
       expect(seededSystem.payload['m2'], isEmpty);
 
+      final db = await store.database;
+      final vfunTables = await db.query(
+        'sqlite_master',
+        columns: const <String>['name'],
+        where: 'type = ? AND name = ?',
+        whereArgs: const <Object?>['table', 'vfun'],
+      );
+      expect(vfunTables, hasLength(1));
+
+      await db.insert('vfun', <String, Object?>{
+        'i': 1,
+        'a': 1,
+        'd': 1700000000000,
+        'e': 7,
+        'ei': 6,
+        't': 4,
+        'n': 'Edit User',
+        's': 'edit_user',
+        'tis': '[2,3]',
+        'sql1': 'select 1;',
+        'sql2': '',
+        'sql3': '',
+      });
+
+      final vfunRows = await db.query(
+        'vfun',
+        where: 'i = ?',
+        whereArgs: const <Object?>[1],
+      );
+      expect(vfunRows, hasLength(1));
+      expect(vfunRows.first['n'], 'Edit User');
+      expect(vfunRows.first['tis'], '[2,3]');
+      expect(vfunRows.first['sql1'], 'select 1;');
+
       const row = SqliteCatalogRow(
         catalog: 'entity',
         i: 1,

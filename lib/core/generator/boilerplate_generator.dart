@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/ux/ux_registry.dart';
+import 'package:genrp/core/model/uschema/ux_registry.dart';
 import 'package:genrp/core/template/checkbox_form_template.dart';
 import 'package:genrp/core/template/collection_template.dart';
 import 'package:genrp/core/template/detail_template.dart';

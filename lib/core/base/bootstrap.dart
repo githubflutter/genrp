@@ -1,4 +1,4 @@
-import 'package:genrp/core/model/data/system_model.dart';
+import 'package:genrp/core/model/base/system_model.dart';
 import 'package:genrp/meta.dart';
 
 class DefaultAppKvSeedEntry {

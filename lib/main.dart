@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:genrp/app/aibook/aibook.dart';
 import 'package:genrp/app/aicodex/aicodex.dart';
 import 'package:genrp/app/aistudio/aistudio.dart';
+import 'package:genrp/core/theme/genrp_theme.dart';
 
 void main() {
   runApp(const MainApp());
@@ -35,6 +36,9 @@ class _MainAppState extends State<MainApp> {
       null => MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'GenRP',
+        theme: GenrpTheme.lightTheme(),
+        darkTheme: GenrpTheme.darkTheme(),
+        themeMode: ThemeMode.dark,
         home: _LauncherHome(onSelect: _open),
       ),
     };

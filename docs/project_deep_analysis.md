@@ -15,9 +15,13 @@ GenRP is a **Flutter monolith** containing **three distinct applications** insid
 |---|---|---|
 | **AIBook** | Runtime reader / preview flow (function-driven business-data consumer) | ~80% beta; Step 2 done, Step 3 pending |
 | **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | Step 2 done; Step 3 pending |
-| **AICodex** | Sensitive data-model CRUD + schema-application surface | Step 1 done; paused before Step 2 |
+| **AICodex** | Sensitive data-model CRUD + schema-application surface | Step 3 done; Step 4 pending |
 
 The apps share a common orchestration engine (`Autopilot`), data models, UX spec models, a JSON-driven UI composition system, and a local SQLite persistence layer. The repo now also has a shared DB contract/admin-client scaffold for PostgreSQL, SQLite, and web action payloads. The architecture is intentionally lean, performance-first, and optimized for compact numeric transport.
+
+The current UI direction is to keep `AIStudio` and `AICodex` converged on one **hybrid authoring shell**: a left-side minor panel plus a right-side major panel. The major panel changes between one-panel and two-panel modes through tabs, so the apps differ by domain responsibility rather than by inventing different outer layouts.
+
+The data-model layer is the foundation of the whole system because it is the actual schema side: the sitting table/function definitions from which runtime and UX layers are derived. That layer is intentionally single origin, single source of truth, and single user under `AICodex`.
 
 ---
 
@@ -81,7 +85,7 @@ graph TB
         SCR["SqliteCatalogRow"]
     end
 
-    subgraph "Data Models"
+    subgraph "BSchema Models"
         EM["EntityModel"]
         FM["FieldModel"]
         RM["RelationModel"]
@@ -90,7 +94,7 @@ graph TB
         TM["TableModel"]
         CM["ColumnModel"]
         SM["SystemModel"]
-        UM["UserModel"]
+        UM["UsrModel"]
     end
 
     subgraph "Transport"
@@ -146,6 +150,7 @@ graph TB
     MT --> REGJ
 
     AISTUDIO --> SQL
+    AICODEX --> SQL
     SQL --> SCR
 ```
 
@@ -155,10 +160,10 @@ graph TB
 
 | Metric | Value |
 |---|---|
-| **Source files** (`lib/`) | 56 Dart files |
-| **Source LOC** (`lib/`) | ~4,307 lines |
-| **Test files** (`test/`) | 13 Dart files |
-| **Test LOC** (`test/`) | ~1,207 lines |
+| **Source files** (`lib/`) | 58 Dart files |
+| **Source LOC** (`lib/`) | ~5,076 lines |
+| **Test files** (`test/`) | 14 Dart files |
+| **Test LOC** (`test/`) | ~1,418 lines |
 | **Asset JSON files** | 3 files |
 | **Doc files** (`docs/`) | 10 markdown files |
 | **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
@@ -178,7 +183,7 @@ genrp/
 │   │   │   ├── aibook.dart               # AIBook entry (MaterialApp + Provider)
 │   │   │   └── autopilotgo.dart          # Concrete Autopilot for AIBook
 │   │   ├── aicodex/
-│   │   │   └── aicodex.dart              # AICodex Step 1 shell (currently paused before Step 2)
+│   │   │   └── aicodex.dart              # AICodex Step 3 shell (SQLite-backed master/detail editor)
 │   │   └── aistudio/
 │   │       └── aistudio.dart             # AIStudio Step 2 shell (UX/spec explorer + selection state)
 │   └── core/
@@ -205,20 +210,22 @@ genrp/
 │       │   ├── pgsqladmin.dart           # PostgreSQL create-db/table/function builder
 │       │   ├── pgsqlclient.dart          # PostgreSQL foundation CRUD builder
 │       │   ├── sqlite_store.dart         # SQLite store + SqliteCatalogRow
-│       │   ├── sqliteadmin.dart          # SQLite create-db/table/virtualfun builder
+│       │   ├── sqliteadmin.dart          # SQLite create-db/table/vfun builder
 │       │   ├── sqliteclient.dart         # SQLite foundation CRUD builder
 │       │   └── webclient.dart            # Generic web action/CRUD envelope builder
 │       ├── generator/
 │       │   └── boilerplate_generator.dart# DynamicSpecBody (body router)
 │       ├── model/
 │       │   ├── models.dart               # Barrel export
-│       │   ├── data/                     # 9 data model files
-│       │   └── ux/                       # 6 UX model/registry files
+│       │   ├── bschema/                  # 7 regular bschema model files
+│       │   ├── base/                     # 2 special base model files
+│       │   ├── bdata/                    # 1 business data model file
+│       │   └── uschema/                  # 6 UX schema model/registry files
 │       ├── runtime/
 │       │   └── template_runtime.dart     # JSON→Widget runtime renderer
 │       ├── template/                     # 4 template widgets
-│       └── widgets/                      # 5 wrapped control widgets
-├── test/                                 # 12 test files
+│       └── widgets/                      # 6 shared shell/control widgets
+├── test/                                 # 13 test files
 ├── assets/json/                          # 3 JSON spec/registry files
 ├── docs/                                 # 10 documentation files
 └── pubspec.yaml
@@ -259,6 +266,13 @@ The **Autopilot** is the heart of the system — an abstract `ChangeNotifier` th
 | `Xiad` | `i, a, d, v` | + date/discriminator |
 | `Xiade` | `i, a, d, e, v` | + entity reference |
 
+**X ID direction**
+- `Xi.i` can use `max(i) + 1`.
+- Richer variants (`Xia`, `Xiad`, `Xiade`) should use epoch-millisecond-based IDs rather than `max(i) + 1`.
+- Planned formula direction is `epochMs * 10/100/1000 + suffix`, with suffix inside `0..999`.
+- Keep those values within 53-bit safe integer range for web/JSON transport even if PostgreSQL stores them as `bigint`.
+- In that family, `d` and `e` are part of the web-safe `int^53` / PostgreSQL `bigint` rule.
+
 All implement `fromJson` / `toJson`. The `v` list is the **slot-addressable payload** — field bindings resolve to `v[slot]` by design.
 
 **`DataType` / `TypeMapper`** provides a cross-platform type registry (Dart ↔ PostgreSQL ↔ SQLite ↔ JSON):
@@ -267,21 +281,40 @@ All implement `fromJson` / `toJson`. The `v` list is the **slot-addressable payl
 
 **`Converter`** provides null-safe, tolerant type conversions (`toInt`, `toDouble`, `toBool`, `toStr`, `tryInt`).
 
-### 5.3 Data Models (`core/model/data/`)
+### 5.3 BSchema Models (`core/model/bschema/`) and Base Models (`core/model/base/`)
 
-Four of the nine models currently share the generic row shape `i, a, d, e, t, n, s` exactly. `FunctionModel` and `EntityModel` keep that shape and add `tis` for dependent table IDs, `FieldModel` adds `ci` for mapped column ID, `ParameterModel` uses `fi` for function ID, and `SystemModel` is a structural metadata model with its own field set. `ActionModel` has moved to `core/model/ux/`.
+The regular schema-row models now live under `core/model/bschema/`, while the special base models live under `core/model/base/`. Four of the seven regular bschema models currently share the generic row shape `i, a, d, e, t, n, s` exactly. `FunctionModel` and `EntityModel` keep that shape and add `tis` for dependent table IDs, `FieldModel` adds `ci` for mapped column ID, `ParameterModel` uses `fi` for function ID, and `ActionModel` has moved to `core/model/uschema/`.
 
 | Field | Type | Semantics |
 |---|---|---|
 | `i` | `int` | ID |
 | `a` | `bool` | Active flag |
-| `d` | `int` | Date/discriminator |
-| `e` | `int` | Entity reference |
+| `d` | `int` | Last date/time, usually UTC epoch milliseconds; web-safe `int^53`, PostgreSQL `bigint` when persisted there |
+| `e` | `int` | Last editor reference; `int4` in `base`, `bschema`, and `uschema`, where it points to `UsrModel.i` |
 | `t` | `int` | Type reference |
 | `n` | `String` | Readable/display name |
 | `s` | `String` | System name / slug, preferably lower snake_case |
 
-**Models:** `EntityModel`, `FieldModel`, `RelationModel`, `FunctionModel`, `ParameterModel`, `TableModel`, `ColumnModel`, `SystemModel`, `UserModel`
+**Regular data models:** `EntityModel`, `FieldModel`, `RelationModel`, `FunctionModel`, `ParameterModel`, `TableModel`, `ColumnModel`
+
+**Base models:** `SystemModel`, `UsrModel`
+
+**BData models:** `UserModel`
+
+**Physical DB naming reminder:**
+- Actual physical database names are not assumed to match the model names directly.
+- Current remembered alias direction is:
+  - `s0` = `usr`
+  - `s1` = `systemmodel`
+  - `s2` = `table`
+  - `s3` = `column`
+  - `s4` = `function`
+  - `s5` = `param`
+  - `s6` = `entity`
+  - `s7` = `field`
+- Business tables should start with `t`.
+- Current remembered business-table entrypoint is:
+  - `t0` = `UserModel`
 
 **`ParameterModel`** fields:
 - `i`, `a`, `d`, `e`, `n`, `s` — same role as the common row models
@@ -309,23 +342,49 @@ Four of the nine models currently share the generic row shape `i, a, d, e, t, n,
 - `uxm` — UX map JSON
 - `m1`, `m2` — reserved future meta JSON buckets
 
-All are immutable with `const` constructor, `fromJson`, `toJson`, `copyWith`, `==`, `hashCode`, but `SystemModel` is a special structural metadata case rather than a normal generic row.
+**`UsrModel`** status:
+- `UsrModel` now lives beside `SystemModel` under `core/model/base/`.
+- It should be treated as a special base model rather than a normal generic schema row.
+- `UsrModel.i` follows the same `int4` + `max(i) + 1` rule as the rest of the base model layer.
+- `UsrModel` represents the system/admin-side user concept. Business users should be modeled separately in the business domain.
+- `UsrModel` now uses the same field contract as business-side `UserModel`: `i, d, e, a, u, p, n, x, l`.
+- The difference is policy, not field names: `UsrModel.i` and `UsrModel.e` stay on the base-side `int4 + max(i) + 1` rule.
+- In schema-side layers, `e` is the last editor and points to `UsrModel.i`.
+
+**`UserModel`** in `bdata`:
+- `UserModel` under `core/model/bdata/` is the first business-data model and is distinct from base-side `UsrModel`.
+- `UserModel` belongs to the business domain and currently maps to business table entrypoint `t0`.
+- Current field contract is `i, d, e, a, u, p, n, x, l`.
+- `i`, `d`, `e`, and `x` are intended as int8 / web-safe integers.
+- In `bdata` and future `udata`, `i` and `e` should stay web-safe `int^53`.
+- In data-side layers, `e` is the last editor and points to `UserModel.i`.
+- New rows in `bdata` and `udata` should follow the epoch-millisecond-plus-suffix allocator rather than `max(i) + 1`.
+- `a` is bool.
+- `u`, `p`, and `n` are text fields for username, password, and name.
+- `p` stays plain text for now; no hashing policy is applied yet.
+- `l` is the user level and should stay `int4`.
+
+All are immutable with `const` constructor, `fromJson`, `toJson`, `copyWith`, `==`, `hashCode`, but `SystemModel` and `UsrModel` are special base cases rather than normal generic rows, while `bdata/UserModel` is business data.
 
 **Semantic roles by app:**
 - **AICodex**: owns CRUD for these sensitive data-model rows and uses them as schema-generation input for create/drop/function-script flows
 - **AIStudio**: may read some of them for context, but its main CRUD surface is UX/spec rather than the sensitive data-model layer
 - **AIBook**: uses the resulting business-data surface through function-driven CRUD (not direct authoring)
+- For this schema layer, primary IDs and explicit structural foreign keys are intended to stay `int4`.
+- The shared `d` field is intentionally the broader time integer and should stay web-safe `int^53`, mapping to PostgreSQL `bigint` when persisted there.
+- The shared `e` field stays layer-specific: `int4` in `base` / `bschema` / `uschema`, where it points to `UsrModel.i`, and web-safe `int^53` in `bdata` / `udata`, where it points to `UserModel.i`.
+- Because schema editing is single-user/admin-side only, `max(i) + 1` is acceptable for model-definition ID allocation.
 
-### 5.4 UX Spec Models (`core/model/ux/`)
+### 5.4 USchema Models (`core/model/uschema/`)
 
 | File | Class | Extra Fields |
 |---|---|---|
-| [action_model.dart](lib/core/model/ux/action_model.dart) | `ActionModel` | UX-side action metadata; moved from `data/` |
-| [ux_button_model.dart](lib/core/model/ux/ux_button_model.dart) | `UxButtonModel` | `hostId, bodyId, actionId, actionName` |
-| [ux_text_box_model.dart](lib/core/model/ux/ux_text_box_model.dart) | `UxTextBoxModel` | `hostId, bodyId, bind, src, fieldId` |
-| [ux_checkbox_model.dart](lib/core/model/ux/ux_checkbox_model.dart) | `UxCheckBoxModel` | `hostId, bodyId, bind, src, fieldId` |
-| [ux_registry.dart](lib/core/model/ux/ux_registry.dart) | `UxRegistry` | `hosts, bodies, templates, types, widgets` — maps `int → String` |
-| [ux_spec_mapper.dart](lib/core/model/ux/ux_spec_mapper.dart) | `UxSpecMapper` | Converts raw JSON nodes → typed UX models |
+| [action_model.dart](lib/core/model/uschema/action_model.dart) | `ActionModel` | UX-side action metadata; moved from `data/` |
+| [ux_button_model.dart](lib/core/model/uschema/ux_button_model.dart) | `UxButtonModel` | `hostId, bodyId, actionId, actionName` |
+| [ux_text_box_model.dart](lib/core/model/uschema/ux_text_box_model.dart) | `UxTextBoxModel` | `hostId, bodyId, bind, src, fieldId` |
+| [ux_checkbox_model.dart](lib/core/model/uschema/ux_checkbox_model.dart) | `UxCheckBoxModel` | `hostId, bodyId, bind, src, fieldId` |
+| [ux_registry.dart](lib/core/model/uschema/ux_registry.dart) | `UxRegistry` | `hosts, bodies, templates, types, widgets` — maps `int → String` |
+| [ux_spec_mapper.dart](lib/core/model/uschema/ux_spec_mapper.dart) | `UxSpecMapper` | Converts raw JSON nodes → typed UX models |
 
 ### 5.5 Rendering Pipeline (`core/runtime/` + `core/template/` + `core/generator/`)
 
@@ -356,7 +415,7 @@ flowchart LR
 |---|---|
 | `db_contract.dart` | Shared specs for database, table, function, and CRUD generation |
 | `pgsqladmin.dart` | PostgreSQL create-database, create-table, create-function SQL |
-| `sqliteadmin.dart` | SQLite create-database, create-table, and `virtualfun` row/script generation |
+| `sqliteadmin.dart` | SQLite create-database, create-table, and `vfun` row/script generation |
 | `pgsqlclient.dart` / `sqliteclient.dart` | Direct CRUD builders for foundation targets; business direct CRUD is rejected |
 | `webclient.dart` | Generic request payload builder for remote action/function calls |
 | `systable.dart` / `sysfunc.dart` / `systype.dart` | Base-layer entrypoint seeds for table, function, and target-kind routing |
@@ -374,7 +433,7 @@ flowchart LR
 - Singleton pattern via `SqliteStore.instance`
 - Supports custom `databaseFactory` and `databasePath` injection for testing
 - Applies shared foundation seed rows on first create
-- PostgreSQL can use real foundation/business functions, while SQLite represents function-like behavior through `virtualfun` rows/scripts instead of database functions
+- PostgreSQL can use real foundation/business functions, while SQLite represents function-like behavior through `vfun` rows/scripts instead of database functions
 - Generated table builders currently emit `NOT NULL` for all columns
 - `ALTER TABLE` is intentionally not part of the current flow
 
@@ -382,6 +441,18 @@ flowchart LR
 > `datasource_helper.dart` is an empty file — reserved for future use.
 
 ### 5.7 Application Layer (`app/`)
+
+**Convergent authoring-shell rule**
+- `AIStudio` and `AICodex` should share the same hybrid shell:
+  - left = **minor panel**
+  - right = **major panel**
+- The minor panel should have **two tabs**.
+- The major panel should have **three tabs**.
+- The major tabs define the layout mode:
+  - tab 1 = single mid-only surface
+  - tab 2 = larger mid + smaller right
+  - tab 3 = equal mid + right
+- This keeps the apps visually and behaviorally aligned while still letting `AIStudio` own UX/spec rows and `AICodex` own sensitive data-model rows plus schema actions.
 
 #### AIBook (~80% beta)
 - **Entry**: `AIBookApp` → wraps a `ChangeNotifierProvider<AutopilotGo>`
@@ -391,21 +462,20 @@ flowchart LR
 - **Near-term gap**: shared `WebClient` payload scaffolding exists, but real HTTP transport is still pending
 
 #### AIStudio (Step 2 done)
-- **Entry**: `AIStudioApp` → three-panel shell with UX/spec left navigation
-- Left panel: UX/spec explorer list (Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node)
+- **Entry**: `AIStudioApp` → shared hybrid shell with two minor tabs and three major tabs
+- Minor panel: `Catalogs` + `Context`
+- Major panel: `Single`, `Dual`, `Equal`
 - Local state: `_selectedCatalog`, `_selectedRowId`
-- Middle panel: selected catalog header + placeholder body
-- Right panel: placeholder
-- Current direction: AIStudio should focus on UX/spec CRUD; any remaining data-model catalogs in the shell are transitional/reference only until the UI is narrowed further
+- Current direction: AIStudio is now narrowed to the UX/spec explorer path only
 - Shared DB builders exist, but SQLite wiring and remaining UX/spec editor work are still pending
 
-#### AICodex (Step 1 done, currently paused)
-- **Entry**: `AICodexApp` → three-panel shell with grouped model navigation
-- Left: grouped model types with selection highlighting
-- Middle: selected model type header + placeholder body
-- Right: placeholder
-- Current direction: AICodex owns sensitive data-model CRUD plus schema generation/apply work
-- SQLite master list, editable detail panel, and DDL generation are still pending when work resumes
+#### AICodex (Step 3 done)
+- **Entry**: `AICodexApp` → shared hybrid shell with two minor tabs and three major tabs
+- Minor panel: `Catalogs` + `Context`
+- Major panel: `Single`, `Dual`, `Equal`
+- Current direction: AICodex owns the data-model explorer/collection path plus sensitive data-model CRUD and schema generation/apply work
+- Current snapshot: SQLite-backed master/detail editing is working, including payload editing and save/delete flow for selected rows
+- Remaining next step: DDL and function-script generation display
 
 ---
 
@@ -459,9 +529,14 @@ The planned backend is a **C# ASP.NET Core Minimal Web API** with a PostgreSQL b
 | **Server behavior** | JSON passthrough — C# does NOT map to business objects |
 | **DB behavior** | PostgreSQL owns the router function, returns JSON directly |
 | **Foundation structures** | Both PostgreSQL and SQLite can have bootstrap/foundation tables |
-| **Function layer** | PostgreSQL can use real functions; SQLite should use a `virtualfun` script store instead |
+| **Function layer** | PostgreSQL can use real functions; SQLite should use a `vfun` script store instead, but `vfun` can be deferred temporarily if it blocks current progress |
 | **Foundation CRUD** | Direct CRUD is allowed |
 | **Business CRUD** | Function-style actions only |
+| **Schema authority** | Data-model layer is single origin / single source of truth / single user |
+| **Schema integer split** | `base`, `bschema`, and `uschema` use `int4` for `i/e` and `max(i)+1` for new rows; `d` remains web-safe `int^53` / PostgreSQL `bigint` |
+| **Business/UX data integer rule** | `bdata` and future `udata` use web-safe `int^53` for `i/e` and new rows follow the epoch-ms-plus-suffix allocator |
+| **Runtime integer rule** | Web/JSON-crossing runtime integers stay within 53-bit safe range; PostgreSQL may store them as `bigint` |
+| **Base X ID rule** | `Xi` uses `max(i) + 1`; richer `X` variants use epoch-ms-based IDs with bounded suffix |
 | **Edit rule** | Inside `edit<ModelName>`: `data.i == 0` → create, `data.i > 0` → update, `data.a = false` → treat as delete through the function payload |
 | **No alter table** | By design |
 | **No hard delete** | By design |
@@ -484,11 +559,13 @@ The planned backend is a **C# ASP.NET Core Minimal Web API** with a PostgreSQL b
 | `Todo` | A single step within an `Action` |
 | `slot` | Direct index into `X.v[]` for field binding resolution |
 | `src` | Binding source: `0` = state, `1` = dataSource, `2` = dataSet |
-| `i/a/d/e/t/n/s` | Common model field abbreviations for the generic row models (id, active, date, entity, type, readable name, system name) |
+| `i/a/d/e/t/n/s` | Common model field abbreviations for the generic row models (id, active, last date, last editor, type, readable name, system name). In `base`, `bschema`, and `uschema`, `i` and `e` stay `int4` and new `i` uses `max(i)+1`. Schema-side `e` points to `UsrModel.i`; data-side `e` points to `UserModel.i`. |
 | `sys-get / sys-set / jss-get / jss-set / biz-get / biz-set` | Function type vocabulary carried by `FunctionModel.t` |
 | `ei` | Output entity foreign key used by `FunctionModel` |
 | `tis` | Table ID array used by `FunctionModel` and `EntityModel` for zero/one/many table dependencies |
 | `ci` | Column ID foreign key used by `FieldModel` |
+| `s0 / s1 / s2 / s3 / s4 / s5 / s6 / s7` | Current remembered physical DB aliases: `s0 = usr`, `s1 = systemmodel`, `s2 = table`, `s3 = column`, `s4 = function`, `s5 = param`, `s6 = entity`, `s7 = field` |
+| `t0` | Current remembered business-table entrypoint: `UserModel` |
 | `fi` | Function ID foreign key used by `ParameterModel` |
 
 ---
@@ -580,7 +657,7 @@ Defines **identity registries** — maps numeric IDs to names:
 | Shared DB builders not wired into app flows yet | Medium | Contract/admin/client scaffolding exists, but app-level integration is still pending |
 | AIStudio only has local selection state | Medium | UX/spec catalog selection exists; SQLite list/editor flow is still missing |
 | AIStudio not wired to SQLite | Medium | Left panel lists exist but no UX/spec persistence yet |
-| AICodex paused after Step 1 | Medium | Middle/right panels are still placeholders; resume directly when ready because it now owns sensitive data-model CRUD |
+| AICodex DDL flow still missing | Medium | Right-side editing now works, but schema generation/apply preview is still pending |
 | Preview selection is debug-only | Low | Long-press in debug mode only |
 | `datasource_helper.dart` is empty | Low | Reserved placeholder |
 | No route navigation (intentional) | N/A | Architecture decision: body swap only |
@@ -603,6 +680,7 @@ Defines **identity registries** — maps numeric IDs to names:
 - **Spec-driven UI** — JSON defines composition, runtime renders predefined templates/widgets
 - **Dual source separation** — UX/UI composition via JSON, business data via base `X` transport
 - **Copilot split** — `CopilotData` and `CopilotUX` intentionally separate (never merge)
+- **Convergent hybrid shell** — AIStudio and AICodex use the same minor-panel / major-panel layout with tab-driven major view modes so role differences stay semantic rather than structural
 
 ---
 
@@ -660,16 +738,14 @@ Based on the existing handover docs and code analysis:
 6. **Build right panel** — UX/spec editor for common `i/a/d/e/t/n/s` shape + JSON payload
 7. **Add AIStudio test coverage** — panel behavior + SQLite CRUD flow
 
-### Phase 3: Resume AICodex
-9. **Build master list from SQLite** — rows for the selected data-model type plus add entrypoint
-10. **Build editable detail panel** — sensitive data-model CRUD for selected rows
-11. **Add DDL generation** — create/drop/function SQL + `virtualfun` script preview
-12. **Add transport + test coverage** — schema action dispatch, `virtualfun` handling, and widget tests
+### Phase 3: Continue AICodex
+8. **Add DDL generation** — create/drop/function SQL + `vfun` script preview
+9. **Add transport + test coverage** — schema action dispatch, `vfun` handling, and widget tests
 
 ### Phase 4: Production Hardening
-13. **Harden failure states** — malformed spec, registry, transport errors
-14. **Decide on preview mode** — debug-only vs. production feature
-15. **Expand full-flow integration coverage** — editor → preview → transport/cache paths
+11. **Harden failure states** — malformed spec, registry, transport errors
+12. **Decide on preview mode** — debug-only vs. production feature
+13. **Expand full-flow integration coverage** — editor → preview → transport/cache paths
 
 ---
 
@@ -687,11 +763,13 @@ Based on the existing handover docs and code analysis:
 | **Base transport + registries** | [x.dart](lib/core/base/x.dart), [data_type.dart](lib/core/base/data_type.dart), [converter.dart](lib/core/base/converter.dart), [systable.dart](lib/core/base/systable.dart), [sysfunc.dart](lib/core/base/sysfunc.dart), [systype.dart](lib/core/base/systype.dart) |
 | **Persistence** | [sqlite_store.dart](lib/core/db/sqlite_store.dart), [db_contract.dart](lib/core/db/db_contract.dart), [pgsqladmin.dart](lib/core/db/pgsqladmin.dart), [pgsqlclient.dart](lib/core/db/pgsqlclient.dart), [sqliteadmin.dart](lib/core/db/sqliteadmin.dart), [sqliteclient.dart](lib/core/db/sqliteclient.dart), [webclient.dart](lib/core/db/webclient.dart), [datasource_helper.dart](lib/core/db/datasource_helper.dart) |
 | **Generator** | [boilerplate_generator.dart](lib/core/generator/boilerplate_generator.dart) |
-| **Data models** (9) | [entity_model.dart](lib/core/model/data/entity_model.dart), [field_model.dart](lib/core/model/data/field_model.dart), [relation_model.dart](lib/core/model/data/relation_model.dart), [function_model.dart](lib/core/model/data/function_model.dart), [parameter_model.dart](lib/core/model/data/parameter_model.dart), [table_model.dart](lib/core/model/data/table_model.dart), [column_model.dart](lib/core/model/data/column_model.dart), [system_model.dart](lib/core/model/data/system_model.dart), [user_model.dart](lib/core/model/data/user_model.dart) |
-| **UX models** (6) | [action_model.dart](lib/core/model/ux/action_model.dart), [ux_button_model.dart](lib/core/model/ux/ux_button_model.dart), [ux_text_box_model.dart](lib/core/model/ux/ux_text_box_model.dart), [ux_checkbox_model.dart](lib/core/model/ux/ux_checkbox_model.dart), [ux_registry.dart](lib/core/model/ux/ux_registry.dart), [ux_spec_mapper.dart](lib/core/model/ux/ux_spec_mapper.dart) |
+| **BSchema models** (7) | [entity_model.dart](lib/core/model/bschema/entity_model.dart), [field_model.dart](lib/core/model/bschema/field_model.dart), [relation_model.dart](lib/core/model/bschema/relation_model.dart), [function_model.dart](lib/core/model/bschema/function_model.dart), [parameter_model.dart](lib/core/model/bschema/parameter_model.dart), [table_model.dart](lib/core/model/bschema/table_model.dart), [column_model.dart](lib/core/model/bschema/column_model.dart) |
+| **Base models** (2) | [system_model.dart](lib/core/model/base/system_model.dart), [usr_model.dart](lib/core/model/base/usr_model.dart) |
+| **BData models** (1) | [user_model.dart](lib/core/model/bdata/user_model.dart) |
+| **USchema models** (6) | [action_model.dart](lib/core/model/uschema/action_model.dart), [ux_button_model.dart](lib/core/model/uschema/ux_button_model.dart), [ux_text_box_model.dart](lib/core/model/uschema/ux_text_box_model.dart), [ux_checkbox_model.dart](lib/core/model/uschema/ux_checkbox_model.dart), [ux_registry.dart](lib/core/model/uschema/ux_registry.dart), [ux_spec_mapper.dart](lib/core/model/uschema/ux_spec_mapper.dart) |
 | **Runtime** | [template_runtime.dart](lib/core/runtime/template_runtime.dart) |
 | **Templates** (4) | [form_template.dart](lib/core/template/form_template.dart), [checkbox_form_template.dart](lib/core/template/checkbox_form_template.dart), [collection_template.dart](lib/core/template/collection_template.dart), [detail_template.dart](lib/core/template/detail_template.dart) |
-| **Widgets** (5) | [x_button.dart](lib/core/widgets/x_button.dart), [x_text_box.dart](lib/core/widgets/x_text_box.dart), [x_checkbox.dart](lib/core/widgets/x_checkbox.dart), [bound_text_field.dart](lib/core/widgets/bound_text_field.dart), [bound_checkbox.dart](lib/core/widgets/bound_checkbox.dart) |
+| **Widgets** (6) | [hybrid_authoring_shell.dart](lib/core/widgets/hybrid_authoring_shell.dart), [x_button.dart](lib/core/widgets/x_button.dart), [x_text_box.dart](lib/core/widgets/x_text_box.dart), [x_checkbox.dart](lib/core/widgets/x_checkbox.dart), [bound_text_field.dart](lib/core/widgets/bound_text_field.dart), [bound_checkbox.dart](lib/core/widgets/bound_checkbox.dart) |
 
 ### Documentation (`docs/` — 10 files)
 
@@ -706,4 +784,4 @@ Based on the existing handover docs and code analysis:
 | [lib_core_base_data_type_readme.md](docs/lib_core_base_data_type_readme.md) | DataType + TypeMapper docs |
 | [lib_core_base_x_readme.md](docs/lib_core_base_x_readme.md) | Base X transport classes docs |
 | [lib_core_db_sqlite_store_readme.md](docs/lib_core_db_sqlite_store_readme.md) | SQLite store docs |
-| [lib_core_model_data_readme.md](docs/lib_core_model_data_readme.md) | Data model directory docs |
+| [lib_core_model_bschema_readme.md](docs/lib_core_model_bschema_readme.md) | Bschema model directory docs |
