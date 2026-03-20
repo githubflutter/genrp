@@ -1,14 +1,15 @@
 # GenRP — Generative Resource Planner
 
-A Flutter monolith with three apps sharing a common core engine.
+A Flutter monolith with four apps sharing a common core engine.
 
 ## Apps
 
 | App | Role | Entry | Status |
 |---|---|---|---|
-| **AIBook** | Runtime reader / function-driven business-data consumer | `lib/app/aibook/aibook.dart` | ~80% beta; Step 2 done, Step 3 pending |
-| **AIStudio** | UX/spec editing surface (UX model-spec CRUD) | `lib/app/aistudio/aistudio.dart` | Step 3 done; Step 4 pending |
-| **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Step 3 done; Step 4 pending |
+| **AIWork** | Client/workflow CRUD surface | `lib/app/aiwork/aiwork.dart` | Ready to run from spec data |
+| **AIBook** | Client/runtime reader surface | `lib/app/aibook/aibook.dart` | Ready to run from spec data |
+| **AIStudio** | UX/spec editing surface | `lib/app/aistudio/aistudio.dart` | Dedicated hard-coded authoring shell |
+| **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Dedicated hard-coded authoring shell |
 
 ## Quick Start
 
@@ -16,12 +17,12 @@ A Flutter monolith with three apps sharing a common core engine.
 flutter run -t lib/main.dart
 ```
 
-A one-way launcher appears — pick AIBook, AICodex, or AIStudio.
+A launcher appears — pick AIWork, AIBook, AICodex, or AIStudio.
 
 Current UI baseline:
-- Shared dark Material 3 theme across all apps
-- AIStudio and AICodex use the same hybrid authoring shell
-- Dual authoring mode currently resolves to `20 / 60 / 20` (minor / mid / right)
+- Shared Material 3 theme across all apps via `UxTheme`
+- Each app owns a dedicated login screen and a dedicated loading screen
+- AIStudio and AICodex use the same convergent authoring direction
 - Scaffold-level FABs are removed; actions now live in headers or active panel content
 
 ## Project Layout
@@ -30,17 +31,14 @@ Current UI baseline:
 lib/
 ├── main.dart              # Launcher selector
 ├── meta.dart              # Static version flags
-├── app/                   # App entry points (aibook, aicodex, aistudio)
+├── app/                   # App entry points (aiwork, aibook, aicodex, aistudio)
 └── core/
-    ├── agent/             # Autopilot orchestrator, copilots, actions, transport
+    ├── agent/             # Autopilot orchestrator, copilots, actions, route state
     ├── base/              # X transport classes, DataType, sys registries
-    ├── db/                # SQLite store + generic PG/SQLite/Web DB builders
-    ├── generator/         # DynamicSpecBody (body router)
-    ├── model/             # base, bschema, bdata, uschema + barrel export
-    ├── runtime/           # TemplateRuntime (JSON → Flutter widgets)
-    ├── template/          # 4 template widgets (form, detail, collection, checkboxForm)
-    ├── theme/             # shared Material 3 theme + layout constants
-    └── widgets/           # 6 shared widgets (including hybrid shell + X controls)
+    ├── db/                # SQLite store + generic PG/SQLite/remote DB builders
+    ├── model/             # base, bschema, bdata, uschema
+    ├── theme/             # shared Material 3 theme + UX chrome helpers
+    └── ux/                # GenUx runtime, papers, templates, views, UX barrel
 ```
 
 ## Documentation
@@ -56,7 +54,7 @@ All docs live in `docs/`. Start with:
 ## Key Architecture Rules
 
 1. **One orchestrator** — `Autopilot` owns all state, bindings, and action dispatch.
-2. **No route navigation** — single `Scaffold`, body swap only.
+2. **Narrow route model** — `CopilotRoute` + preset specs drive app/page selection; no user-facing back stack is planned.
 3. **Numeric identity** — integer IDs for all runtime references (body, template, widget, action, binding).
 4. **Compact transport** — base `X` with slot-addressable `v[]` for business data.
 5. **Copilot split** — `CopilotData` and `CopilotUX` never merge.
@@ -70,6 +68,8 @@ All docs live in `docs/`. Start with:
 Every change must pass:
 
 ```bash
-flutter analyze
-flutter test
+flutter analyze lib test
 ```
+
+Current snapshot note: checked-in Dart test files have been deleted in this working tree, so `flutter analyze lib test` is currently an analyzer-only gate.
+The active apps have also been manually tested in this snapshot.

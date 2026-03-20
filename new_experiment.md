@@ -15,6 +15,27 @@ with the current repo shape:
 So the experiment is **not** a data-layer rewrite. It is a UX/runtime
 restructure on top of the existing data foundation.
 
+## Current Status
+
+This experiment is no longer a side branch or planning-only direction.
+
+It has already been merged into the active codebase.
+
+Current merged status:
+
+- the active runtime lives under `lib/core/*`
+- the active UX runtime lives under `lib/core/ux`
+- the active apps boot through the current `MainApp` launcher/direct-route flow
+- dedicated login and loading screens are already part of the app flow
+- the current merged runtime has already been manually tested
+- `flutter analyze lib test` currently passes
+
+So this note should now be read as:
+
+- merged architecture record
+- current-direction guardrail
+- cleanup/hardening note for the next steps
+
 ## App Structure
 
 The active app surfaces are:
@@ -35,34 +56,44 @@ Purpose guardrails:
 The runtime should be shaped around:
 
 - `MainApp` -> launcher or direct app boot
-- app wrapper -> `GenrpApp` / `GenrpHome`
-- app session -> `UxAppSession`
+- app entry -> `<AppName>App`
+- app shell -> `<AppName>Home`
+- dedicated app-owned login screen
+- dedicated loading screen
+- ready route rendered from `UxRouteSpec` through `GenUx`
 
-`Autopilot` remains the shared base runtime/controller contract.  
-`UxAppSession` owns orchestration, load flow, action policy, and app-level
-state behavior for each app shell.
+`Autopilot` remains the shared base runtime/controller contract.
+
+There is no `UxAppSession` in the forward direction anymore.
+Do not introduce `GenrpApp`, `GenrpHome`, or `UxAppSession` as new mandatory
+runtime layers unless a later code need clearly proves they are necessary.
+
+Startup orchestration should stay small and practical:
+
+- auth/login is a dedicated screen, not a session object
+- loading is a dedicated temporary screen
+- app bootstrap is owned directly by the app home flow plus `Autopilot`
+- route rendering begins only after bootstrap is ready
 
 ## Main Migration Decision
 
-The experiment is now strong enough to become the **main forward direction**
-for UX/runtime work.
+The experiment has already become the **main forward direction** for
+UX/runtime work and is already merged into the active repo.
 
 That means:
 
 - the experiment is a subset under the original implementation
 - the final merge target is responsibility-based under `core/*`
-- the old `core/ux` staging idea is gone
 - `AIWork`, `AIBook`, `AICodex`, and `AIStudio` share the canonical
   implementation path
 - route/runtime agent logic should merge under `core/agent`
 - schema/spec models should merge under `core/model/uschema`
-- generator-side creation should merge under `core/generator`
-- template implementation should merge under `core/template`
-- if paper/view become necessary as first-class surfaces, create them only when
-  they earn their own directories
+- runtime rendering currently lives under `core/ux` and should stay there until
+  a later simplification is clearly better
+- do not create new wrapper/session layers just to rename what already works
 - the old runtime is treated as legacy and migration source only
 
-This is a **forward-only** migration decision.
+This remains a **forward-only** decision.
 
 Do not plan around backward compatibility.
 Do not add compatibility shims just to preserve the old runtime shape.
@@ -72,9 +103,9 @@ Rules:
 
 - new architecture work should be designed for eventual merge into:
   - `core/agent`
-  - `core/generator`
   - `core/model/uschema`
-  - `core/template`
+  - `core/ux`
+  - `core/theme`
 - old runtime paths get fixes only if needed to keep the repo buildable during
   migration
 - migration should prefer rewrite/replacement over wrapping/adapting old paths
@@ -87,12 +118,11 @@ The active architecture now lives directly under `lib/core`.
 
 - `lib/core`
   - is now the active core architecture
-  - contains `agent`, `generator`, `layout`, `model`, `paper`, `template`,
-    `theme`, `view`, and supporting roots
-  - uses one generic node-spec tree instead of separate paper/template/view
-    spec subclasses where that keeps the runtime simpler
-  - uses generic node scopes derived from spec-id paths
-  - does not keep separate `p/t/v` contract wrappers unless they prove useful
+  - currently contains `agent`, `base`, `db`, `model`, `theme`, and `ux`
+  - keeps the active paper/template/view runtime under `core/ux`
+  - keeps route/session state under `core/agent`
+  - keeps shared app theme/chrome rules under `core/theme`
+  - keeps spec models under `core/model/uschema`
 
 Working rule:
 
@@ -104,10 +134,11 @@ Current runtime note:
 
 - `MainApp` shows the app launcher by default
 - `MainApp` can still boot directly into a specific app from an incoming route
-- route state mounts once
-- scoped runtime state is owned by the app runtime path under
-  `core/agent`
+- each app currently owns its own dedicated login screen
+- each app currently owns its own loading screen
+- scoped runtime state is owned by the runtime path under `core/agent`
 - `Paper -> Template -> View` is the active UI composition model
+- the merged app flows have already been manually tested
 - the active implementation should stay small and practical, not carry extra
   staging layers
 
@@ -126,7 +157,7 @@ Instead, the flow should be:
 
 1. login succeeds
 2. show a dedicated loading page
-3. in background, `UxAppSession` loads:
+3. in background, the app bootstrap flow loads:
    - current `usr`
    - current `user`
    - route presets for the current app
@@ -148,17 +179,30 @@ This avoids:
 - mixing login flow with route/bootstrap flow
 - leaking stale startup state across users
 
-### UxAppSession Responsibility
+### Bootstrap Ownership
 
-`UxAppSession` should own this bootstrap sequence.
+This bootstrap sequence should be owned directly by the app home flow plus
+`Autopilot`.
 
 That means:
 
 - login success updates `autopilot.usr` and `autopilot.user`
 - loading page becomes the temporary active screen
-- user-specific navigation map is fetched
+- route presets and startup context are resolved
 - route-specific UX schema/spec is fetched
 - only then does route rendering begin
+
+### Dedicated Login Rule
+
+Login should stay explicit and dedicated.
+
+That means:
+
+- do not hide login flow inside a session helper
+- do not make login another template/view concern
+- keep login as a dedicated screen or dedicated auth widget owned by the app
+- if login is shared later, extract it as a normal widget/module, not as
+  `UxAppSession`
 
 ### Loading Page Rule
 
@@ -696,10 +740,11 @@ Route management may be reshaped if that gives a safer and faster runtime.
 
 Current direction:
 
-- `PilotWorkspace` owns route management
-- `AIWork` uses replace-only navigation
-- `AIWork` does not keep a user-facing back stack
-- route addresses should remain future-deep-link friendly
+- app home flow plus `Autopilot` owns route management
+- route changes replace the active route
+- there is no user-facing back stack requirement
+- browser/history behavior is not a design target
+- direct route entry is still useful for launcher shortcuts or incoming paths
 - route is an address and lifecycle boundary, not another UX layer
 
 ### Route Shape
@@ -721,8 +766,8 @@ Where:
 - `page_spec_id` selects the `UxPaperSpec.i`
 - `optional_id` identifies the business working context when needed
 
-This route shape should support future deep linking even though the runtime
-navigation model keeps no back stack.
+This route shape should support direct app entry and internal route resolution.
+It is not intended to model browser history or a retained navigation stack.
 
 ### Route Resolution Rule
 
@@ -740,20 +785,12 @@ On route replacement/dispose:
 2. clear all child template scopes
 3. mount the next route scope
 
-### Back Stack Rule
+### Navigation Rule
 
-- no back stack in normal `AIWork` navigation
-- menu and route changes replace the current route
-- startup loading page is replaced, not retained behind the route
-- future deep links should still be resolvable directly to a route address
-
-Back stack guideline:
-
-- do not model normal `AIWork` navigation around browser/app history
-- do not require route-level back behavior for CRUD/template workflows
-- route change means dispose current paper/template scopes and mount the next route
-- incoming deep links are supported as an entry path only
-- browser/history write-back is not part of this runtime
+- normal route changes replace the active route
+- startup loading is temporary and is replaced by the resolved route
+- there is no retained user-facing back stack to preserve
+- direct route input is supported only as an entry path
 - if a `Back` button appears inside a template, it is a local workflow control
   only
 - local `Back` means return from inspect/edit/create to browse mode inside the
@@ -1078,24 +1115,36 @@ The current direction is healthy when:
 4. the active app path stays small enough to understand and extend
 5. new templates and views can be added without reviving removed legacy layers
 
+Current snapshot note:
+
+- the merge is already done
+- the active runtime has already been manually tested
+- the current phase is cleanup, hardening, and data hookup
+- seeded/demo `*_specs.dart` data is still acceptable until ID-key rules are discussed
+- checked-in Dart test files are deleted in this snapshot, so analyzer plus manual app testing are the active checks
+- the next work is not "should we merge?" but "how do we simplify and extend the merged runtime safely?"
+
 ## Beta Test Plan
 
-The beta stage should validate whether this UX/runtime direction is safe enough
-to replace the old body-switching approach for real work.
+The first merge checkpoint has already happened.
 
-### Beta Goal
+This section now serves as a continuing hardening/validation checklist for the
+merged runtime rather than a go/no-go pre-merge beta gate.
+
+### Validation Goal
 
 Prove these things together:
 
 - `Paper -> Template -> View` hierarchy is stable
-- route replacement without back stack is predictable
+- route replacement is predictable
 - scoped runtime state is cleaned correctly on dispose
 - packed structural UX codes are practical and safe
 - the first `Tcrud` slice is usable for real CRUD workflows
 
-### Beta Entry Criteria
+### Current Entry Status
 
-Do not start beta until these are true:
+The merged snapshot already has the minimum shape needed to keep validating the
+runtime. Continue using these as health checks:
 
 1. `Paper`, `Template`, and `View` contracts are stable enough for internal use
 2. route resolution works with `/<appname>/<page_spec_id>/<optional_id>`
@@ -1105,15 +1154,14 @@ Do not start beta until these are true:
 6. `toolbarview`, `collectionview`, `plistview`, `fromview`, `tabview`, and
    `emptyview` are stable enough to demo without obvious breakage
 
-### Beta Test Areas
+### Validation Areas
 
 #### 1. Route And Lifecycle
 
 Test:
 
-- route replace with no back stack
+- route replacement
 - direct entry to route
-- future-deep-link style route resolution
 - loading page replacement
 - page switch from menu
 - page switch while current page has selection or dirty runtime state
@@ -1211,7 +1259,7 @@ Expected result:
 - selection state is reflected correctly in toolbars and footer
 - CRUD flow feels coherent in one aiwork
 
-### Beta Test Execution Style
+### Validation Style
 
 Use a small internal beta first:
 
@@ -1222,7 +1270,7 @@ Use a small internal beta first:
 Do not spread beta across many templates immediately.
 Start with the strongest single slice and learn from it.
 
-### Beta Metrics
+### Validation Metrics
 
 Track at least:
 
@@ -1234,13 +1282,13 @@ Track at least:
 - toolbar mode layout regressions
 - CRUD completion success for the chosen beta workflow
 
-### Beta Exit Criteria
+### Validation Exit Criteria
 
-The beta can be considered successful when:
+This merged checkpoint can be considered healthy when:
 
 1. no critical stale-state bug remains open
 2. no packed-code collision issue is found in real usage
-3. route replacement works reliably without back stack confusion
+3. route replacement works reliably
 4. one `Tcrud` workflow can be completed end-to-end by internal users
 5. toolbar, collection, plist, and form interaction feel stable enough to
    continue building on

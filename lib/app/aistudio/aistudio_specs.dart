@@ -1,6 +1,19 @@
 import 'package:genrp/core/agent/copilot_route.dart';
-import 'package:genrp/core/model/uschema/ux.dart';
 import 'package:genrp/meta.dart';
+
+class AIStudioSection {
+  const AIStudioSection({
+    required this.route,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final CopilotRoute route;
+  final String title;
+  final String subtitle;
+
+  String get path => route.path;
+}
 
 class AIStudioSpecs {
   AIStudioSpecs._();
@@ -11,15 +24,15 @@ class AIStudioSpecs {
   static const int paperZeroSpecId = 40001;
   static const int paperOneSpecId = 40002;
 
-  static List<UxRouteSpec> presets() => <UxRouteSpec>[
-    buildRouteSpec(
+  static List<AIStudioSection> presets() => <AIStudioSection>[
+    buildSection(
       const CopilotRoute(
         appName: appName,
         pageSpecId: paperZeroSpecId,
         optionalId: '42',
       ),
     ),
-    buildRouteSpec(
+    buildSection(
       const CopilotRoute(
         appName: appName,
         pageSpecId: paperOneSpecId,
@@ -56,7 +69,7 @@ class AIStudioSpecs {
   static CopilotRoute initialRoute({
     String? explicitPath,
     Uri? currentUri,
-    List<UxRouteSpec> presets = const <UxRouteSpec>[],
+    List<AIStudioSection> presets = const <AIStudioSection>[],
   }) {
     final direct = directRoute(
       explicitPath: explicitPath,
@@ -78,7 +91,7 @@ class AIStudioSpecs {
   static String initialPath({
     String? explicitPath,
     Uri? currentUri,
-    List<UxRouteSpec> presets = const <UxRouteSpec>[],
+    List<AIStudioSection> presets = const <AIStudioSection>[],
   }) {
     return initialRoute(
       explicitPath: explicitPath,
@@ -87,65 +100,26 @@ class AIStudioSpecs {
     ).path;
   }
 
-  static UxRouteSpec resolve(
+  static AIStudioSection resolve(
     CopilotRoute route, {
-    List<UxRouteSpec> presets = const <UxRouteSpec>[],
+    List<AIStudioSection> presets = const <AIStudioSection>[],
   }) {
     for (final preset in presets) {
       if (preset.path == route.path) {
         return preset;
       }
     }
-    return buildRouteSpec(route);
+    return buildSection(route);
   }
 
-  static UxRouteSpec buildRouteSpec(CopilotRoute route) {
-    final seed = int.tryParse(route.optionalId ?? '42') ?? 42;
-    final pid = route.pageSpecId == paperZeroSpecId ? 0 : 1;
-    final isPaperZero = pid == 0;
-    final name = 'Studio Board $seed';
-    final owner = seed.isEven ? 'Mia' : 'Ethan';
-    final status = seed.isEven ? 'Open' : 'Closed';
-
-    return UxRouteSpec(
-      appName: route.appName,
-      pageSpecId: route.pageSpecId,
-      optionalId: route.optionalId,
-      title: isPaperZero
-          ? 'Paperzero / ${route.optionalId ?? '-'}'
-          : 'Paperone / ${route.optionalId ?? '-'}',
-      subtitle: isPaperZero
-          ? 'UX/spec host for AIStudio'
-          : 'Scrollable UX/spec host for AIStudio',
-      paper: UxPaperSpec(
-        pid: pid,
-        i: route.pageSpecId,
-        template: UxCrudTemplateSpec(
-          i: 41001,
-          collectionTitle: 'Projects',
-          collectionColumns: const <String>['ID', 'Name', 'Status'],
-          collectionViewModes: const <int>[1, 2, 3],
-          collectionRows: <List<Object?>>[
-            <Object?>[seed, name, status],
-            <Object?>[seed + 1, 'Ux Map ${seed + 1}', 'Pending'],
-            <Object?>[seed + 2, 'Spec Flow ${seed + 2}', 'Open'],
-          ],
-          properties: <String, Object?>{
-            'id': seed,
-            'name': name,
-            'status': status,
-            'owner': owner,
-            'route': route.path,
-            'app': title,
-          },
-          formFields: <UxFieldSpec>[
-            UxFieldSpec(label: 'Name', hint: name),
-            UxFieldSpec(label: 'Status', hint: status),
-            UxFieldSpec(label: 'Owner', hint: owner),
-          ],
-          summaryText: 'app=$appName, owner=$owner, status=$status',
-        ),
-      ),
+  static AIStudioSection buildSection(CopilotRoute route) {
+    final isBoard = route.pageSpecId != paperOneSpecId;
+    return AIStudioSection(
+      route: route,
+      title: isBoard ? 'Studio Board' : 'Review Queue',
+      subtitle: isBoard
+          ? 'Hard-coded explorer, draft, and inspector workspace for UX/spec authoring.'
+          : 'Hard-coded review lane for publish checks, notes, and release prep.',
     );
   }
 }

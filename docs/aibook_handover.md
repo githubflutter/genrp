@@ -2,12 +2,12 @@
 
 Progressive step-by-step plan to reach constrained AIBook beta.
 
-**Current status:** ~80% beta — internal vertical slice, working editor/preview flow, hybrid runtime. Numeric-first body routing and reference validation are in place. Shared DB/request scaffolding now exists, but AIBook still uses `MockTransport` at runtime.
+**Current status:** Ready-to-run spec-driven client surface in the live snapshot. Numeric-first body routing and reference validation are in place, and shared DB/request scaffolding already exists. AIBook still uses `MockTransport` at runtime, and the active AIBook app has also been manually tested in this snapshot.
 
 > [!NOTE]
 > This handover was written for a pre-`core/ux` refactor snapshot. The current runtime entry points are `lib/app/aibook/aibook.dart`, `lib/app/aibook/aibook_specs.dart`, `lib/core/ux/genux.dart`, `lib/core/ux/ux.dart`, and `lib/core/model/uschema/ux.dart`. References below to `autopilotgo.dart`, `MockTransport`, `boilerplate_generator.dart`, or wrapped `X*` widgets should be treated as historical guidance unless those files return in a later snapshot.
 
-**Current next step:** Step 3 — Clean slot-first binding path.
+**Current next step:** Keep the spec-driven runtime stable as the active path. Archived Step 3 remains the next historical hardening step if deeper AIBook runtime work resumes.
 
 **Role:** AIBook is a mobile-centric client app. It owns client/runtime CRUD and business-data consumption only.
 
@@ -27,7 +27,8 @@ Progressive step-by-step plan to reach constrained AIBook beta.
 flutter analyze lib test
 ```
 
-Current snapshot note: the checked-in `test/` directory is empty in this working tree, so analyzer coverage is the active quality gate right now.
+Current snapshot note: checked-in Dart test files have been deleted in this working tree, so `flutter analyze lib test` is currently the analyzer-only quality gate.
+Manual app testing has already been completed for the active snapshot.
 
 ---
 

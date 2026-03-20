@@ -1,7 +1,7 @@
 # GenRP — Deep Project Analysis
 
 > **Project:** `genrp` — Generative Resource Planner  
-> **Platform:** Flutter (multi-platform: macOS, Linux, Windows, Android, iOS, Web shell)  
+> **Platform:** Flutter (macOS, Linux, Windows, Android, iOS)  
 > **SDK:** Dart ≥3.11.0  
 > **Analysis Date:** 2026-03-20  
 
@@ -13,16 +13,16 @@ GenRP is a **Flutter monolith** containing **four distinct applications** inside
 
 | App | Role | Maturity |
 |---|---|---|
-| **AIWork** | Client/workflow CRUD surface | Active beta scaffold |
-| **AIBook** | Client/runtime reader surface | Active beta scaffold |
-| **AIStudio** | UX/spec authoring surface | Active beta scaffold |
-| **AICodex** | Sensitive data-model authoring + schema-application surface | Active beta scaffold |
+| **AIWork** | Client/workflow CRUD surface | Ready to run from spec data |
+| **AIBook** | Client/runtime reader surface | Ready to run from spec data |
+| **AIStudio** | UX/spec authoring surface | Dedicated hard-coded authoring shell |
+| **AICodex** | Sensitive data-model authoring + schema-application surface | Dedicated hard-coded authoring shell |
 
-The apps share a common orchestration engine (`Autopilot`), `uschema` route/paper/template/view specs, a spec-driven UX composition system centered on `GenUx`, and a local SQLite persistence layer. The repo also has shared DB contract/admin/client scaffolding for PostgreSQL, SQLite, and web action payloads. The architecture is intentionally lean, numeric-first, and optimized around a small set of reusable UX primitives.
+The apps share a common orchestration engine (`Autopilot`), route metadata, shared UX primitives, and a local SQLite persistence layer. `AIWork` and `AIBook` remain spec-driven through `GenUx`, while `AIStudio` and `AICodex` now use dedicated hard-coded authoring shells that still reuse shared `Ux*View` components. The repo also has shared DB contract/admin/client scaffolding for PostgreSQL, SQLite, and remote action payloads. The architecture is intentionally lean, numeric-first, and optimized around a small set of reusable UX primitives.
 
 The current UI direction is to keep `AIStudio` and `AICodex` converged on one **hybrid authoring shell**: a left-side minor panel plus a right-side major panel. The major panel changes between one-panel and two-panel modes through tabs, so the apps differ by domain responsibility rather than by inventing different outer layouts. The current working split is `20 / 60 / 20` in dual mode, with the left minor panel and right detail panel intentionally matching widths. The shared shell contract should stay narrow: layout, tab mechanism, width ratios, and chrome styling only. Left-side explorer/list behavior should remain app-specific.
 
-The current visual baseline is a shared **Material 3 theme** owned by `UxTheme` in `lib/core/theme/theme.dart`, with centralized typography and chrome sizing. The launcher, AIWork, AIBook, AIStudio, and AICodex share the same toolbar-height and bottom-status sizing rules, and scaffold-level FABs have been removed in favor of in-panel or header actions.
+The current visual baseline is a shared **Material 3 theme** owned by `UxTheme` in `lib/core/theme/theme.dart`, with centralized typography and chrome sizing. The launcher, AIWork, AIBook, AIStudio, and AICodex share the same toolbar-height and bottom-status sizing rules, and scaffold-level FABs have been removed in favor of in-panel or header actions. Each app currently owns a dedicated login screen and a dedicated loading screen before the ready-state route UI is shown.
 
 The data-model layer is the foundation of the whole system because it is the actual schema side: the sitting table/function definitions from which runtime and UX layers are derived. That layer is intentionally single origin, single source of truth, and single user under `AICodex`. On authoring surfaces, new schema-side rows should begin as drafts with `i = 0`; save/edit then decides insert vs update and allocates `max(i) + 1` only when the draft is first persisted.
 
@@ -192,7 +192,7 @@ genrp/
 │       │   ├── sqlite_store.dart         # SQLite store + SqliteCatalogRow
 │       │   ├── sqliteadmin.dart          # SQLite create-db/table/vfun builder
 │       │   ├── sqliteclient.dart         # SQLite foundation CRUD builder
-│       │   └── webclient.dart            # Generic web action/CRUD envelope builder
+│       │   └── webclient.dart            # Generic remote action/CRUD envelope builder
 │       ├── model/
 │       │   ├── bdata/                    # 1 business data model file
 │       │   ├── base/                     # 2 base model files
@@ -210,7 +210,7 @@ genrp/
 │           ├── paper/                    # Paper widgets
 │           ├── template/                 # Template widgets
 │           └── view/                     # Reusable UX views
-├── test/                                 # Currently empty in this working tree
+├── test/                                 # No checked-in Dart tests in this working tree
 ├── assets/json/                          # 3 JSON spec/registry files
 ├── docs/                                 # 10 documentation files
 └── pubspec.yaml
@@ -376,9 +376,9 @@ All are immutable with `const` constructor, `fromJson`, `toJson`, `copyWith`, `=
 ```mermaid
 flowchart LR
     Route["CopilotRoute"]
-    Specs["AIWork/AIBook/AICodex/AIStudio Specs"]
-    RS["UxRouteSpec"]
-    GX["GenUx.buildPaper()"]
+    Specs["AIWork/AIBook Specs or AIStudio/AICodex Sections"]
+    RS["UxRouteSpec or app-owned section config"]
+    GX["GenUx.buildPaper() or dedicated shell"]
     PH["UxPaperHost"]
     TH["UxTemplateHost"]
     VW["Ux*View widgets"]
@@ -390,10 +390,10 @@ flowchart LR
     AP --> VW
 ```
 
-1. **App-specific specs** (`AIWorkSpecs`, `AIBookSpecs`, `AICodexSpecs`, `AIStudioSpecs`) resolve a `CopilotRoute` into a `UxRouteSpec`.
-2. **`GenUx`** selects the concrete paper/template implementation from `pid` and `tid`, then composes the widget tree.
-3. **`UxPaperHost` / `UxTemplateHost`** mount scoped paper/template state inside `Autopilot`.
-4. **`Ux*View` widgets** render the actual UI primitives and read/write scoped state through `Autopilot`.
+1. **App route helpers** resolve a `CopilotRoute` into either a `UxRouteSpec` (`AIWork`, `AIBook`) or an app-owned section config (`AIStudio`, `AICodex`).
+2. **`GenUx`** still drives the spec-based papers for `AIWork` and `AIBook`, while `AIStudio` and `AICodex` build dedicated hard-coded three-panel shells.
+3. **`UxPaperHost` / `UxTemplateHost`** mount scoped paper/template state inside `Autopilot` where the spec-driven path is used.
+4. **`Ux*View` widgets** render the shared UI primitives for both the spec-driven apps and the dedicated authoring shells.
 5. The older JSON body-router/template-runtime pipeline is not part of the active working tree in this snapshot.
 
 > [!IMPORTANT]
@@ -421,7 +421,7 @@ flowchart LR
 
 `SqliteCatalogRow` mirrors the common model shape (`i, a, d, e, t, n, s`) plus `catalog`, `payload` (JSON), `updatedAt`.
 
-- Platform-aware: desktop uses `sqflite_common_ffi`, mobile uses `sqflite`, web throws `UnsupportedError`
+- Platform-aware: desktop uses `sqflite_common_ffi`, mobile uses `sqflite`; web is not a target in the current direction
 - Singleton pattern via `SqliteStore.instance`
 - Supports custom `databaseFactory` and `databasePath` injection for testing
 - Applies shared foundation seed rows on first create
@@ -459,10 +459,11 @@ flowchart LR
 
 #### Shared app pattern
 - Each app is a minimal `MaterialApp` using `UxTheme.lightTheme()` / `UxTheme.darkTheme()`.
+- Each app currently owns a dedicated login screen inside its app entry flow.
 - Each home widget follows the same `login -> loading -> ready` stage model.
 - Sign-in currently goes through `Autopilot.applyMockAuth(...)`.
-- Each app resolves the current route through its `*Specs` class and gets back a `UxRouteSpec`.
-- Ready-state rendering flows through `GenUx.buildPaper(spec: _spec.paper, autopilot: _pilot, optionalId: _route.optionalId)`.
+- Each app resolves the current route through its `*Specs` class and gets back either a `UxRouteSpec` or an app-owned section config.
+- `AIWork` and `AIBook` still render ready state through `GenUx.buildPaper(...)`, while `AIStudio` and `AICodex` now render dedicated hard-coded three-panel shells that reuse shared UX widgets.
 - Route changes use `CopilotRoute` plus `Autopilot.navigate(...)`.
 
 #### App roles
@@ -616,11 +617,13 @@ Defines **identity registries** — maps numeric IDs to names:
 
 ## 10. Test Coverage
 
-The current working tree has no checked-in Dart test files under `test/`, so the historical test inventory from earlier snapshots no longer matches this checkout.
+The checked-in Dart test tree has been deleted in this checkout, so the historical test inventory from earlier snapshots no longer matches the current repo state.
 
 Current verification for this analysis:
 - `flutter analyze lib test` — passes on 2026-03-20.
-- Rebuilding focused tests around `Autopilot`, `*_specs.dart`, `GenUx`, and the current `core/ux` views should be treated as a near-term priority.
+- The four active apps have been manually tested in this snapshot.
+- Seeded/demo `*_specs.dart` data remains intentional for now until ID-key direction is discussed.
+- `flutter analyze lib test` plus manual app runs are the active verification path for this snapshot.
 
 ---
 
@@ -632,7 +635,7 @@ Current verification for this analysis:
 |---|---|
 | App launcher with direct multi-app selection | ✅ Stable |
 | Four app entry points + shared login/loading/ready staging | ✅ Working |
-| `UxRouteSpec` / `GenUx` spec-driven rendering | ✅ Working |
+| `AIWork` / `AIBook` spec-driven rendering + `AIStudio` / `AICodex` dedicated shells | ✅ Working |
 | `UxPaperHost` / `UxTemplateHost` scoped state mounting | ✅ Working |
 | Action dispatch and template/paper state mutations through `Autopilot` | ✅ Working |
 | SQLite store (shared foundation) | ✅ Working |
@@ -641,18 +644,19 @@ Current verification for this analysis:
 | Shared hybrid authoring shell (`20 / 60 / 20` dual mode) | ✅ Working |
 | `uschema` barrel + current spec imports | ✅ Working |
 | `flutter analyze lib test` | ✅ Passes |
+| Manual validation of AIWork / AIBook / AIStudio / AICodex | ✅ Done |
 | Checked-in automated tests | ⚪ None in current working tree |
 
 ### Known Gaps ⚠️
 
 | Gap | Priority | Notes |
 |---|---|---|
-| No checked-in automated test suite | High | `test/` is empty in this working tree; regression coverage needs rebuilding |
+| No checked-in automated test suite | N/A | Test files have been deleted in this working tree; analyzer plus manual app testing are the active checks for this snapshot |
 | Mock/demo auth and route bootstrap | High | Apps still rely on `applyMockAuth` and local preset specs for ready-state entry |
 | Real transport integration | High | `WebClient` scaffolding exists, but active app flows are not server-backed yet |
 | Validation still partial | Medium | Core imports are fixed, but deeper semantic consistency checks can grow further |
 | Shared DB builders not wired into app flows yet | Medium | Contract/admin/client scaffolding exists, but app-level integration is still pending |
-| AIWork and AIBook remain local-spec driven | Medium | Runtime surfaces are stable, but remote-backed business flows are still pending |
+| AIWork and AIBook are intentionally local-spec driven | N/A | This is the current ready-to-run mode; remote-backed business flows can be added later without blocking app readiness |
 | AIStudio generic editor still missing | Medium | Row list/search/draft selection works; Save/Delete editor is the next step |
 | AIStudio payload-specific UX/spec editing still missing | Medium | Common row editor comes first; catalog-specific payload editing remains after that |
 | AICodex DDL flow still missing | Medium | Right-side editing now works, but schema generation/apply preview is still pending |

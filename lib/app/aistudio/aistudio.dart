@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:genrp/app/aistudio/aistudio_specs.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/agent/copilot_route.dart';
-import 'package:genrp/core/model/uschema/ux.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/genux.dart';
+import 'package:genrp/core/ux/view/cardview.dart';
+import 'package:genrp/core/ux/view/collectionview.dart';
+import 'package:genrp/core/ux/view/fromview.dart';
+import 'package:genrp/core/ux/view/plistview.dart';
+import 'package:genrp/core/ux/view/tabview.dart';
+import 'package:genrp/core/ux/view/toolbarview.dart';
 import 'package:genrp/meta.dart';
 
 class AIStudioApp extends StatelessWidget {
@@ -49,15 +53,55 @@ class AIStudioHome extends StatefulWidget {
 
 enum _AIStudioStage { login, loading, ready }
 
+class _AIStudioCatalog {
+  const _AIStudioCatalog({required this.name, required this.subtitle});
+
+  final String name;
+  final String subtitle;
+
+  List<Object?> get row => <Object?>[name, subtitle];
+}
+
+class _AIStudioRow {
+  const _AIStudioRow({
+    required this.id,
+    required this.name,
+    required this.status,
+    required this.owner,
+    required this.notes,
+  });
+
+  final int id;
+  final String name;
+  final String status;
+  final String owner;
+  final String notes;
+
+  List<Object?> get cells => <Object?>[id, name, status, owner];
+}
+
 class _AIStudioHomeState extends State<AIStudioHome> {
+  static const List<String> _minorLabels = <String>['Core', 'Flow'];
+  static const List<String> _majorLabels = <String>['List', 'Editor', 'Split'];
+  static const List<String> _rowColumns = <String>[
+    'ID',
+    'Name',
+    'Status',
+    'Owner',
+  ];
+
   late final Autopilot _pilot;
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
 
   _AIStudioStage _stage = _AIStudioStage.login;
   String? _errorMessage;
-  List<UxRouteSpec> _presets = const <UxRouteSpec>[];
+  List<AIStudioSection> _presets = const <AIStudioSection>[];
   String? _routePath;
+  int _minorTabIndex = 0;
+  int _majorTabIndex = 1;
+  String _selectedCatalog = 'Host';
+  int _selectedRowIndex = 0;
 
   CopilotRoute get _route =>
       _pilot.currentRoute ??
@@ -67,7 +111,8 @@ class _AIStudioHomeState extends State<AIStudioHome> {
         presets: _presets,
       );
 
-  UxRouteSpec get _spec => AIStudioSpecs.resolve(_route, presets: _presets);
+  AIStudioSection get _section =>
+      AIStudioSpecs.resolve(_route, presets: _presets);
 
   @override
   void initState() {
@@ -137,17 +182,18 @@ class _AIStudioHomeState extends State<AIStudioHome> {
 
     await Future<void>.delayed(Duration.zero);
     final presets = AIStudioSpecs.presets();
-    final routePath = AIStudioSpecs.initialPath(
+    final route = AIStudioSpecs.initialRoute(
       explicitPath: widget.initialRoutePath,
       currentUri: Uri.base,
       presets: presets,
     );
-    _pilot.navigate(routePath, notify: false);
+    _pilot.navigate(route.path, notify: false);
 
     if (!mounted) return true;
     setState(() {
       _presets = presets;
-      _routePath = routePath;
+      _routePath = route.path;
+      _applySectionDefaults(route);
       _stage = _AIStudioStage.ready;
     });
     return true;
@@ -158,9 +204,21 @@ class _AIStudioHomeState extends State<AIStudioHome> {
       return;
     }
     _pilot.navigate(route, notify: false);
+    final nextRoute = CopilotRoute.parse(route);
     setState(() {
       _routePath = route;
+      _applySectionDefaults(nextRoute);
     });
+  }
+
+  void _applySectionDefaults(CopilotRoute route) {
+    final defaultCatalog = route.pageSpecId == AIStudioSpecs.paperOneSpecId
+        ? 'UX Action'
+        : 'Host';
+    _selectedCatalog = defaultCatalog;
+    _minorTabIndex = _tabIndexForCatalog(defaultCatalog);
+    _majorTabIndex = 1;
+    _selectedRowIndex = 0;
   }
 
   Widget _buildLogin(BuildContext context) {
@@ -238,10 +296,23 @@ class _AIStudioHomeState extends State<AIStudioHome> {
 
   Widget _buildReady(BuildContext context) {
     final route = _route;
-    final spec = _spec;
+    final section = _section;
     final presets = _presets;
+    final catalogs = _catalogsForSection(section);
+    final selectedCatalog = catalogs.firstWhere(
+      (_AIStudioCatalog catalog) => catalog.name == _selectedCatalog,
+      orElse: () => catalogs.first,
+    );
+    final rows = _rowsForCatalog(selectedCatalog.name, route);
+    final selectedRowIndex = _resolveIndex(
+      requestedIndex: _selectedRowIndex,
+      length: rows.length,
+    );
+    final selectedRow = selectedRowIndex == null
+        ? null
+        : rows[selectedRowIndex];
     final selectedIndex = presets.indexWhere(
-      (UxRouteSpec preset) => preset.path == route.path,
+      (AIStudioSection preset) => preset.path == route.path,
     );
 
     return Scaffold(
@@ -264,9 +335,9 @@ class _AIStudioHomeState extends State<AIStudioHome> {
             },
             destinations: presets
                 .map<NavigationRailDestination>(
-                  (UxRouteSpec preset) => NavigationRailDestination(
-                    icon: const Icon(Icons.folder_open_outlined),
-                    selectedIcon: const Icon(Icons.folder_open),
+                  (AIStudioSection preset) => NavigationRailDestination(
+                    icon: const Icon(Icons.design_services_outlined),
+                    selectedIcon: const Icon(Icons.design_services),
                     label: Text(preset.title),
                   ),
                 )
@@ -280,30 +351,48 @@ class _AIStudioHomeState extends State<AIStudioHome> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  Container(
-                    decoration: UxTheme.softPanelDecoration(context),
-                    padding: UxTheme.panelPadding,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          spec.title,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          spec.subtitle,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
+                  _buildHeader(
+                    context: context,
+                    section: section,
+                    route: route,
+                    selectedCatalog: selectedCatalog,
+                    rowCount: rows.length,
                   ),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: GenUx.buildPaper(
-                      spec: spec.paper,
-                      autopilot: _pilot,
-                      optionalId: spec.optionalId,
+                    child: LayoutBuilder(
+                      builder:
+                          (BuildContext context, BoxConstraints constraints) {
+                            final stacked = constraints.maxWidth < 1100;
+                            final minorPanel = _buildMinorPanel(
+                              section: section,
+                            );
+                            final majorPanel = _buildMajorPanel(
+                              context: context,
+                              route: route,
+                              section: section,
+                              selectedCatalog: selectedCatalog,
+                              rows: rows,
+                              selectedRowIndex: selectedRowIndex,
+                              selectedRow: selectedRow,
+                            );
+                            if (stacked) {
+                              return Column(
+                                children: <Widget>[
+                                  SizedBox(height: 260, child: minorPanel),
+                                  const SizedBox(height: 16),
+                                  Expanded(child: majorPanel),
+                                ],
+                              );
+                            }
+                            return Row(
+                              children: <Widget>[
+                                SizedBox(width: 280, child: minorPanel),
+                                const SizedBox(width: 16),
+                                Expanded(child: majorPanel),
+                              ],
+                            );
+                          },
                     ),
                   ),
                 ],
@@ -322,5 +411,613 @@ class _AIStudioHomeState extends State<AIStudioHome> {
         ),
       ),
     );
+  }
+
+  Widget _buildHeader({
+    required BuildContext context,
+    required AIStudioSection section,
+    required CopilotRoute route,
+    required _AIStudioCatalog selectedCatalog,
+    required int rowCount,
+  }) {
+    final chips = <String>[
+      'Catalog: ${selectedCatalog.name}',
+      'Rows: $rowCount',
+      'Back Stack: Off',
+      'Web Support: Off',
+    ];
+    return Container(
+      decoration: UxTheme.softPanelDecoration(context),
+      padding: UxTheme.panelPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(section.title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(section.subtitle, style: Theme.of(context).textTheme.bodyMedium),
+          const SizedBox(height: 12),
+          UxToolbarView(
+            i: 40101,
+            autopilot: _pilot,
+            s: 30,
+            leftChildren: chips
+                .map<Widget>((String chip) => Chip(label: Text(chip)))
+                .toList(growable: false),
+            rightChildren: <Widget>[
+              OutlinedButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.rule_folder_outlined),
+                label: const Text('Validate'),
+              ),
+              FilledButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Save Draft'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'AIStudio stays editor-first. Live preview from raw Ux* mutations is intentionally avoided in favor of a hard-coded authoring shell.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Current route: ${route.path}',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMinorPanel({required AIStudioSection section}) {
+    return UxTabView(
+      i: 40110,
+      autopilot: _pilot,
+      s: 10,
+      activeIndex: _minorTabIndex,
+      labels: _minorLabels,
+      onChanged: (int index) {
+        final catalogs = _catalogsForTab(section: section, tabIndex: index);
+        setState(() {
+          _minorTabIndex = index;
+          if (!catalogs.any(
+            (_AIStudioCatalog catalog) => catalog.name == _selectedCatalog,
+          )) {
+            _selectedCatalog = catalogs.first.name;
+            _selectedRowIndex = 0;
+          }
+        });
+      },
+      children: <Widget>[
+        _buildCatalogList(
+          title: 'UX Core',
+          catalogs: _catalogsForTab(section: section, tabIndex: 0),
+        ),
+        _buildCatalogList(
+          title: 'UX Flow',
+          catalogs: _catalogsForTab(section: section, tabIndex: 1),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCatalogList({
+    required String title,
+    required List<_AIStudioCatalog> catalogs,
+  }) {
+    final selectedIndex = catalogs.indexWhere(
+      (_AIStudioCatalog catalog) => catalog.name == _selectedCatalog,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        UxToolbarView(
+          i: 40111,
+          autopilot: _pilot,
+          s: 20,
+          leftChildren: <Widget>[Text(title)],
+          rightChildren: const <Widget>[Chip(label: Text('2 tabs'))],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: UxCollectionView(
+            i: 40112,
+            autopilot: _pilot,
+            s: 1,
+            p: title,
+            rows: catalogs
+                .map<List<Object?>>((_AIStudioCatalog catalog) => catalog.row)
+                .toList(growable: false),
+            selectedIndex: selectedIndex < 0 ? null : selectedIndex,
+            onSelectIndex: (int index) {
+              setState(() {
+                _selectedCatalog = catalogs[index].name;
+                _selectedRowIndex = 0;
+                _majorTabIndex = 1;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMajorPanel({
+    required BuildContext context,
+    required CopilotRoute route,
+    required AIStudioSection section,
+    required _AIStudioCatalog selectedCatalog,
+    required List<_AIStudioRow> rows,
+    required int? selectedRowIndex,
+    required _AIStudioRow? selectedRow,
+  }) {
+    return UxTabView(
+      i: 40120,
+      autopilot: _pilot,
+      s: 10,
+      activeIndex: _majorTabIndex,
+      labels: _majorLabels,
+      onChanged: (int index) {
+        setState(() {
+          _majorTabIndex = index;
+        });
+      },
+      children: <Widget>[
+        _buildRowList(
+          title: '${selectedCatalog.name} Rows',
+          rows: rows,
+          selectedRowIndex: selectedRowIndex,
+        ),
+        _buildEditorLayout(
+          context: context,
+          route: route,
+          section: section,
+          selectedCatalog: selectedCatalog,
+          rows: rows,
+          selectedRowIndex: selectedRowIndex,
+          selectedRow: selectedRow,
+          leftFlex: 3,
+          rightFlex: 2,
+        ),
+        _buildEditorLayout(
+          context: context,
+          route: route,
+          section: section,
+          selectedCatalog: selectedCatalog,
+          rows: rows,
+          selectedRowIndex: selectedRowIndex,
+          selectedRow: selectedRow,
+          leftFlex: 1,
+          rightFlex: 1,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRowList({
+    required String title,
+    required List<_AIStudioRow> rows,
+    required int? selectedRowIndex,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        UxToolbarView(
+          i: 40121,
+          autopilot: _pilot,
+          s: 20,
+          leftChildren: <Widget>[Text(title)],
+          rightChildren: <Widget>[
+            OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.add_box_outlined),
+              label: const Text('New'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: UxCollectionView(
+            i: 40122,
+            autopilot: _pilot,
+            s: 3,
+            p: title,
+            columns: _rowColumns,
+            rows: rows
+                .map<List<Object?>>((_AIStudioRow row) => row.cells)
+                .toList(growable: false),
+            selectedIndex: selectedRowIndex,
+            onSelectIndex: (int index) {
+              setState(() {
+                _selectedRowIndex = index;
+              });
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditorLayout({
+    required BuildContext context,
+    required CopilotRoute route,
+    required AIStudioSection section,
+    required _AIStudioCatalog selectedCatalog,
+    required List<_AIStudioRow> rows,
+    required int? selectedRowIndex,
+    required _AIStudioRow? selectedRow,
+    required int leftFlex,
+    required int rightFlex,
+  }) {
+    final list = _buildRowList(
+      title: '${selectedCatalog.name} Rows',
+      rows: rows,
+      selectedRowIndex: selectedRowIndex,
+    );
+    final detail = _buildEditorStack(
+      context: context,
+      route: route,
+      section: section,
+      selectedCatalog: selectedCatalog,
+      selectedRow: selectedRow,
+    );
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        if (constraints.maxWidth < 920) {
+          return Column(
+            children: <Widget>[
+              Expanded(child: list),
+              const SizedBox(height: 16),
+              Expanded(child: detail),
+            ],
+          );
+        }
+        return Row(
+          children: <Widget>[
+            Expanded(flex: leftFlex, child: list),
+            const SizedBox(width: 16),
+            Expanded(flex: rightFlex, child: detail),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildEditorStack({
+    required BuildContext context,
+    required CopilotRoute route,
+    required AIStudioSection section,
+    required _AIStudioCatalog selectedCatalog,
+    required _AIStudioRow? selectedRow,
+  }) {
+    final properties = _propertiesForRow(
+      route: route,
+      section: section,
+      selectedCatalog: selectedCatalog,
+      selectedRow: selectedRow,
+    );
+    final selectedName = selectedRow?.name ?? 'No Selection';
+    return Column(
+      children: <Widget>[
+        Expanded(
+          child: UxCardView(
+            i: 40130,
+            autopilot: _pilot,
+            title: 'Inspector',
+            child: SingleChildScrollView(
+              child: UxPListView(
+                i: 40131,
+                autopilot: _pilot,
+                properties: properties,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: UxCardView(
+            i: 40132,
+            autopilot: _pilot,
+            title: 'Editor',
+            child: SingleChildScrollView(
+              child: UxFromView(
+                i: 40133,
+                autopilot: _pilot,
+                p: '$selectedName Form',
+                footer: Wrap(
+                  spacing: 8,
+                  children: <Widget>[
+                    FilledButton(onPressed: () {}, child: const Text('Save')),
+                    OutlinedButton(
+                      onPressed: () {},
+                      child: const Text('Duplicate'),
+                    ),
+                  ],
+                ),
+                children: _formFields(
+                  selectedCatalog: selectedCatalog,
+                  selectedRow: selectedRow,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<_AIStudioCatalog> _catalogsForSection(AIStudioSection section) {
+    return <_AIStudioCatalog>[
+      ..._catalogsForTab(section: section, tabIndex: 0),
+      ..._catalogsForTab(section: section, tabIndex: 1),
+    ];
+  }
+
+  List<_AIStudioCatalog> _catalogsForTab({
+    required AIStudioSection section,
+    required int tabIndex,
+  }) {
+    final reviewMode = section.route.pageSpecId == AIStudioSpecs.paperOneSpecId;
+    if (tabIndex == 0) {
+      return <_AIStudioCatalog>[
+        _AIStudioCatalog(
+          name: 'Host',
+          subtitle: reviewMode
+              ? 'Review host surfaces and release titles'
+              : 'App-level entry hosts and route owners',
+        ),
+        const _AIStudioCatalog(
+          name: 'Body',
+          subtitle: 'Paper/body structure and layout identity',
+        ),
+        const _AIStudioCatalog(
+          name: 'Template',
+          subtitle: 'Reusable template surfaces and composition',
+        ),
+        const _AIStudioCatalog(
+          name: 'Type',
+          subtitle: 'Typed node families and render contracts',
+        ),
+        const _AIStudioCatalog(
+          name: 'Widget',
+          subtitle: 'Widget registrations and UX view mapping',
+        ),
+      ];
+    }
+    return <_AIStudioCatalog>[
+      const _AIStudioCatalog(
+        name: 'UX Action',
+        subtitle: 'Actions, handlers, and tool commands',
+      ),
+      const _AIStudioCatalog(
+        name: 'FieldBinding',
+        subtitle: 'Bindings between fields, slots, and paths',
+      ),
+      const _AIStudioCatalog(
+        name: 'Body Spec Node',
+        subtitle: 'Tree nodes, nesting, and local behavior',
+      ),
+    ];
+  }
+
+  List<_AIStudioRow> _rowsForCatalog(String catalog, CopilotRoute route) {
+    final seed = int.tryParse(route.optionalId ?? '42') ?? 42;
+    switch (catalog) {
+      case 'Host':
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed,
+            name: 'main_host',
+            status: 'Ready',
+            owner: 'Mia',
+            notes: 'Primary shell host for AIStudio entry.',
+          ),
+          _AIStudioRow(
+            id: seed + 1,
+            name: 'publish_host',
+            status: 'Draft',
+            owner: 'Ethan',
+            notes: 'Release review host for publish checks.',
+          ),
+        ];
+      case 'Body':
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed + 10,
+            name: 'ux_catalog_body',
+            status: 'Ready',
+            owner: 'Mia',
+            notes: 'Catalog browser body for left-to-right authoring.',
+          ),
+          _AIStudioRow(
+            id: seed + 11,
+            name: 'ux_editor_body',
+            status: 'Review',
+            owner: 'Ethan',
+            notes: 'Editor body for row detail and bindings.',
+          ),
+        ];
+      case 'Template':
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed + 20,
+            name: 'tcrud_studio',
+            status: 'Ready',
+            owner: 'Mia',
+            notes: 'CRUD-oriented studio template for authoring.',
+          ),
+          _AIStudioRow(
+            id: seed + 21,
+            name: 'treview_lane',
+            status: 'Draft',
+            owner: 'Ethan',
+            notes: 'Review lane template for publish prep.',
+          ),
+        ];
+      case 'Type':
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed + 30,
+            name: 'column',
+            status: 'Stable',
+            owner: 'Mia',
+            notes: 'Vertical composition type.',
+          ),
+          _AIStudioRow(
+            id: seed + 31,
+            name: 'toolbar',
+            status: 'Stable',
+            owner: 'Ethan',
+            notes: 'Toolbar type for command chrome.',
+          ),
+        ];
+      case 'Widget':
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed + 40,
+            name: 'toolbarview',
+            status: 'Ready',
+            owner: 'Mia',
+            notes: 'Shared toolbar widget used in authoring shells.',
+          ),
+          _AIStudioRow(
+            id: seed + 41,
+            name: 'plistview',
+            status: 'Ready',
+            owner: 'Ethan',
+            notes: 'Property list widget for inspectors.',
+          ),
+        ];
+      case 'UX Action':
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed + 50,
+            name: 'publish_spec',
+            status: 'Draft',
+            owner: 'Mia',
+            notes: 'Publish current draft with validation.',
+          ),
+          _AIStudioRow(
+            id: seed + 51,
+            name: 'clone_spec',
+            status: 'Ready',
+            owner: 'Ethan',
+            notes: 'Duplicate selected UX row into a draft.',
+          ),
+        ];
+      case 'FieldBinding':
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed + 60,
+            name: 'title -> paper.title',
+            status: 'Ready',
+            owner: 'Mia',
+            notes: 'Maps title form input to paper title.',
+          ),
+          _AIStudioRow(
+            id: seed + 61,
+            name: 'owner -> template.summary',
+            status: 'Review',
+            owner: 'Ethan',
+            notes: 'Maps owner field into summary slot.',
+          ),
+        ];
+      case 'Body Spec Node':
+      default:
+        return <_AIStudioRow>[
+          _AIStudioRow(
+            id: seed + 70,
+            name: 'body.root.column',
+            status: 'Ready',
+            owner: 'Mia',
+            notes: 'Root column node for AIStudio page.',
+          ),
+          _AIStudioRow(
+            id: seed + 71,
+            name: 'detail.toolbar',
+            status: 'Draft',
+            owner: 'Ethan',
+            notes: 'Toolbar node for detail editor actions.',
+          ),
+        ];
+    }
+  }
+
+  Map<String, Object?> _propertiesForRow({
+    required CopilotRoute route,
+    required AIStudioSection section,
+    required _AIStudioCatalog selectedCatalog,
+    required _AIStudioRow? selectedRow,
+  }) {
+    return <String, Object?>{
+      'app': AIStudioSpecs.title,
+      'surface': section.title,
+      'catalog': selectedCatalog.name,
+      'route': route.path,
+      'row_name': selectedRow?.name ?? '',
+      'row_status': selectedRow?.status ?? '',
+      'owner': selectedRow?.owner ?? '',
+      'back_stack': 'disabled',
+      'web_support': 'disabled',
+      'preview_mode': 'hard-coded editor shell',
+      'notes': selectedRow?.notes ?? 'Select a row to inspect details.',
+    };
+  }
+
+  List<Widget> _formFields({
+    required _AIStudioCatalog selectedCatalog,
+    required _AIStudioRow? selectedRow,
+  }) {
+    return <Widget>[
+      TextFormField(
+        initialValue: selectedRow?.name ?? '',
+        decoration: InputDecoration(labelText: '${selectedCatalog.name} Name'),
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        initialValue: selectedRow?.status ?? 'Draft',
+        decoration: const InputDecoration(labelText: 'Status'),
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        initialValue: selectedRow?.owner ?? 'admin',
+        decoration: const InputDecoration(labelText: 'Owner'),
+      ),
+      const SizedBox(height: 12),
+      TextFormField(
+        initialValue: selectedRow?.notes ?? '',
+        minLines: 3,
+        maxLines: 5,
+        decoration: const InputDecoration(labelText: 'Notes'),
+      ),
+    ];
+  }
+
+  int _tabIndexForCatalog(String catalog) {
+    switch (catalog) {
+      case 'Host':
+      case 'Body':
+      case 'Template':
+      case 'Type':
+      case 'Widget':
+        return 0;
+      default:
+        return 1;
+    }
+  }
+
+  int? _resolveIndex({required int requestedIndex, required int length}) {
+    if (length <= 0) {
+      return null;
+    }
+    if (requestedIndex < 0) {
+      return 0;
+    }
+    if (requestedIndex >= length) {
+      return length - 1;
+    }
+    return requestedIndex;
   }
 }

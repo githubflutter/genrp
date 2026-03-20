@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and schema-application surface.
 
-**Current status:** Step 3 is done, and the shared hybrid shell is in place — shared dark Material 3 theme, minor panel with two tabs, major panel with three tabs, grouped model navigation, SQLite-backed master list, search, add-row action, row selection, and the right-side detail editor are all in place. Step 4 is next.
+**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aicodex/aicodex.dart` + `lib/app/aicodex/aicodex_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated three-panel authoring shell, shared `UxTheme`, and shared UX widgets such as `UxTabView`, `UxCollectionView`, `UxPListView`, and `UxFromView`. `flutter analyze lib test` passes in the current snapshot, and the active AICodex app has already been manually tested.
 
-**Current next step:** Step 4 — DDL and function-script generation display.
+**Current next step:** Continue the AICodex feature plan inside the dedicated hard-coded shell while reusing shared UX components. The seeded/demo route metadata in `AICodexSpecs` is intentional for now until ID-key rules are discussed.
 
 **Role:** AICodex is the **sensitive data-model CRUD and schema configurator**. It owns CRUD for model definitions such as Entity, Field, Table, Column, Function, and related rows because those edits can require database recreation or schema regeneration. It also applies those definitions as **create, drop, and function/script** operations against the PostgreSQL backend and SQLite foundation. It does not consume runtime row data the way AIBook does.
 
@@ -30,6 +30,9 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 - AICodex still owns its own left explorer/navigation mechanism inside that shell
 - functional data-model CRUD and schema work should now continue inside that shared shell
 
+> [!NOTE]
+> The detailed step list below was written for a pre-`core/ux` snapshot where AICodex owned more of the shell/master/detail implementation directly. The current runtime entry points are `lib/app/aicodex/aicodex.dart`, `lib/app/aicodex/aicodex_specs.dart`, `lib/core/ux/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+
 ---
 
 ## How to use this document
@@ -41,9 +44,11 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 
 **Quality gate** (run after every step):
 ```bash
-flutter analyze
-flutter test
+flutter analyze lib test
 ```
+
+Current snapshot note: checked-in Dart test files have been deleted in this working tree, so `flutter analyze lib test` is currently the analyzer-only quality gate.
+Manual app testing has already been completed for the active snapshot.
 
 **Prerequisite:** None beyond the shared SQLite foundation. AICodex now owns the sensitive data-model CRUD path, so it no longer depends on AIStudio finishing model-row editing first.
 
@@ -51,22 +56,17 @@ flutter test
 
 ## What is already done
 
-- [x] Shared hybrid shell inside one `Scaffold.body`
-- [x] Left panel navigation with grouped model types
-- [x] Local selection state for model type and selected row
-- [x] Middle panel header reflects the selected model type
-- [x] Middle panel: SQLite-backed master list for the selected model type
-- [x] Search box filters rows by `n`
-- [x] Add/New button opens an unsaved draft row (`i = 0`) in the selected catalog
-- [x] Row selection highlighting in the master list
-- [x] Right panel: detail editor with save/delete flow
-- [x] Shared dark Material 3 theme + centralized chrome sizing
-- [x] Bottom status bar
-- [x] No scaffold FAB; add/save/delete actions live in header/panel content
-- [x] `SqliteStore` shared foundation exists
+- [x] Shared `MaterialApp` flow with login -> loading -> ready stages
+- [x] Direct-path support through `CopilotRoute`
+- [x] `AICodexSpecs.presets()` and `AICodexSpecs.resolve(...)` produce the active hard-coded route sections
+- [x] `NavigationRail` switches between preset routes in the live app shell
+- [x] The ready state is a dedicated hard-coded three-panel shell that still reuses shared UX widgets
+- [x] Shared `UxTheme` owns theme data plus panel/chrome helpers
+- [x] Current seeded AICodex route metadata lives in `AICodexSpecs.buildSection(...)` and remains intentional for this snapshot
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
-- [x] Core models exist, with `ActionModel` now treated as UX-side metadata under `lib/core/model/uschema`
-- [x] Backend contract documented (single POST endpoint, JSON passthrough, PG router function)
+- [x] Backend contract remains documented (single POST endpoint, JSON passthrough, PG router function)
+- [x] `flutter analyze lib test` passes in the current snapshot
+- [x] The older step history is preserved below as archival context for the pre-`core/ux` implementation path
 
 ## [x] UI convergence prerequisite — Hybrid shell
 

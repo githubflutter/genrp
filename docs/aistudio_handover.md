@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
-**Current status:** Step 3 is done, and the shared hybrid shell is in place — shared dark Material 3 theme, minor panel with two tabs, major panel with three tabs, UX/spec catalog navigation, local selection state, full UX/spec catalog list, SQLite-backed middle-panel row loading, search, draft-first add/new flow, and major-panel placeholders are all in place. Step 4 is next.
+**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aistudio/aistudio.dart` + `lib/app/aistudio/aistudio_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated three-panel authoring shell, shared `UxTheme`, and shared UX widgets such as `UxTabView`, `UxCollectionView`, `UxPListView`, and `UxFromView`. `flutter analyze lib test` passes in the current snapshot, and the active AIStudio app has already been manually tested.
 
-**Current next step:** Step 4 — Right panel generic editor for UX/spec rows.
+**Current next step:** Continue the AIStudio feature plan inside the dedicated hard-coded shell while reusing shared UX components. The seeded/demo route metadata in `AIStudioSpecs` is intentional for now until ID-key rules are discussed.
 
 **Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio is now narrowed to UX/spec CRUD and should stay on that path.
 
@@ -28,6 +28,9 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 - AIStudio still owns its own left explorer/list mechanism inside that shell
 - functional UX/spec work should now continue inside that shared shell
 
+> [!NOTE]
+> The detailed step list below was written for a pre-`core/ux` snapshot where AIStudio owned more of the shell/list/editor wiring directly. The current runtime entry points are `lib/app/aistudio/aistudio.dart`, `lib/app/aistudio/aistudio_specs.dart`, `lib/core/ux/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+
 ---
 
 ## How to use this document
@@ -39,30 +42,26 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
 **Quality gate** (run after every step):
 ```bash
-flutter analyze
-flutter test
+flutter analyze lib test
 ```
+
+Current snapshot note: checked-in Dart test files have been deleted in this working tree, so `flutter analyze lib test` is currently the analyzer-only quality gate.
+Manual app testing has already been completed for the active snapshot.
 
 ---
 
 ## What is already done
 
-- [x] Shared hybrid shell inside one `Scaffold.body`
-- [x] Left panel with UX/spec catalog navigation
-- [x] UX/spec list: Host, Body, Template, Type, Widget, UX Action, FieldBinding, Body Spec Node
-- [x] Local selection state for selected catalog and selected row
-- [x] Middle panel header updates from the selected catalog
-- [x] Selected catalog is visually highlighted
-- [x] Shared dark Material 3 theme + centralized chrome sizing
-- [x] Bottom status bar
-- [x] No scaffold FAB; future actions should live in header/panel content
-- [x] SQLite-backed middle-panel row list for selected UX/spec catalog
-- [x] Search filter by `n`
-- [x] Draft-first add/new flow with local `i = 0` rows
-- [x] Right-side placeholder reacts to draft-vs-selected row state
-- [x] Dedicated AIStudio widget coverage for list/search/draft behavior
-- [x] `SqliteStore` shared foundation wired into AIStudio list flow
+- [x] Shared `MaterialApp` flow with login -> loading -> ready stages
+- [x] Direct-path support through `CopilotRoute`
+- [x] `AIStudioSpecs.presets()` and `AIStudioSpecs.resolve(...)` produce the active hard-coded route sections
+- [x] `NavigationRail` switches between preset routes in the live app shell
+- [x] The ready state is a dedicated hard-coded three-panel shell that still reuses shared UX widgets
+- [x] Shared `UxTheme` owns theme data plus panel/chrome helpers
+- [x] Current seeded AIStudio route metadata lives in `AIStudioSpecs.buildSection(...)` and remains intentional for this snapshot
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
+- [x] `flutter analyze lib test` passes in the current snapshot
+- [x] The older step history is preserved below as archival context for the pre-`core/ux` implementation path
 
 ## [x] UI convergence prerequisite — Hybrid shell
 

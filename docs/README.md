@@ -8,15 +8,27 @@ Index of documentation files in `docs/`:
 - `aistudio_handover.md` — AIStudio progressive step-by-step handover with micro-tasks and per-step prompts.
 - `aicodex_handover.md` — AICodex progressive step-by-step handover with master-detail panels and DDL generation.
 
-Current next steps in this snapshot:
-- `AIBook` — Step 3
-- `AIStudio` — Step 4
-- `AICodex` — Step 4
+Current verification in this snapshot:
+- `flutter analyze lib test` passes on `2026-03-20`.
+- All four active apps have already been manually tested in this snapshot.
+- Checked-in Dart test files have been deleted in this working tree.
+
+Current handover status in this snapshot:
+- `AIWork` — ready-to-run spec-driven client surface; no dedicated handover doc yet.
+- `AIBook` — ready-to-run spec-driven client surface; the handover doc keeps older pre-`core/ux` steps as historical context.
+- `AIStudio` — dedicated hard-coded authoring shell with route presets and shared UX components; older step history remains as context.
+- `AICodex` — dedicated hard-coded authoring shell with route presets and shared UX components; older step history remains as context.
+
+Current next focus:
+- Continue feature work on the dedicated AIStudio/AICodex shells while reusing shared UX components and keeping seeded/demo route metadata intentional for now.
+- Keep using `flutter analyze lib test` plus manual app runs as the active validation path for this snapshot.
+- Add an `AIWork` handover doc when active feature work begins there.
 
 Current UI baseline in this snapshot:
-- Shared dark Material 3 theme across launcher and apps
-- AIStudio and AICodex share one hybrid shell
-- Dual authoring mode currently uses a `20 / 60 / 20` layout
+- Shared Material 3 theme via `UxTheme` across launcher and apps
+- Each app currently owns a dedicated login screen before the loading/ready flow
+- All four apps use the same login -> loading -> ready stage flow
+- AIStudio and AICodex still share the convergent authoring-shell direction
 - Scaffold FABs are gone; actions should live in headers or active panel content
 
 Current ownership reminder:
