@@ -26,10 +26,10 @@ void main() {
 
     final specValid = {
       'id': 'test-2',
-      'bodiesRegistry': [
-        {'id': 1, 'name': 'editor'},
-        {'id': 2, 'name': 'preview'},
-      ],
+      'bodies': {
+        'editor': {'bodyId': 1, 't': 4, 'type': 'text', 'text': 'Editor'},
+        'preview': {'bodyId': 2, 't': 3, 'type': 'text', 'text': 'Preview'},
+      },
     };
 
     autopilot.configureSpec(specValid);
@@ -58,21 +58,23 @@ void main() {
       'actions': [
         {'id': 100, 'name': 'save'},
       ],
-      'bodiesRegistry': [
-        {
-          'id': 1,
+      'bodies': {
+        'editor': {
+          'bodyId': 1,
+          't': 4,
+          'type': 'column',
           'children': [
             {'actionId': 999}, // Invalid
           ],
         },
-      ],
+      },
     };
 
     autopilot.configureSpec(spec);
     expect(autopilot.specError, equals('Invalid actionId 999 in body child'));
   });
 
-  test('AutopilotGo detects invalid templateId in body', () {
+  test('AutopilotGo detects invalid template type in body', () {
     final autopilot = AutopilotGo();
 
     final spec = {
@@ -80,16 +82,16 @@ void main() {
       'templates': [
         {'id': 200, 'name': 'form'},
       ],
-      'bodiesRegistry': [
-        {
-          'id': 1,
-          'templateId': 888, // Invalid
+      'bodies': {
+        'editor': {
+          'bodyId': 1,
+          't': 888, // Invalid
         },
-      ],
+      },
     };
 
     autopilot.configureSpec(spec);
-    expect(autopilot.specError, equals('Invalid templateId 888 in body'));
+    expect(autopilot.specError, equals('Unknown template type 888 in body'));
   });
 
   test('AutopilotGo detects invalid typeId in body child', () {
@@ -100,17 +102,88 @@ void main() {
       'types': [
         {'id': 300, 'name': 'text'},
       ],
-      'bodiesRegistry': [
-        {
-          'id': 1,
+      'bodies': {
+        'editor': {
+          'bodyId': 1,
+          't': 4,
+          'type': 'column',
           'children': [
             {'typeId': 777}, // Invalid
           ],
         },
-      ],
+      },
     };
 
     autopilot.configureSpec(spec);
     expect(autopilot.specError, equals('Invalid typeId 777 in body child'));
+  });
+
+  test('AutopilotGo detects unknown template mode in body', () {
+    final autopilot = AutopilotGo();
+
+    final spec = {
+      'id': 'test-7',
+      'bodies': {
+        'collection': {
+          'bodyId': 1,
+          't': 2,
+          'm': [9],
+        },
+      },
+    };
+
+    autopilot.configureSpec(spec);
+    expect(autopilot.specError, equals('Unknown template mode 9 in body'));
+  });
+
+  test('AutopilotGo detects unsupported mode for template type', () {
+    final autopilot = AutopilotGo();
+
+    final spec = {
+      'id': 'test-8',
+      'bodies': {
+        'detail': {
+          'bodyId': 1,
+          't': 3,
+          'm': [1],
+        },
+      },
+    };
+
+    autopilot.configureSpec(spec);
+    expect(
+      autopilot.specError,
+      equals('Mode 1 is not supported by template type 3'),
+    );
+  });
+
+  test('AutopilotGo detects invalid actionId in action center', () {
+    final autopilot = AutopilotGo();
+
+    final spec = {
+      'id': 'test-9',
+      'actions': [
+        {'id': 1, 'name': 'save'},
+      ],
+      'bodies': {
+        'editor': {
+          'bodyId': 1,
+          't': 4,
+          'type': 'text',
+          'text': 'Editor',
+          'actionCenters': {
+            'toolbar': {
+              'actionIds': [999],
+            },
+          },
+        },
+      },
+    };
+
+    autopilot.configureSpec(spec);
+    expect(
+      autopilot.specError,
+      equals('Invalid actionId 999 in action center'),
+    );
   });
 }

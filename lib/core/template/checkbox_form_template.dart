@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/uschema/ux_registry.dart';
-import 'package:genrp/core/model/uschema/ux_spec_mapper.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 import 'package:genrp/core/runtime/template_runtime.dart';
+import 'package:genrp/core/template/action_center_bar.dart';
 import 'package:genrp/core/widgets/x_checkbox.dart';
 
 class CheckboxFormTemplate extends StatelessWidget {
@@ -12,20 +12,12 @@ class CheckboxFormTemplate extends StatelessWidget {
     super.key,
   });
 
-  final Map<String, dynamic> bodySpec;
+  final UxTemplateSpec bodySpec;
   final Autopilot autopilot;
 
   @override
   Widget build(BuildContext context) {
     const runtime = TemplateRuntime();
-    const mapper = UxSpecMapper();
-    final registry = UxRegistry.fromSpec(bodySpec);
-    final hostId = (bodySpec['hostId'] as num?)?.toInt() ?? 0;
-    final bodyId = (bodySpec['bodyId'] as num?)?.toInt() ?? 0;
-    final checkboxSpec = Map<String, dynamic>.from(bodySpec['checkbox'] as Map? ?? const {});
-    final checkboxModel = checkboxSpec.isEmpty
-        ? null
-        : mapper.checkBoxFromNode(checkboxSpec, hostId: hostId, bodyId: bodyId);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -36,12 +28,10 @@ class CheckboxFormTemplate extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (checkboxModel != null)
-                XCheckBox(
-                  model: checkboxModel,
-                  autopilot: autopilot,
-                ),
-              runtime.render(bodySpec, autopilot, registry: registry, hostId: hostId, bodyId: bodyId),
+              ActionCenterBar(bodySpec: bodySpec, autopilot: autopilot),
+              if (bodySpec.checkbox != null)
+                XCheckBox(node: bodySpec.checkbox!, autopilot: autopilot),
+              runtime.render(bodySpec.root, autopilot),
             ],
           ),
         ),

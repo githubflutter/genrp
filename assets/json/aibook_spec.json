@@ -18,8 +18,13 @@
   "bodies": {
     "editor": {
       "bodyId": 1,
-      "templateId": 1,
-      "template": "checkboxForm",
+      "t": 1,
+      "actionCenters": {
+        "toolbar": {
+          "label": "Actions",
+          "actionIds": [1, 2]
+        }
+      },
       "checkbox": {
         "widgetId": 101,
         "label": "Saved",
@@ -57,29 +62,18 @@
           "bind": "data.book.title",
           "src": 1,
           "f": 101
-        },
-        {
-          "widgetId": 103,
-          "typeId": 4,
-          "type": "button",
-          "text": "Save",
-          "action": "saveBook",
-          "actionId": 1
-        },
-        {
-          "widgetId": 104,
-          "typeId": 4,
-          "type": "button",
-          "text": "Show Preview",
-          "action": "showPreview",
-          "actionId": 2
         }
       ]
     },
     "preview": {
       "bodyId": 2,
-      "templateId": 3,
-      "template": "detail",
+      "t": 3,
+      "actionCenters": {
+        "toolbar": {
+          "label": "Actions",
+          "actionIds": [3]
+        }
+      },
       "typeId": 1,
       "type": "column",
       "children": [
@@ -107,14 +101,6 @@
           "bind": "data.book.saved",
           "src": 1,
           "f": 102
-        },
-        {
-          "widgetId": 204,
-          "typeId": 4,
-          "type": "button",
-          "text": "Back to Editor",
-          "action": "showEditor",
-          "actionId": 3
         }
       ]
     }

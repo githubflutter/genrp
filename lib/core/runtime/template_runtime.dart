@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/uschema/ux_registry.dart';
-import 'package:genrp/core/model/uschema/ux_spec_mapper.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 import 'package:genrp/core/theme/genrp_theme.dart';
 import 'package:genrp/core/widgets/x_button.dart';
 import 'package:genrp/core/widgets/x_text_box.dart';
 
 typedef RuntimeNodeBuilder =
     Widget Function(
-      Map<String, dynamic> node,
+      UxNodeSpec node,
       Autopilot autopilot,
-      Widget Function(Map<String, dynamic> childNode) renderChild,
+      Widget Function(UxNodeSpec childNode) renderChild,
     );
 
 /// Runtime that renders the current small widget set from JSON nodes.
 class TemplateRuntime {
   const TemplateRuntime();
-
-  static const UxSpecMapper _mapper = UxSpecMapper();
 
   static final Map<String, RuntimeNodeBuilder> _builders = {
     'column': (node, autopilot, renderChild) =>
@@ -31,32 +28,16 @@ class TemplateRuntime {
         _RuntimeText(node: node, autopilot: autopilot),
   };
 
-  Widget render(
-    Map<String, dynamic> node,
-    Autopilot autopilot, {
-    UxRegistry? registry,
-    int hostId = 0,
-    int bodyId = 0,
-  }) {
-    final typeId = (node['typeId'] as num?)?.toInt();
-    final type =
-        registry?.typeName(typeId) ?? node['type']?.toString() ?? 'text';
+  Widget render(dynamic nodeInput, Autopilot autopilot) {
+    final node = nodeInput is UxNodeSpec
+        ? nodeInput
+        : UxNodeSpec.fromJson(Map<String, dynamic>.from(nodeInput as Map));
+    final type = node.type.isEmpty ? 'text' : node.type;
     final builder = _builders[type] ?? _builders['text']!;
-    final scopedNode = <String, dynamic>{
-      ...node,
-      'hostId': (node['hostId'] as num?)?.toInt() ?? hostId,
-      'bodyId': (node['bodyId'] as num?)?.toInt() ?? bodyId,
-    };
     return builder(
-      scopedNode,
+      node,
       autopilot,
-      (childNode) => render(
-        childNode,
-        autopilot,
-        registry: registry,
-        hostId: hostId,
-        bodyId: bodyId,
-      ),
+      (childNode) => render(childNode, autopilot),
     );
   }
 }
@@ -64,18 +45,14 @@ class TemplateRuntime {
 class _RuntimeColumn extends StatelessWidget {
   const _RuntimeColumn({required this.node, required this.renderChild});
 
-  final Map<String, dynamic> node;
-  final Widget Function(Map<String, dynamic> childNode) renderChild;
+  final UxNodeSpec node;
+  final Widget Function(UxNodeSpec childNode) renderChild;
 
   @override
   Widget build(BuildContext context) {
-    final children = List<Object?>.from(node['children'] as List? ?? const [])
-        .whereType<Map>()
-        .map((child) => renderChild(Map<String, dynamic>.from(child)))
-        .toList(growable: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: children,
+      children: node.children.map(renderChild).toList(growable: false),
     );
   }
 }
@@ -83,11 +60,11 @@ class _RuntimeColumn extends StatelessWidget {
 class _RuntimeSpacer extends StatelessWidget {
   const _RuntimeSpacer({required this.node});
 
-  final Map<String, dynamic> node;
+  final UxNodeSpec node;
 
   @override
   Widget build(BuildContext context) {
-    final height = (node['height'] as num?)?.toDouble() ?? 12;
+    final height = node.height ?? 12;
     return SizedBox(height: height);
   }
 }
@@ -95,62 +72,44 @@ class _RuntimeSpacer extends StatelessWidget {
 class _RuntimeTextField extends StatelessWidget {
   const _RuntimeTextField({required this.node, required this.autopilot});
 
-  final Map<String, dynamic> node;
+  final UxNodeSpec node;
   final Autopilot autopilot;
 
   @override
   Widget build(BuildContext context) {
-    return XTextBox(
-      model: TemplateRuntime._mapper.textBoxFromNode(
-        node,
-        hostId: (node['hostId'] as num?)?.toInt() ?? 0,
-        bodyId: (node['bodyId'] as num?)?.toInt() ?? 0,
-      ),
-      autopilot: autopilot,
-    );
+    return XTextBox(node: node, autopilot: autopilot);
   }
 }
 
 class _RuntimeButton extends StatelessWidget {
   const _RuntimeButton({required this.node, required this.autopilot});
 
-  final Map<String, dynamic> node;
+  final UxNodeSpec node;
   final Autopilot autopilot;
 
   @override
   Widget build(BuildContext context) {
-    return XButton(
-      model: TemplateRuntime._mapper.buttonFromNode(
-        node,
-        hostId: (node['hostId'] as num?)?.toInt() ?? 0,
-        bodyId: (node['bodyId'] as num?)?.toInt() ?? 0,
-      ),
-      autopilot: autopilot,
-    );
+    return XButton(node: node, autopilot: autopilot);
   }
 }
 
 class _RuntimeText extends StatelessWidget {
   const _RuntimeText({required this.node, required this.autopilot});
 
-  final Map<String, dynamic> node;
+  final UxNodeSpec node;
   final Autopilot autopilot;
 
   @override
   Widget build(BuildContext context) {
-    final bind = node['bind']?.toString();
-    final src = (node['src'] as num?)?.toInt();
-    final fieldId =
-        (node['fieldId'] as num?)?.toInt() ?? (node['f'] as num?)?.toInt();
     final resolvedValue = autopilot.resolveFieldBinding(
-      src: src,
-      fieldId: fieldId,
-      fallbackPath: bind,
+      src: node.src,
+      fieldId: node.fieldId,
+      fallbackPath: node.bind,
     );
-    final text = bind == null || bind.isEmpty
-        ? node['text']?.toString() ?? ''
-        : '${node['prefix'] ?? ''}${resolvedValue ?? ''}${node['suffix'] ?? ''}';
-    final style = node['style'] == 'headline'
+    final text = node.bind.isEmpty
+        ? node.text
+        : '${node.prefix}${resolvedValue ?? ''}${node.suffix}';
+    final style = node.style == 'headline'
         ? Theme.of(context).textTheme.titleLarge?.copyWith(
             fontSize: GenrpTheme.fontXl,
             fontWeight: FontWeight.w700,

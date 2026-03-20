@@ -4,6 +4,7 @@ import 'package:genrp/meta.dart';
 import 'package:genrp/app/aibook/autopilotgo.dart';
 import 'package:genrp/core/agent/mock_transport.dart';
 import 'package:genrp/core/generator/boilerplate_generator.dart';
+import 'package:genrp/core/model/uschema/ux_document_spec.dart';
 import 'package:genrp/core/theme/genrp_theme.dart';
 import 'package:provider/provider.dart';
 
@@ -34,7 +35,7 @@ class _AIBookHome extends StatefulWidget {
 }
 
 class _AIBookHomeState extends State<_AIBookHome> {
-  late final Future<Map<String, dynamic>> _specFuture;
+  late final Future<UxSpecDocument> _specFuture;
 
   @override
   void initState() {
@@ -42,15 +43,15 @@ class _AIBookHomeState extends State<_AIBookHome> {
     _specFuture = _loadSpec();
   }
 
-  Future<Map<String, dynamic>> _loadSpec() async {
-    return MockTransport.fetchSpec();
+  Future<UxSpecDocument> _loadSpec() async {
+    return MockTransport.fetchSpecDocument();
   }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<AutopilotGo>(
       builder: (context, autopilot, _) {
-        return FutureBuilder<Map<String, dynamic>>(
+        return FutureBuilder<UxSpecDocument>(
           future: _specFuture,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
@@ -92,16 +93,11 @@ class _AIBookHomeState extends State<_AIBookHome> {
               );
             }
 
-            final toolbar = Map<String, dynamic>.from(
-              spec['toolbar'] as Map? ?? const {},
-            );
             final status =
                 autopilot.resolve('ux.status')?.toString() ?? 'Ready';
 
             return Scaffold(
-              appBar: AppBar(
-                title: Text(toolbar['title']?.toString() ?? 'AIBook'),
-              ),
+              appBar: AppBar(title: Text(spec.toolbarTitle)),
               body: DynamicSpecBody(spec: spec, autopilot: autopilot),
               bottomNavigationBar: BottomAppBar(
                 child: Row(

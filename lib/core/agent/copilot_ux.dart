@@ -16,4 +16,9 @@ class CopilotUX {
     autopilot.stateSet.patch(values);
     if (notify) autopilot.publishChange();
   }
+
+  void clear({bool notify = true}) {
+    autopilot.stateSet.clear();
+    if (notify) autopilot.publishChange();
+  }
 }

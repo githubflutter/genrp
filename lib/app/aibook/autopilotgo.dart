@@ -1,22 +1,33 @@
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/agent/action.dart';
 import 'package:genrp/core/agent/mock_transport.dart';
 import 'package:genrp/core/base/x.dart';
+import 'package:genrp/core/model/uschema/ux_action_spec.dart';
+import 'package:genrp/core/model/uschema/ux_document_spec.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 
 /// Minimal concrete Autopilot implementation used by the app.
 class AutopilotGo extends Autopilot {
   AutopilotGo();
 
   String? _loadedSpecId;
+  UxSpecDocument? loadedSpec;
   String? specError;
+  final Map<int, UxActionSpec> _actionsById = <int, UxActionSpec>{};
 
-  void configureSpec(Map<String, dynamic> spec) {
-    final nextSpecId =
-        (spec['id'] ?? spec['name'] ?? spec['toolbar']?['title'] ?? 'aibook')
-            .toString();
+  @override
+  void clearActions() {
+    _actionsById.clear();
+  }
+
+  void configureSpec(dynamic specInput) {
+    final spec = specInput is UxSpecDocument
+        ? specInput
+        : UxSpecDocument.fromJson(Map<String, dynamic>.from(specInput as Map));
+    final nextSpecId = spec.id;
     if (_loadedSpecId == nextSpecId) return;
 
     _loadedSpecId = nextSpecId;
+    loadedSpec = spec;
     specError = null;
 
     final error = _validateSpec(spec);
@@ -26,62 +37,58 @@ class AutopilotGo extends Autopilot {
       return;
     }
 
-    actionSet.clear();
-    dataSet.clear();
-    stateSet.clear();
-    clearFieldPaths();
-    clearSelectedUxIdentity(notify: false);
+    resetRuntime(notify: false);
     _configureFieldBindings(spec);
 
-    final initialData = Map<String, dynamic>.from(
-      spec['initialData'] as Map? ?? const {},
-    );
+    final initialData = Map<String, dynamic>.from(spec.initialData);
     if (initialData.containsKey('x_row') && initialData['x_row'] is Map) {
       initialData['x_row'] = X.fromJson(
         Map<String, dynamic>.from(initialData['x_row']),
       );
     }
     copilotData.patch(initialData, notify: false);
-    copilotUX.patch(
-      Map<String, dynamic>.from(spec['initialState'] as Map? ?? const {}),
-      notify: false,
-    );
+    copilotUX.patch(spec.initialState, notify: false);
 
-    final actions = Action.fromList(spec['actions']);
+    final actions = spec.actions;
     for (final action in actions) {
-      if (action.name.isEmpty) continue;
-      actionSet.register(
-        action.name,
-        (payload) => _runAction(action, payload),
-        action,
-      );
+      if (action.id == 0) continue;
+      _actionsById[action.id] = action;
     }
   }
 
-  void _configureFieldBindings(Map<String, dynamic> spec) {
-    final bindings = List<Object?>.from(
-      spec['fieldBindings'] as List? ?? const [],
-    );
-    for (final item in bindings.whereType<Map>()) {
-      final map = Map<String, dynamic>.from(item);
-      final src = (map['src'] as num?)?.toInt();
-      final fieldId =
-          (map['fieldId'] as num?)?.toInt() ?? (map['f'] as num?)?.toInt();
-      final path = map['path']?.toString() ?? '';
-      final slot = (map['slot'] as num?)?.toInt();
-      if (src == null || fieldId == null) continue;
-      if (slot != null) {
-        registerFieldSlot(src, fieldId, slot);
+  @override
+  Future<void> triggerActionById(int id, [dynamic payload]) async {
+    final action = _actionsById[id];
+    if (action == null) return;
+    await _runAction(action, payload);
+  }
+
+  @override
+  String actionLabelForId(int id) {
+    final action = _actionsById[id];
+    if (action == null) return '';
+    return action.label;
+  }
+
+  @override
+  bool hasAction(int id) => _actionsById.containsKey(id);
+
+  void _configureFieldBindings(UxSpecDocument spec) {
+    for (final binding in spec.fieldBindings) {
+      if (binding.slot != null) {
+        registerFieldSlot(binding.src, binding.fieldId, binding.slot!);
       }
-      if (path.isNotEmpty) {
-        registerFieldPath(src, fieldId, path);
+      if (binding.path.isNotEmpty) {
+        registerFieldPath(binding.src, binding.fieldId, binding.path);
       }
     }
   }
 
-  String? _validateSpec(Map<String, dynamic> spec) {
+  String? _validateSpec(UxSpecDocument spec) {
+    final raw = spec.raw;
+
     String? checkDuplicates(String key) {
-      final list = List<Object?>.from(spec[key] ?? []);
+      final list = List<Object?>.from(raw[key] ?? []);
       final seenIds = <int>{};
       for (final item in list.whereType<Map>()) {
         final id = (item['id'] as num?)?.toInt();
@@ -98,54 +105,71 @@ class AutopilotGo extends Autopilot {
     if (e2 != null) return e2;
 
     // Validate fieldBindings: must have src and fieldId
-    final bindings = List<Object?>.from(spec['fieldBindings'] as List? ?? []);
+    final bindings = List<Object?>.from(raw['fieldBindings'] as List? ?? []);
     for (final item in bindings.whereType<Map>()) {
       final map = Map<String, dynamic>.from(item);
       final src = (map['src'] as num?)?.toInt();
-      final fieldId = (map['fieldId'] as num?)?.toInt() ?? (map['f'] as num?)?.toInt();
+      final fieldId =
+          (map['fieldId'] as num?)?.toInt() ?? (map['f'] as num?)?.toInt();
       if (src == null || fieldId == null) {
         return 'fieldBinding missing src or fieldId';
       }
     }
 
-    // Collect valid IDs from registry lists
-    final actionIds = <int>{};
-    for (final item in List<Object?>.from(spec['actions'] as List? ?? []).whereType<Map>()) {
-      final id = (item['id'] as num?)?.toInt();
-      if (id != null) actionIds.add(id);
-    }
+    final actionIds = spec.actions.map((action) => action.id).toSet();
+    final typeIds = spec.registry.types.keys.toSet();
 
-    final templateIds = <int>{};
-    for (final item in List<Object?>.from(spec['templates'] as List? ?? []).whereType<Map>()) {
-      final id = (item['id'] as num?)?.toInt();
-      if (id != null) templateIds.add(id);
-    }
-
-    final typeIds = <int>{};
-    for (final item in List<Object?>.from(spec['types'] as List? ?? []).whereType<Map>()) {
-      final id = (item['id'] as num?)?.toInt();
-      if (id != null) typeIds.add(id);
-    }
-
-    // Validate bodies
-    final bodies = List<Object?>.from(spec['bodiesRegistry'] as List? ?? []);
-    for (final b in bodies.whereType<Map>()) {
-      final body = Map<String, dynamic>.from(b);
-      final templateId = (body['templateId'] as num?)?.toInt();
-      if (templateId != null && !templateIds.contains(templateId)) {
-        return 'Invalid templateId $templateId in body';
+    String? validateNode(UxNodeSpec node, {required bool isRoot}) {
+      final typeId = node.typeId;
+      if (typeId != null && !typeIds.contains(typeId)) {
+        return 'Invalid typeId $typeId in ${isRoot ? 'body' : 'body child'}';
       }
 
-      final children = List<Object?>.from(body['children'] as List? ?? []);
-      for (final c in children.whereType<Map>()) {
-        final child = Map<String, dynamic>.from(c);
-        final actionId = (child['actionId'] as num?)?.toInt();
-        if (actionId != null && !actionIds.contains(actionId)) {
-          return 'Invalid actionId $actionId in body child';
+      final actionId = node.actionId;
+      if (actionId != 0 && !actionIds.contains(actionId)) {
+        return 'Invalid actionId $actionId in body child';
+      }
+
+      for (final child in node.children) {
+        final error = validateNode(child, isRoot: false);
+        if (error != null) return error;
+      }
+
+      return null;
+    }
+
+    for (final body in spec.bodiesByName.values) {
+      final templateTypeId = body.templateTypeId;
+      if (!UxTemplateType.known.contains(templateTypeId)) {
+        return 'Unknown template type $templateTypeId in body';
+      }
+
+      for (final modeId in body.modeIds) {
+        if (!UxTemplateMode.known.contains(modeId)) {
+          return 'Unknown template mode $modeId in body';
         }
-        final typeId = (child['typeId'] as num?)?.toInt();
-        if (typeId != null && !typeIds.contains(typeId)) {
-          return 'Invalid typeId $typeId in body child';
+        if (!UxTemplateSpec.isModeSupportedByType(templateTypeId, modeId)) {
+          return 'Mode $modeId is not supported by template type $templateTypeId';
+        }
+      }
+
+      final bodyError = validateNode(body.root, isRoot: true);
+      if (bodyError != null) {
+        return bodyError;
+      }
+
+      final checkboxError = body.checkbox == null
+          ? null
+          : validateNode(body.checkbox!, isRoot: false);
+      if (checkboxError != null) {
+        return checkboxError;
+      }
+
+      for (final center in body.actionCenters.values) {
+        for (final actionId in center.actionIds) {
+          if (!actionIds.contains(actionId)) {
+            return 'Invalid actionId $actionId in action center';
+          }
         }
       }
     }
@@ -153,7 +177,7 @@ class AutopilotGo extends Autopilot {
     return null;
   }
 
-  Future<void> _runAction(Action action, dynamic payload) async {
+  Future<void> _runAction(UxActionSpec action, dynamic payload) async {
     if (action.name == 'saveBook') {
       final xRow = copilotData.getValue('x_row');
       if (xRow is X) {
@@ -167,7 +191,7 @@ class AutopilotGo extends Autopilot {
     }
   }
 
-  Future<void> _runTodo(Todo todo, dynamic payload) async {
+  Future<void> _runTodo(UxTodoSpec todo, dynamic payload) async {
     if (todo.operation != 'set' || todo.path.isEmpty) return;
 
     dynamic value;

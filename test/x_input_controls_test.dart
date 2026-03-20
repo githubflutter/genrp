@@ -1,32 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genrp/app/aibook/autopilotgo.dart';
-import 'package:genrp/core/model/uschema/ux_checkbox_model.dart';
-import 'package:genrp/core/model/uschema/ux_text_box_model.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 import 'package:genrp/core/widgets/x_checkbox.dart';
 import 'package:genrp/core/widgets/x_text_box.dart';
 
 void main() {
-  testWidgets('XTextBox renders from UxTextBoxModel', (tester) async {
+  testWidgets('XTextBox renders from UxNodeSpec', (tester) async {
     final autopilot = AutopilotGo()
       ..updateBinding('data.book.title', 'Initial');
-    const model = UxTextBoxModel(
-      i: 1,
+    const node = UxNodeSpec(
+      widgetId: 1,
       a: true,
       d: 0,
       e: 0,
       t: 0,
       hostId: 0,
       bodyId: 0,
-      n: 'Book Title',
+      typeId: 3,
+      type: 'textField',
+      n: '',
       s: '',
+      text: '',
+      label: 'Book Title',
       bind: 'data.book.title',
+      src: null,
+      fieldId: null,
+      actionId: 0,
+      prefix: '',
+      suffix: '',
+      style: '',
+      height: null,
+      props: <String, dynamic>{},
+      children: <UxNodeSpec>[],
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: XTextBox(model: model, autopilot: autopilot),
+          body: XTextBox(node: node, autopilot: autopilot),
         ),
       ),
     );
@@ -42,23 +54,36 @@ void main() {
     final autopilot = AutopilotGo()
       ..updateBinding('data.book.title', 'Initial')
       ..selectUxIdentity(hostId: 2, bodyId: 4, widgetId: 9, notify: false);
-    const model = UxTextBoxModel(
-      i: 9,
+    const node = UxNodeSpec(
+      widgetId: 9,
       a: true,
       d: 0,
       e: 0,
       t: 0,
       hostId: 2,
       bodyId: 4,
-      n: 'Book Title',
+      typeId: 3,
+      type: 'textField',
+      n: '',
       s: '',
+      text: '',
+      label: 'Book Title',
       bind: 'data.book.title',
+      src: null,
+      fieldId: null,
+      actionId: 0,
+      prefix: '',
+      suffix: '',
+      style: '',
+      height: null,
+      props: <String, dynamic>{},
+      children: <UxNodeSpec>[],
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: XTextBox(model: model, autopilot: autopilot),
+          body: XTextBox(node: node, autopilot: autopilot),
         ),
       ),
     );
@@ -71,25 +96,38 @@ void main() {
     expect(decoration.border, isNotNull);
   });
 
-  testWidgets('XCheckBox renders from UxCheckBoxModel', (tester) async {
+  testWidgets('XCheckBox renders from UxNodeSpec', (tester) async {
     final autopilot = AutopilotGo()..updateBinding('data.book.saved', true);
-    const model = UxCheckBoxModel(
-      i: 1,
+    const node = UxNodeSpec(
+      widgetId: 1,
       a: true,
       d: 0,
       e: 0,
       t: 0,
       hostId: 0,
       bodyId: 0,
-      n: 'Saved',
+      typeId: 6,
+      type: 'checkbox',
+      n: '',
       s: '',
+      text: '',
+      label: 'Saved',
       bind: 'data.book.saved',
+      src: null,
+      fieldId: null,
+      actionId: 0,
+      prefix: '',
+      suffix: '',
+      style: '',
+      height: null,
+      props: <String, dynamic>{},
+      children: <UxNodeSpec>[],
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: XCheckBox(model: model, autopilot: autopilot),
+          body: XCheckBox(node: node, autopilot: autopilot),
         ),
       ),
     );
@@ -105,23 +143,36 @@ void main() {
     final autopilot = AutopilotGo()
       ..updateBinding('data.book.saved', true)
       ..selectUxIdentity(hostId: 5, bodyId: 6, widgetId: 7, notify: false);
-    const model = UxCheckBoxModel(
-      i: 7,
+    const node = UxNodeSpec(
+      widgetId: 7,
       a: true,
       d: 0,
       e: 0,
       t: 0,
       hostId: 5,
       bodyId: 6,
-      n: 'Saved',
+      typeId: 6,
+      type: 'checkbox',
+      n: '',
       s: '',
+      text: '',
+      label: 'Saved',
       bind: 'data.book.saved',
+      src: null,
+      fieldId: null,
+      actionId: 0,
+      prefix: '',
+      suffix: '',
+      style: '',
+      height: null,
+      props: <String, dynamic>{},
+      children: <UxNodeSpec>[],
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: XCheckBox(model: model, autopilot: autopilot),
+          body: XCheckBox(node: node, autopilot: autopilot),
         ),
       ),
     );

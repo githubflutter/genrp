@@ -4,13 +4,11 @@ import 'package:genrp/core/agent/copilot_ux.dart';
 import 'package:genrp/core/base/x.dart';
 import 'package:genrp/core/agent/data_set.dart';
 import 'package:genrp/core/agent/state_set.dart';
-import 'package:genrp/core/agent/action_set.dart';
 
 abstract class Autopilot extends ChangeNotifier {
   Autopilot() {
     dataSet = DataSet();
     stateSet = StateSet();
-    actionSet = ActionSet();
     copilotData = CopilotData(this);
     copilotUX = CopilotUX(this);
   }
@@ -19,7 +17,6 @@ abstract class Autopilot extends ChangeNotifier {
   late final CopilotUX copilotUX;
   late final DataSet dataSet;
   late final StateSet stateSet;
-  late final ActionSet actionSet;
   final Map<int, String> _stateFieldPaths = {};
   final Map<int, String> _dataSourceFieldPaths = {};
   final Map<int, String> _dataSetFieldPaths = {};
@@ -79,12 +76,209 @@ abstract class Autopilot extends ChangeNotifier {
         _selectedWidgetId == widgetId;
   }
 
+  String selectionStateKey({
+    required int hostId,
+    required int bodyId,
+    int? widgetId,
+  }) {
+    if (widgetId == null) {
+      return 'selection.$hostId.$bodyId';
+    }
+    return 'selection.$hostId.$bodyId.$widgetId';
+  }
+
+  String selectionSetStateKey({
+    required int hostId,
+    required int bodyId,
+    int? widgetId,
+  }) {
+    if (widgetId == null) {
+      return 'selections.$hostId.$bodyId';
+    }
+    return 'selections.$hostId.$bodyId.$widgetId';
+  }
+
+  int? selectedIndexFor({
+    required int hostId,
+    required int bodyId,
+    int? widgetId,
+  }) {
+    final value = copilotUX.getValue(
+      selectionStateKey(hostId: hostId, bodyId: bodyId, widgetId: widgetId),
+    );
+    return (value as num?)?.toInt();
+  }
+
+  void selectIndex({
+    required int hostId,
+    required int bodyId,
+    required int index,
+    int? widgetId,
+    bool notify = true,
+  }) {
+    final key = selectionStateKey(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+    );
+    final current = copilotUX.getValue(key);
+    if (current == index) return;
+    copilotUX.setValue(key, index, notify: notify);
+  }
+
+  void clearSelectedIndex({
+    required int hostId,
+    required int bodyId,
+    int? widgetId,
+    bool notify = true,
+  }) {
+    final key = selectionStateKey(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+    );
+    if (copilotUX.getValue(key) == null) return;
+    copilotUX.setValue(key, null, notify: notify);
+  }
+
+  bool isSelectedIndex({
+    required int hostId,
+    required int bodyId,
+    required int index,
+    int? widgetId,
+  }) {
+    return selectedIndexFor(
+          hostId: hostId,
+          bodyId: bodyId,
+          widgetId: widgetId,
+        ) ==
+        index;
+  }
+
+  List<int> selectedIndexesFor({
+    required int hostId,
+    required int bodyId,
+    int? widgetId,
+  }) {
+    final value = copilotUX.getValue(
+      selectionSetStateKey(hostId: hostId, bodyId: bodyId, widgetId: widgetId),
+    );
+    if (value is List) {
+      final result =
+          value
+              .whereType<num>()
+              .map((item) => item.toInt())
+              .toSet()
+              .toList(growable: false)
+            ..sort();
+      return result;
+    }
+    return const <int>[];
+  }
+
+  void setSelectedIndexes({
+    required int hostId,
+    required int bodyId,
+    required List<int> indexes,
+    int? widgetId,
+    bool notify = true,
+  }) {
+    final normalized = indexes.toSet().toList(growable: false)..sort();
+    final key = selectionSetStateKey(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+    );
+    final current = selectedIndexesFor(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+    );
+    if (listEquals(current, normalized)) return;
+    copilotUX.setValue(key, normalized, notify: notify);
+  }
+
+  void toggleSelectedIndex({
+    required int hostId,
+    required int bodyId,
+    required int index,
+    int? widgetId,
+    bool notify = true,
+  }) {
+    final current = selectedIndexesFor(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+    );
+    final next = current.toSet();
+    if (!next.add(index)) {
+      next.remove(index);
+    }
+    setSelectedIndexes(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+      indexes: next.toList(growable: false),
+      notify: notify,
+    );
+  }
+
+  void clearSelectedIndexes({
+    required int hostId,
+    required int bodyId,
+    int? widgetId,
+    bool notify = true,
+  }) {
+    final key = selectionSetStateKey(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+    );
+    final current = selectedIndexesFor(
+      hostId: hostId,
+      bodyId: bodyId,
+      widgetId: widgetId,
+    );
+    if (current.isEmpty) return;
+    copilotUX.setValue(key, const <int>[], notify: notify);
+  }
+
   void clearFieldPaths() {
     _stateFieldPaths.clear();
     _dataSourceFieldPaths.clear();
     _dataSetFieldPaths.clear();
     _dataSourceFieldSlots.clear();
     _dataSetFieldSlots.clear();
+  }
+
+  void clearActions();
+
+  void resetRuntime({
+    bool clearData = true,
+    bool clearUxState = true,
+    bool clearActionRegistry = true,
+    bool clearBindings = true,
+    bool clearSelectionIdentity = true,
+    bool notify = true,
+  }) {
+    if (clearActionRegistry) {
+      clearActions();
+    }
+    if (clearData) {
+      copilotData.clear(notify: false);
+    }
+    if (clearUxState) {
+      copilotUX.clear(notify: false);
+    }
+    if (clearBindings) {
+      clearFieldPaths();
+    }
+    if (clearSelectionIdentity) {
+      clearSelectedUxIdentity(notify: false);
+    }
+    if (notify) {
+      publishChange();
+    }
   }
 
   dynamic resolve(String path) {
@@ -213,9 +407,9 @@ abstract class Autopilot extends ChangeNotifier {
 
   void publishChange() => notifyListeners();
 
-  Future<void> triggerAction(String name, [dynamic payload]) =>
-      actionSet.invoke(name, payload);
+  Future<void> triggerActionById(int id, [dynamic payload]) async {}
 
-  Future<void> triggerActionById(int id, [dynamic payload]) =>
-      actionSet.invokeById(id, payload);
+  String actionLabelForId(int id) => '';
+
+  bool hasAction(int id) => false;
 }

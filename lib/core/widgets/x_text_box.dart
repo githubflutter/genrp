@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/uschema/ux_text_box_model.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 
 class XTextBox extends StatefulWidget {
-  const XTextBox({required this.model, required this.autopilot, super.key});
+  const XTextBox({required this.node, required this.autopilot, super.key});
 
-  final UxTextBoxModel model;
+  final UxNodeSpec node;
   final Autopilot autopilot;
 
   @override
@@ -36,17 +36,17 @@ class _XTextBoxState extends State<XTextBox> {
   String get _currentValue =>
       widget.autopilot
           .resolveFieldBinding(
-            src: widget.model.src,
-            fieldId: widget.model.fieldId,
-            fallbackPath: widget.model.bind,
+            src: widget.node.src,
+            fieldId: widget.node.fieldId,
+            fallbackPath: widget.node.bind,
           )
           ?.toString() ??
       '';
 
   bool get _isSelected => widget.autopilot.isSelectedUxIdentity(
-    hostId: widget.model.hostId,
-    bodyId: widget.model.bodyId,
-    widgetId: widget.model.i,
+    hostId: widget.node.hostId,
+    bodyId: widget.node.bodyId,
+    widgetId: widget.node.widgetId,
   );
 
   @override
@@ -61,7 +61,7 @@ class _XTextBoxState extends State<XTextBox> {
 
     return DecoratedBox(
       key: ValueKey(
-        'x-text-box-${widget.model.hostId}-${widget.model.bodyId}-${widget.model.i}',
+        'x-text-box-${widget.node.hostId}-${widget.node.bodyId}-${widget.node.widgetId}',
       ),
       decoration: BoxDecoration(
         border: _isSelected
@@ -74,18 +74,22 @@ class _XTextBoxState extends State<XTextBox> {
         child: GestureDetector(
           onLongPress: kDebugMode
               ? () => widget.autopilot.selectUxIdentity(
-                    hostId: widget.model.hostId,
-                    bodyId: widget.model.bodyId,
-                    widgetId: widget.model.i,
-                  )
+                  hostId: widget.node.hostId,
+                  bodyId: widget.node.bodyId,
+                  widgetId: widget.node.widgetId,
+                )
               : null,
           child: TextField(
             controller: _controller,
-            decoration: InputDecoration(labelText: widget.model.n),
+            decoration: InputDecoration(
+              labelText: widget.node.label.isEmpty
+                  ? widget.node.n
+                  : widget.node.label,
+            ),
             onChanged: (value) => widget.autopilot.updateFieldBinding(
-              src: widget.model.src,
-              fieldId: widget.model.fieldId,
-              fallbackPath: widget.model.bind,
+              src: widget.node.src,
+              fieldId: widget.node.fieldId,
+              fallbackPath: widget.node.bind,
               value: value,
             ),
           ),

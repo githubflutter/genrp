@@ -1,30 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genrp/app/aibook/autopilotgo.dart';
-import 'package:genrp/core/model/uschema/ux_button_model.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 import 'package:genrp/core/widgets/x_button.dart';
 
 void main() {
-  testWidgets('XButton renders from UxButtonModel', (tester) async {
+  testWidgets('XButton renders from UxNodeSpec', (tester) async {
     final autopilot = AutopilotGo();
-    const model = UxButtonModel(
-      i: 1,
+    const node = UxNodeSpec(
+      widgetId: 1,
       a: true,
       d: 0,
       e: 0,
       t: 0,
       hostId: 0,
       bodyId: 0,
-      n: 'Save',
+      typeId: 4,
+      type: 'button',
+      n: '',
       s: '',
+      text: 'Save',
+      label: '',
+      bind: '',
+      src: null,
+      fieldId: null,
       actionId: 1001,
-      actionName: '',
+      prefix: '',
+      suffix: '',
+      style: '',
+      height: null,
+      props: <String, dynamic>{},
+      children: <UxNodeSpec>[],
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: XButton(model: model, autopilot: autopilot),
+          body: XButton(node: node, autopilot: autopilot),
         ),
       ),
     );
@@ -39,24 +51,36 @@ void main() {
   ) async {
     final autopilot = AutopilotGo()
       ..selectUxIdentity(hostId: 3, bodyId: 7, widgetId: 11, notify: false);
-    const model = UxButtonModel(
-      i: 11,
+    const node = UxNodeSpec(
+      widgetId: 11,
       a: true,
       d: 0,
       e: 0,
       t: 0,
       hostId: 3,
       bodyId: 7,
-      n: 'Preview',
+      typeId: 4,
+      type: 'button',
+      n: '',
       s: '',
+      text: 'Preview',
+      label: '',
+      bind: '',
+      src: null,
+      fieldId: null,
       actionId: 0,
-      actionName: '',
+      prefix: '',
+      suffix: '',
+      style: '',
+      height: null,
+      props: <String, dynamic>{},
+      children: <UxNodeSpec>[],
     );
 
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: XButton(model: model, autopilot: autopilot),
+          body: XButton(node: node, autopilot: autopilot),
         ),
       ),
     );

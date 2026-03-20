@@ -41,6 +41,20 @@
       "name": "form"
     }
   ],
+  "templateModes": [
+    {
+      "id": 1,
+      "name": "list"
+    },
+    {
+      "id": 2,
+      "name": "grid"
+    },
+    {
+      "id": 3,
+      "name": "table"
+    }
+  ],
   "types": [
     {
       "id": 1,
@@ -136,6 +150,7 @@
   "actions": [
     {
       "id": 1,
+      "n": "Save",
       "name": "saveBook",
       "todos": [
         {
@@ -163,6 +178,7 @@
     },
     {
       "id": 2,
+      "n": "Show Preview",
       "name": "showPreview",
       "todos": [
         {
@@ -183,6 +199,7 @@
     },
     {
       "id": 3,
+      "n": "Back to Editor",
       "name": "showEditor",
       "todos": [
         {

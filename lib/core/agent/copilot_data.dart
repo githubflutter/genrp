@@ -16,4 +16,9 @@ class CopilotData {
     autopilot.dataSet.patch(values);
     if (notify) autopilot.publishChange();
   }
+
+  void clear({bool notify = true}) {
+    autopilot.dataSet.clear();
+    if (notify) autopilot.publishChange();
+  }
 }

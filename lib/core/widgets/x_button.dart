@@ -1,34 +1,32 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/uschema/ux_button_model.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 
 class XButton extends StatelessWidget {
-  const XButton({required this.model, required this.autopilot, super.key});
+  const XButton({required this.node, required this.autopilot, super.key});
 
-  final UxButtonModel model;
+  final UxNodeSpec node;
   final Autopilot autopilot;
 
   bool get _isSelected => autopilot.isSelectedUxIdentity(
-    hostId: model.hostId,
-    bodyId: model.bodyId,
-    widgetId: model.i,
+    hostId: node.hostId,
+    bodyId: node.bodyId,
+    widgetId: node.widgetId,
   );
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final button = ElevatedButton(
-      onPressed: model.actionId != 0
-          ? () => autopilot.triggerActionById(model.actionId)
-          : model.actionName.isEmpty
+      onPressed: node.actionId == 0
           ? null
-          : () => autopilot.triggerAction(model.actionName),
-      child: Text(model.n.isEmpty ? 'Action' : model.n),
+          : () => autopilot.triggerActionById(node.actionId),
+      child: Text(node.text.isEmpty ? 'Action' : node.text),
     );
 
     return Padding(
-      key: ValueKey('x-button-${model.hostId}-${model.bodyId}-${model.i}'),
+      key: ValueKey('x-button-${node.hostId}-${node.bodyId}-${node.widgetId}'),
       padding: const EdgeInsets.only(top: 12),
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -42,10 +40,10 @@ class XButton extends StatelessWidget {
           child: GestureDetector(
             onLongPress: kDebugMode
                 ? () => autopilot.selectUxIdentity(
-                      hostId: model.hostId,
-                      bodyId: model.bodyId,
-                      widgetId: model.i,
-                    )
+                    hostId: node.hostId,
+                    bodyId: node.bodyId,
+                    widgetId: node.widgetId,
+                  )
                 : null,
             child: button,
           ),
