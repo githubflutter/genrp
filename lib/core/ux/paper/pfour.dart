@@ -1,9 +1,14 @@
 import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/paper.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 class Pfour extends StatelessWidget with Paper {
-  const Pfour({required this.i, required this.autopilot, this.s = 0, super.key});
+  const Pfour({
+    required this.i,
+    required this.autopilot,
+    this.s = 0,
+    super.key,
+  });
 
   @override
   final int pid = 4;
@@ -21,6 +26,10 @@ class Pfour extends StatelessWidget with Paper {
 
   @override
   Widget build(BuildContext context) {
-    return UxPaperHost(i: i, autopilot: autopilot, child: const SizedBox.shrink());
+    return UxPaperHost(
+      i: i,
+      autopilot: autopilot,
+      child: const SizedBox.shrink(),
+    );
   }
 }

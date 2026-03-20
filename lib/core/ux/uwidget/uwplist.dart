@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/v.dart';
-import 'package:genrp/core/ux/view/empty.dart';
+import 'package:genrp/core/ux/uwidget/uwempty.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
-class UxPListView extends StatelessWidget with V {
-  const UxPListView({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.properties = const <String, Object?>{}});
+class UwPList extends StatelessWidget with Uwidget {
+  const UwPList({
+    required this.i,
+    required this.autopilot,
+    this.s = 0,
+    super.key,
+    this.p = '',
+    this.title,
+    this.properties = const <String, Object?>{},
+  });
 
   @override
   final int vid = 6;
@@ -22,13 +30,17 @@ class UxPListView extends StatelessWidget with V {
   final Map<String, Object?> properties;
 
   @override
-  final String n = 'plistview';
+  final String n = 'plist';
 
   @override
   Widget build(BuildContext context) {
     final resolvedTitle = title ?? p;
     if (properties.isEmpty) {
-      return UxEmptyView(i: i, autopilot: autopilot, p: resolvedTitle.isNotEmpty ? resolvedTitle : 'No properties');
+      return UwEmpty(
+        i: i,
+        autopilot: autopilot,
+        p: resolvedTitle.isNotEmpty ? resolvedTitle : 'No properties',
+      );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,9 +57,18 @@ class UxPListView extends StatelessWidget with V {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Expanded(flex: 2, child: Text(entry.key, style: UxTheme.keyStyle(context))),
+                Expanded(
+                  flex: 2,
+                  child: Text(entry.key, style: UxTheme.keyStyle(context)),
+                ),
                 const SizedBox(width: 12),
-                Expanded(flex: 3, child: Text('${entry.value ?? ''}', style: UxTheme.bodyStyle(context))),
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    '${entry.value ?? ''}',
+                    style: UxTheme.bodyStyle(context),
+                  ),
+                ),
               ],
             ),
           ),

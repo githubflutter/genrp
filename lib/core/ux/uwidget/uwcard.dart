@@ -1,11 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/v.dart';
-import 'package:genrp/core/ux/view/empty.dart';
+import 'package:genrp/core/ux/uwidget/uwempty.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
-class UxCardView extends StatelessWidget with V {
-  const UxCardView({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.child, this.footer, this.padding = const EdgeInsets.all(16)});
+class UwCard extends StatelessWidget with Uwidget {
+  const UwCard({
+    required this.i,
+    required this.autopilot,
+    this.s = 0,
+    super.key,
+    this.p = '',
+    this.title,
+    this.child,
+    this.footer,
+    this.padding = const EdgeInsets.all(16),
+  });
 
   @override
   final int vid = 7;
@@ -24,7 +34,7 @@ class UxCardView extends StatelessWidget with V {
   final EdgeInsetsGeometry padding;
 
   @override
-  final String n = 'cardview';
+  final String n = 'card';
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +48,15 @@ class UxCardView extends StatelessWidget with V {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (resolvedTitle.isNotEmpty) ...<Widget>[Text(resolvedTitle, style: UxTheme.titleStyle(context)), const SizedBox(height: 12)],
-            child ?? UxEmptyView(i: i, autopilot: autopilot, p: 'Empty card'),
-            if (footer != null) ...<Widget>[const SizedBox(height: 12), footer!],
+            if (resolvedTitle.isNotEmpty) ...<Widget>[
+              Text(resolvedTitle, style: UxTheme.titleStyle(context)),
+              const SizedBox(height: 12),
+            ],
+            child ?? UwEmpty(i: i, autopilot: autopilot, p: 'Empty card'),
+            if (footer != null) ...<Widget>[
+              const SizedBox(height: 12),
+              footer!,
+            ],
           ],
         ),
       ),

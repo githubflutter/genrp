@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/view/toolbarview.dart';
+import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
 class TcrudHeader extends StatelessWidget {
   const TcrudHeader({
@@ -36,7 +36,7 @@ class TcrudHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UxToolbarView(
+    return UwToolbar(
       i: i,
       autopilot: autopilot,
       s: 2,

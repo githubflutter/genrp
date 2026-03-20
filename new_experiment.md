@@ -23,10 +23,14 @@ It has already been merged into the active codebase.
 
 Current merged status:
 
-- the active runtime lives under `lib/core/*`
-- the active UX runtime lives under `lib/core/ux`
-- the active apps boot through the current `MainApp` launcher/direct-route flow
+- the active runtime now spans `lib/core/agent`, `lib/core/gen`, and `lib/core/ux`
+- the active UX contracts live under `lib/core/ux`
+- spec rendering lives under `lib/core/gen`
+- persisted `uschema` UX-spec ids stay `int32/int4`; draft rows use `i = 0` and first persistence uses `max(i) + 1`
+- `MainApp` now boots directly into `AIWorkApp`
 - dedicated login and loading screens are already part of the app flow
+- `AIWork` and `AIBook` still use local preset specs in this snapshot, but the final client direction remains server-spec-driven UI
+- `AIStudio` and `AICodex` are currently in the hard-coded/demo authoring-shell stage
 - the current merged runtime has already been manually tested
 - `flutter analyze lib test` currently passes
 
@@ -55,7 +59,7 @@ Purpose guardrails:
 
 The runtime should be shaped around:
 
-- `MainApp` -> launcher or direct app boot
+- `MainApp` -> direct `AIWorkApp` boot
 - app entry -> `<AppName>App`
 - app shell -> `<AppName>Home`
 - dedicated app-owned login screen
@@ -74,6 +78,7 @@ Startup orchestration should stay small and practical:
 - loading is a dedicated temporary screen
 - app bootstrap is owned directly by the app home flow plus `Autopilot`
 - route rendering begins only after bootstrap is ready
+- local preset specs are an intentional temporary stand-in; the final client target is server-spec-driven UI
 
 ## Main Migration Decision
 
@@ -88,8 +93,8 @@ That means:
   implementation path
 - route/runtime agent logic should merge under `core/agent`
 - schema/spec models should merge under `core/model/uschema`
-- runtime rendering currently lives under `core/ux` and should stay there until
-  a later simplification is clearly better
+- spec rendering currently lives under `core/gen`
+- shared UX contracts and primitives currently live under `core/ux`
 - do not create new wrapper/session layers just to rename what already works
 - the old runtime is treated as legacy and migration source only
 
@@ -103,6 +108,7 @@ Rules:
 
 - new architecture work should be designed for eventual merge into:
   - `core/agent`
+  - `core/gen`
   - `core/model/uschema`
   - `core/ux`
   - `core/theme`
@@ -118,8 +124,9 @@ The active architecture now lives directly under `lib/core`.
 
 - `lib/core`
   - is now the active core architecture
-  - currently contains `agent`, `base`, `db`, `model`, `theme`, and `ux`
-  - keeps the active paper/template/view runtime under `core/ux`
+  - currently contains `agent`, `base`, `db`, `gen`, `model`, `theme`, and `ux`
+  - keeps spec rendering under `core/gen`
+  - keeps the active paper/template/Uwidget contracts under `core/ux`
   - keeps route/session state under `core/agent`
   - keeps shared app theme/chrome rules under `core/theme`
   - keeps spec models under `core/model/uschema`
@@ -132,15 +139,19 @@ Working rule:
 
 Current runtime note:
 
-- `MainApp` shows the app launcher by default
-- `MainApp` can still boot directly into a specific app from an incoming route
+- `MainApp` boots directly into `AIWork`
 - each app currently owns its own dedicated login screen
 - each app currently owns its own loading screen
 - scoped runtime state is owned by the runtime path under `core/agent`
-- `Paper -> Template -> View` is the active UI composition model
+- `Paper -> Template -> Uwidget` is the active UI composition model
+- `AIStudio` and `AICodex` currently use app-owned hard-coded/demo shells rather than SQLite-backed row editing
 - the merged app flows have already been manually tested
 - the active implementation should stay small and practical, not carry extra
   staging layers
+
+Historical wording note:
+
+- older `View` references below should be read as today's `Uwidget` / `Uw*` layer unless the text is explicitly discussing an archived design
 
 For future discussion in this experiment:
 
@@ -225,6 +236,16 @@ Keep these parts stable:
 3. ids remain numeric and stable.
 4. datatype mapping remains numeric-first.
 5. persistence stays catalog-row oriented with JSON payload extension.
+
+### UX Spec Id Rule
+
+For `uschema` UX-spec rows:
+
+- persisted `i` and `e` stay `int32/int4`
+- new drafts use `i = 0`
+- first save allocates `max(i) + 1`
+- later saves update in place when `i > 0`
+- do not switch persisted UX-spec ids to epoch-based or runtime-generated ids
 
 ## Autopilot-Owned Context
 

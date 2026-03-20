@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/v.dart';
-import 'package:genrp/core/ux/view/empty.dart';
+import 'package:genrp/core/ux/uwidget/uwempty.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
-class UxListView extends StatelessWidget with V {
-  const UxListView({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.children = const <Widget>[]});
+class UwList extends StatelessWidget with Uwidget {
+  const UwList({
+    required this.i,
+    required this.autopilot,
+    this.s = 0,
+    super.key,
+    this.p = '',
+    this.title,
+    this.children = const <Widget>[],
+  });
 
   @override
   final int vid = 1;
@@ -22,13 +30,17 @@ class UxListView extends StatelessWidget with V {
   final List<Widget> children;
 
   @override
-  final String n = 'listview';
+  final String n = 'list';
 
   @override
   Widget build(BuildContext context) {
     final resolvedTitle = title ?? p;
     if (children.isEmpty) {
-      return UxEmptyView(i: i, autopilot: autopilot, p: resolvedTitle.isNotEmpty ? resolvedTitle : 'Empty list');
+      return UwEmpty(
+        i: i,
+        autopilot: autopilot,
+        p: resolvedTitle.isNotEmpty ? resolvedTitle : 'Empty list',
+      );
     }
     final listChildren = <Widget>[
       if (resolvedTitle.isNotEmpty)
@@ -47,6 +59,10 @@ class UxListView extends StatelessWidget with V {
     } else {
       listChildren.addAll(children);
     }
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: listChildren);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: listChildren,
+    );
   }
 }

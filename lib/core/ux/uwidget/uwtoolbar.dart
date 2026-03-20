@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/v.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
-class UxToolbarView extends StatelessWidget with V {
-  const UxToolbarView({
+class UwToolbar extends StatelessWidget with Uwidget {
+  const UwToolbar({
     required this.i,
     required this.autopilot,
     this.s = 0,
@@ -33,7 +33,7 @@ class UxToolbarView extends StatelessWidget with V {
   final List<Widget> rightChildren;
 
   @override
-  final String n = 'toolbarview';
+  final String n = 'toolbar';
 
   @override
   Widget build(BuildContext context) {
@@ -54,28 +54,47 @@ class UxToolbarView extends StatelessWidget with V {
     final middleGroup = middleChildren;
     final rightGroup = rightChildren;
 
-    if (children.isEmpty && leftGroup.isEmpty && middleGroup.isEmpty && rightGroup.isEmpty) {
+    if (children.isEmpty &&
+        leftGroup.isEmpty &&
+        middleGroup.isEmpty &&
+        rightGroup.isEmpty) {
       return const SizedBox.shrink();
     }
 
     switch (s) {
       case 1:
-        return Row(mainAxisAlignment: MainAxisAlignment.start, children: children);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: children,
+        );
       case -1:
-        return Row(mainAxisAlignment: MainAxisAlignment.end, children: children);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: children,
+        );
       case 2:
         return Row(
           children: <Widget>[
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.start, children: leftGroup),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.start,
+                  children: leftGroup,
+                ),
               ),
             ),
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: rightGroup),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: rightGroup,
+                ),
               ),
             ),
           ],
@@ -86,13 +105,23 @@ class UxToolbarView extends StatelessWidget with V {
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: leftGroup),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: leftGroup,
+                ),
               ),
             ),
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.start, children: rightGroup),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.start,
+                  children: rightGroup,
+                ),
               ),
             ),
           ],
@@ -103,25 +132,42 @@ class UxToolbarView extends StatelessWidget with V {
             Expanded(
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.start, children: leftGroup),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.start,
+                  children: leftGroup,
+                ),
               ),
             ),
             Expanded(
               child: Center(
-                child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: middleGroup),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: middleGroup,
+                ),
               ),
             ),
             Expanded(
               child: Align(
                 alignment: Alignment.centerRight,
-                child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: rightGroup),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: rightGroup,
+                ),
               ),
             ),
           ],
         );
       case 10:
       case -10:
-        final alignment = s == 10 ? Alignment.centerLeft : Alignment.centerRight;
+        final alignment = s == 10
+            ? Alignment.centerLeft
+            : Alignment.centerRight;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
@@ -141,9 +187,19 @@ class UxToolbarView extends StatelessWidget with V {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.start, children: leftGroup),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.start,
+                    children: leftGroup,
+                  ),
                   const SizedBox(width: 16),
-                  Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: rightGroup),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
+                    children: rightGroup,
+                  ),
                 ],
               ),
             ),
@@ -160,12 +216,22 @@ class UxToolbarView extends StatelessWidget with V {
                 children: <Widget>[
                   Align(
                     alignment: Alignment.centerRight,
-                    child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: leftGroup),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      children: leftGroup,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.start, children: rightGroup),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.start,
+                      children: rightGroup,
+                    ),
                   ),
                 ],
               ),
@@ -180,11 +246,26 @@ class UxToolbarView extends StatelessWidget with V {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.start, children: leftGroup),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.start,
+                  children: leftGroup,
+                ),
                 const SizedBox(width: 16),
-                Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.center, children: middleGroup),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.center,
+                  children: middleGroup,
+                ),
                 const SizedBox(width: 16),
-                Wrap(spacing: 8, runSpacing: 8, alignment: WrapAlignment.end, children: rightGroup),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.end,
+                  children: rightGroup,
+                ),
               ],
             ),
           ),
@@ -192,7 +273,11 @@ class UxToolbarView extends StatelessWidget with V {
       default:
         return Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: children.map<Widget>((Widget child) => Expanded(child: Center(child: child))).toList(),
+          children: children
+              .map<Widget>(
+                (Widget child) => Expanded(child: Center(child: child)),
+              )
+              .toList(),
         );
     }
   }

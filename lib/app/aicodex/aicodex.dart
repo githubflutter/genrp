@@ -3,12 +3,12 @@ import 'package:genrp/app/aicodex/aicodex_specs.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/agent/copilot_route.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/view/cardview.dart';
-import 'package:genrp/core/ux/view/collectionview.dart';
-import 'package:genrp/core/ux/view/fromview.dart';
-import 'package:genrp/core/ux/view/plistview.dart';
-import 'package:genrp/core/ux/view/tabview.dart';
-import 'package:genrp/core/ux/view/toolbarview.dart';
+import 'package:genrp/core/ux/uwidget/uwcard.dart';
+import 'package:genrp/core/ux/uwidget/uwcollection.dart';
+import 'package:genrp/core/ux/uwidget/uwfrom.dart';
+import 'package:genrp/core/ux/uwidget/uwplist.dart';
+import 'package:genrp/core/ux/uwidget/uwtab.dart';
+import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 import 'package:genrp/meta.dart';
 
 class AICodexApp extends StatelessWidget {
@@ -430,7 +430,7 @@ class _AICodexHomeState extends State<AICodexHome> {
           const SizedBox(height: 8),
           Text(section.subtitle, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
-          UxToolbarView(
+          UwToolbar(
             i: 30101,
             autopilot: _pilot,
             s: 30,
@@ -466,7 +466,7 @@ class _AICodexHomeState extends State<AICodexHome> {
   }
 
   Widget _buildMinorPanel() {
-    return UxTabView(
+    return UwTab(
       i: 30110,
       autopilot: _pilot,
       s: 10,
@@ -501,7 +501,7 @@ class _AICodexHomeState extends State<AICodexHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        UxToolbarView(
+        UwToolbar(
           i: 30111,
           autopilot: _pilot,
           s: 20,
@@ -510,7 +510,7 @@ class _AICodexHomeState extends State<AICodexHome> {
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: UxCollectionView(
+          child: UwCollection(
             i: 30112,
             autopilot: _pilot,
             s: 1,
@@ -541,7 +541,7 @@ class _AICodexHomeState extends State<AICodexHome> {
     required int? selectedRowIndex,
     required _AICodexRow? selectedRow,
   }) {
-    return UxTabView(
+    return UwTab(
       i: 30120,
       autopilot: _pilot,
       s: 10,
@@ -592,7 +592,7 @@ class _AICodexHomeState extends State<AICodexHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        UxToolbarView(
+        UwToolbar(
           i: 30121,
           autopilot: _pilot,
           s: 20,
@@ -607,7 +607,7 @@ class _AICodexHomeState extends State<AICodexHome> {
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: UxCollectionView(
+          child: UwCollection(
             i: 30122,
             autopilot: _pilot,
             s: 3,
@@ -693,12 +693,12 @@ class _AICodexHomeState extends State<AICodexHome> {
     return Column(
       children: <Widget>[
         Expanded(
-          child: UxCardView(
+          child: UwCard(
             i: 30130,
             autopilot: _pilot,
             title: 'Inspector',
             child: SingleChildScrollView(
-              child: UxPListView(
+              child: UwPList(
                 i: 30131,
                 autopilot: _pilot,
                 properties: properties,
@@ -708,7 +708,7 @@ class _AICodexHomeState extends State<AICodexHome> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: UxCardView(
+          child: UwCard(
             i: 30132,
             autopilot: _pilot,
             title: 'Editor + DDL',
@@ -716,7 +716,7 @@ class _AICodexHomeState extends State<AICodexHome> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  UxFromView(
+                  UwFrom(
                     i: 30133,
                     autopilot: _pilot,
                     p: '${selectedCatalog.name} Form',

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/view/toolbarview.dart';
+import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
 class TcrudFooter extends StatelessWidget {
   const TcrudFooter({
@@ -22,7 +22,7 @@ class TcrudFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return UxToolbarView(
+    return UwToolbar(
       i: i,
       autopilot: autopilot,
       s: 2,

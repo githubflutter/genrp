@@ -3,7 +3,7 @@
 > **Project:** `genrp` — Generative Resource Planner  
 > **Platform:** Flutter (macOS, Linux, Windows, Android, iOS)  
 > **SDK:** Dart ≥3.11.0  
-> **Analysis Date:** 2026-03-20  
+> **Analysis Date:** 2026-03-21  
 
 ---
 
@@ -18,13 +18,48 @@ GenRP is a **Flutter monolith** containing **four distinct applications** inside
 | **AIStudio** | UX/spec authoring surface | Dedicated hard-coded authoring shell |
 | **AICodex** | Sensitive data-model authoring + schema-application surface | Dedicated hard-coded authoring shell |
 
-The apps share a common orchestration engine (`Autopilot`), route metadata, shared UX primitives, and a local SQLite persistence layer. `AIWork` and `AIBook` remain spec-driven through `GenUx`, while `AIStudio` and `AICodex` now use dedicated hard-coded authoring shells that still reuse shared `Ux*View` components. The repo also has shared DB contract/admin/client scaffolding for PostgreSQL, SQLite, and remote action payloads. The architecture is intentionally lean, numeric-first, and optimized around a small set of reusable UX primitives.
+The apps share a common orchestration layer (`Autopilot`), route/spec metadata, shared UX primitives, and optional local DB scaffolding under `core/db`. `AIWork` and `AIBook` remain spec-driven through `GenUx` in `lib/core/gen/genux.dart`, currently using local preset specs as the ready-state source, while `AIStudio` and `AICodex` now use dedicated hard-coded authoring shells seeded from app-owned section data and shared `Uw*` components from `lib/core/ux/uwidget/`. The repo also has shared DB contract/admin/client scaffolding for PostgreSQL, SQLite, and remote action payloads, but those transport and persistence layers are not yet the live ready-state source for the current authoring shells. The client-facing end goal is still server-spec-driven UI once the bootstrap and transport path is wired. The architecture is intentionally lean, numeric-first, and optimized around a small set of reusable UX primitives.
 
 The current UI direction is to keep `AIStudio` and `AICodex` converged on one **hybrid authoring shell**: a left-side minor panel plus a right-side major panel. The major panel changes between one-panel and two-panel modes through tabs, so the apps differ by domain responsibility rather than by inventing different outer layouts. The current working split is `20 / 60 / 20` in dual mode, with the left minor panel and right detail panel intentionally matching widths. The shared shell contract should stay narrow: layout, tab mechanism, width ratios, and chrome styling only. Left-side explorer/list behavior should remain app-specific.
 
-The current visual baseline is a shared **Material 3 theme** owned by `UxTheme` in `lib/core/theme/theme.dart`, with centralized typography and chrome sizing. The launcher, AIWork, AIBook, AIStudio, and AICodex share the same toolbar-height and bottom-status sizing rules, and scaffold-level FABs have been removed in favor of in-panel or header actions. Each app currently owns a dedicated login screen and a dedicated loading screen before the ready-state route UI is shown.
+The current visual baseline is a shared **Material 3 theme** owned by `UxTheme` in `lib/core/theme/theme.dart`, with centralized typography and chrome sizing. The main entry plus AIWork, AIBook, AIStudio, and AICodex share the same toolbar-height and bottom-status sizing rules, and scaffold-level FABs have been removed in favor of in-panel or header actions. Each app currently owns a dedicated login screen and a dedicated loading screen before the ready-state route UI is shown.
 
 The data-model layer is the foundation of the whole system because it is the actual schema side: the sitting table/function definitions from which runtime and UX layers are derived. That layer is intentionally single origin, single source of truth, and single user under `AICodex`. On authoring surfaces, new schema-side rows should begin as drafts with `i = 0`; save/edit then decides insert vs update and allocates `max(i) + 1` only when the draft is first persisted.
+
+### 1.1 Architecture Phase Change
+
+One of the most important project changes is that GenRP is no longer trying to
+carry several overlapping architecture identities at once.
+
+In earlier phases, the docs and experiments referred to many adjacent layers:
+
+- core engine
+- runtime
+- renderer
+- builder
+- generator
+- router / body-router
+- session wrapper
+- layout helper / layout engine
+
+Those labels came from real exploration work, but they also describe a period
+where responsibilities were not yet fully collapsed. Different notes could make
+the system sound like a runtime stack, a generator stack, a renderer stack, or
+an app-shell/session stack depending on which document was read first.
+
+The current working tree is much cleaner and should now be read through one
+active runtime path only:
+
+- `Autopilot` is the single orchestration layer.
+- `GenUx` is the current spec-to-widget renderer for spec-driven apps.
+- `core/ux` owns the shared UI contracts and primitives through `mixins.dart`, `paper/`, `template/`, and `uwidget/`.
+- `AIWork` and `AIBook` stay on the spec-driven path.
+- `AIStudio` and `AICodex` use dedicated hard-coded authoring shells, but they reuse the same shared UX primitives instead of introducing a competing runtime.
+
+This means older references to `AutopilotGo`, body-router/template-runtime
+pipelines, extra session wrappers, or generator-heavy runtime ownership should
+be interpreted as historical experiment context unless a future change
+explicitly reintroduces them.
 
 ---
 
@@ -33,7 +68,7 @@ The data-model layer is the foundation of the whole system because it is the act
 ```mermaid
 graph TB
     subgraph "Entry Point"
-        MAIN["main.dart<br/>Launcher + route dispatch"]
+        MAIN["main.dart<br/>AIWork default entry"]
     end
 
     subgraph "Applications"
@@ -51,7 +86,7 @@ graph TB
         URS["UxRouteSpec / UxPaperSpec / UxTemplateSpec"]
     end
 
-    subgraph "Core Engine"
+    subgraph "Core Orchestration"
         AP["Autopilot"]
         CD["CopilotData"]
         CU["CopilotUX"]
@@ -61,11 +96,11 @@ graph TB
     end
 
     subgraph "UX Runtime"
-        GX["GenUx"]
+        GX["GenUx<br/>core/gen/genux.dart"]
         PH["Paper + UxPaperHost"]
         TH["Template + UxTemplateHost"]
-        VW["Ux*View widgets"]
-        REG["UxRegister"]
+        VW["Uw* widgets"]
+        REG["mixins.dart<br/>UxRegister + Ux / Paper / Template / Uwidget"]
     end
 
     subgraph "Schema Models"
@@ -85,9 +120,6 @@ graph TB
     end
 
     MAIN --> AIWORK
-    MAIN --> AIBOOK
-    MAIN --> AICODEX
-    MAIN --> AISTUDIO
 
     AIWORK --> WSP
     AIBOOK --> BSP
@@ -123,9 +155,6 @@ graph TB
     US --> URS
     BS --> AICODEX
 
-    AISTUDIO --> SQL
-    AICODEX --> SQL
-    AIWORK --> SQL
     DBC --> SQL
 ```
 
@@ -135,15 +164,15 @@ graph TB
 
 | Metric | Value |
 |---|---|
-| **Source files** (`lib/`) | 82 Dart files |
-| **Source LOC** (`lib/`) | ~7,815 lines |
+| **Source files** (`lib/`) | 79 Dart files |
+| **Source LOC** (`lib/`) | ~9,782 lines |
 | **Test files** (`test/`) | 0 Dart files in the current working tree |
 | **Test LOC** (`test/`) | 0 |
-| **Asset JSON files** | 3 files |
+| **Asset JSON files** | 2 files |
 | **Doc files** (`docs/`) | 10 markdown files |
 | **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
 | **Dev Dependencies** | flutter_test, flutter_lints |
-| **Analyzer status** | `flutter analyze lib test` passes on 2026-03-20 |
+| **Analyzer status** | `flutter analyze lib test` passes on 2026-03-21 |
 
 ---
 
@@ -152,7 +181,7 @@ graph TB
 ```
 genrp/
 ├── lib/
-│   ├── main.dart                         # App launcher / selector
+│   ├── main.dart                         # Default app entry (boots AIWork)
 │   ├── meta.dart                         # Static version flags
 │   ├── app/
 │   │   ├── aiwork/
@@ -193,25 +222,23 @@ genrp/
 │       │   ├── sqliteadmin.dart          # SQLite create-db/table/vfun builder
 │       │   ├── sqliteclient.dart         # SQLite foundation CRUD builder
 │       │   └── webclient.dart            # Generic remote action/CRUD envelope builder
+│       ├── gen/
+│       │   └── genux.dart                # Spec-to-widget runtime builder
 │       ├── model/
 │       │   ├── bdata/                    # 1 business data model file
 │       │   ├── base/                     # 2 base model files
 │       │   ├── bschema/                  # 7 schema model files
-│       │   └── uschema/                  # UX spec files + barrel export
+│       │   └── uschema/                  # UX spec files + ux_specs.dart barrel
 │       ├── theme/
 │       │   └── theme.dart                # Shared Material 3 theme + UX chrome helpers
 │       └── ux/
-│           ├── genux.dart                # Spec-to-widget runtime builder
-│           ├── paper.dart                # Paper contract + scoped host
-│           ├── template.dart             # Template contract + scoped host
+│           ├── mixins.dart               # Shared UxRegister / Ux / Paper / Template / Uwidget contracts
 │           ├── ux.dart                   # UX barrel export
-│           ├── ux_register.dart          # Packed ids + UX naming registry
-│           ├── v.dart                    # View contract mixin
 │           ├── paper/                    # Paper widgets
 │           ├── template/                 # Template widgets
-│           └── view/                     # Reusable UX views
+│           └── uwidget/                  # Reusable UX widgets
 ├── test/                                 # No checked-in Dart tests in this working tree
-├── assets/json/                          # 3 JSON spec/registry files
+├── assets/json/                          # 2 JSON support files
 ├── docs/                                 # 10 documentation files
 └── pubspec.yaml
 ```
@@ -239,6 +266,7 @@ The **Autopilot** is the heart of the system — an abstract `ChangeNotifier` th
 - Binding resolution is **dual-path**: slot-first `X.v[index]` for machine transport, fallback to string path for migration.
 - Source codes: `0` = state, `1` = dataSource, `2` = dataSet.
 - UX identity is scoped as `hostId + bodyId + widgetId` — used for selection highlighting in debug mode.
+- Historically, older docs sometimes made orchestration sound broader than it is by mixing it with router/session/runtime-wrapper experiments. In the current repo, `Autopilot` is the only active orchestrator.
 
 ### 5.2 Transport Layer (`core/base/`)
 
@@ -363,7 +391,7 @@ All are immutable with `const` constructor, `fromJson`, `toJson`, `copyWith`, `=
 
 | File | Class | Extra Fields |
 |---|---|---|
-| [ux.dart](lib/core/model/uschema/ux.dart) | barrel export | Re-exports the active UX spec types used by apps and `GenUx` |
+| [ux_specs.dart](lib/core/model/uschema/ux_specs.dart) | barrel export | Re-exports the active UX spec types used by apps and `GenUx` |
 | [ux_node_spec.dart](lib/core/model/uschema/ux_node_spec.dart) | `UxNodeSpec` | Shared `i`, `s`, `m`, `code`, and `id` contract |
 | [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart) | `UxFieldSpec` | `label`, `hint`, `width` |
 | [ux_view_spec.dart](lib/core/model/uschema/ux_view_spec.dart) | `UxViewSpec` | `vid`, `p`, plus packed IDs via `UxRegister` |
@@ -371,7 +399,13 @@ All are immutable with `const` constructor, `fromJson`, `toJson`, `copyWith`, `=
 | [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart) | `UxPaperSpec` | `pid`, `template` |
 | [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart) | `UxRouteSpec` | `appName`, `pageSpecId`, `title`, `subtitle`, `paper`, `optionalId` |
 
-### 5.5 UX Rendering Pipeline (`app/*_specs.dart` + `core/ux/`)
+**USchema id rule**
+- Persisted UX-spec ids stay schema-side: `i` and `e` use `int4` / `int32`.
+- Draft UX/spec rows start with `i = 0`.
+- First persistence allocates `max(i) + 1`; later saves update in place.
+- This rule should stay the same whether the spec is local-seeded today or server-delivered later.
+
+### 5.5 UX Rendering Pipeline (`app/*_specs.dart` + `core/gen/` + `core/ux/`)
 
 ```mermaid
 flowchart LR
@@ -381,7 +415,7 @@ flowchart LR
     GX["GenUx.buildPaper() or dedicated shell"]
     PH["UxPaperHost"]
     TH["UxTemplateHost"]
-    VW["Ux*View widgets"]
+    VW["Uw* widgets"]
     AP["Autopilot"]
 
     Route --> Specs --> RS --> GX --> PH --> TH --> VW
@@ -391,13 +425,14 @@ flowchart LR
 ```
 
 1. **App route helpers** resolve a `CopilotRoute` into either a `UxRouteSpec` (`AIWork`, `AIBook`) or an app-owned section config (`AIStudio`, `AICodex`).
-2. **`GenUx`** still drives the spec-based papers for `AIWork` and `AIBook`, while `AIStudio` and `AICodex` build dedicated hard-coded three-panel shells.
-3. **`UxPaperHost` / `UxTemplateHost`** mount scoped paper/template state inside `Autopilot` where the spec-driven path is used.
-4. **`Ux*View` widgets** render the shared UI primitives for both the spec-driven apps and the dedicated authoring shells.
-5. The older JSON body-router/template-runtime pipeline is not part of the active working tree in this snapshot.
+2. **`GenUx`** in `lib/core/gen/genux.dart` still drives the spec-based papers for `AIWork` and `AIBook`, while `AIStudio` and `AICodex` build dedicated hard-coded three-panel shells.
+3. **`mixins.dart`** centralizes `UxRegister`, `Ux`, `Paper`, `Template`, `Uwidget`, `UxPaperHost`, and `UxTemplateHost`.
+4. **`UxPaperHost` / `UxTemplateHost`** mount scoped paper/template state inside `Autopilot` where the spec-driven path is used.
+5. **`Uw*` widgets** render the shared UI primitives for both the spec-driven apps and the dedicated authoring shells.
+6. The older JSON body-router/template-runtime pipeline is not part of the active working tree in this snapshot.
 
-> [!IMPORTANT]
-> Body routing is still **hybrid** — it tries numeric `bodyId` first but falls back to string names. This is a documented beta gap.
+> [!NOTE]
+> The current spec-driven path is typed and Dart-seeded through `*_specs.dart` plus `UxRouteSpec` / `UxPaperSpec` / `UxTemplateSpec`. Older JSON registry/body-router notes in archived docs are historical context, not the active ready-state input path. The final client direction is still server-spec-driven UI; local preset specs are the current stand-in.
 
 ### 5.6 Persistence (`core/db/`)
 
@@ -425,6 +460,7 @@ flowchart LR
 - Singleton pattern via `SqliteStore.instance`
 - Supports custom `databaseFactory` and `databasePath` injection for testing
 - Applies shared foundation seed rows on first create
+- The live app shells do not currently load their ready-state route/editor data from `SqliteStore`; it remains shared scaffolding and local foundation support for later persistence work
 - PostgreSQL can use real foundation/business functions, while SQLite represents function-like behavior through `vfun` rows/scripts instead of database functions
 - Generated table builders currently emit `NOT NULL` for all columns
 - `ALTER TABLE` is intentionally not part of the current flow
@@ -449,7 +485,7 @@ flowchart LR
   - major panel = `80%`
 - Current dual-mode working split = `20 / 60 / 20`
 - Shared visual baseline:
-  - dark Material 3 theme
+  - shared Material 3 theme through `UxTheme`
   - centralized font sizes and toolbar/status heights
   - no scaffold FABs
 - Shared shell boundary:
@@ -476,26 +512,29 @@ flowchart LR
 - **Entry**: `AIStudioApp` → shared hybrid shell with two minor tabs and three major tabs
 - Minor panel: `Catalogs` + `Context`
 - Major panel: `Single`, `Dual`, `Equal`
-- Visual baseline: shared dark Material 3 theme, centralized toolbar/status sizing, no scaffold FAB
-- Local state: `_selectedCatalog`, `_selectedRowId`, `_draftRow`, search text, loaded rows
+- Visual baseline: shared Material 3 theme via `UxTheme` (current app config uses `ThemeMode.dark`), centralized toolbar/status sizing, no scaffold FAB
+- Local state: `_selectedCatalog`, `_selectedRowIndex`, `_minorTabIndex`, `_majorTabIndex`, `_routePath`
 - Explorer boundary: current left catalog list is app-owned and should stay decoupled from the shell widget
 - Current direction: AIStudio is now narrowed to the UX/spec explorer path only
-- Current snapshot: SQLite-backed middle-panel row loading is working, including search, draft-first add/new, and row selection
-- Remaining next step: right-side generic editor for common UX/spec row fields
+- Current snapshot: app-owned seeded catalog rows drive the list, inspector, and split-panel views; the shell is intentionally hard-coded rather than live-previewing raw `Ux*` mutations
+- Remaining next step: decide whether any durable authoring persistence is worth adding, without reintroducing a second runtime path
 
 #### AICodex (Step 3 done)
 - **Entry**: `AICodexApp` → shared hybrid shell with two minor tabs and three major tabs
 - Minor panel: `Catalogs` + `Context`
 - Major panel: `Single`, `Dual`, `Equal`
-- Visual baseline: shared dark Material 3 theme, centralized toolbar/status sizing, no scaffold FAB
+- Visual baseline: shared Material 3 theme via `UxTheme` (current app config uses `ThemeMode.dark`), centralized toolbar/status sizing, no scaffold FAB
+- Local state: `_selectedModelType`, `_selectedRowIndex`, `_minorTabIndex`, `_majorTabIndex`, `_routePath`
 - Explorer boundary: current grouped model explorer is app-owned and should stay decoupled from the shell widget
 - Current direction: AICodex owns the data-model explorer/collection path plus sensitive data-model CRUD and schema generation/apply work
-- Current snapshot: SQLite-backed master/detail editing is working, including payload editing and save/delete flow for selected rows
-- Remaining next step: DDL and function-script generation display
+- Current snapshot: app-owned seeded model rows drive the master/detail shell, and SQL preview text is generated locally for the selected model type
+- Remaining next step: connect preview-oriented schema work to a real backend/apply flow only when the transport boundary is ready
 
 ---
 
 ## 6. Data Flow Diagram
+
+The diagram below shows the current spec-driven path used by `AIWork` and `AIBook`. `AIStudio` and `AICodex` reuse the same `Autopilot` and shared `Uw*` primitives, but their ready-state shells are app-owned hard-coded/demo surfaces rather than `GenUx`-rendered papers.
 
 ```mermaid
 sequenceDiagram
@@ -517,7 +556,7 @@ sequenceDiagram
     PaperHost->>Autopilot: mountPaper()
     GenUx->>TemplateHost: create UxTemplateHost
     TemplateHost->>Autopilot: mountCurrentTemplate()
-    User->>App: Interact with Ux*View widgets
+    User->>App: Interact with Uw* widgets
     App->>Autopilot: setTemplateState() / setPaperState()
     Autopilot-->>App: notifyListeners()
 ```
@@ -558,7 +597,7 @@ The planned backend is a **C# ASP.NET Core Minimal Web API** with a PostgreSQL b
 |---|---|
 | `paper` | The route-facing UX container selected by `pid` and hosted by `UxPaperHost` |
 | `template` | The workflow/content layer selected by `tid` and hosted by `UxTemplateHost` |
-| `view` | A reusable primitive widget under `lib/core/ux/view/` |
+| `uwidget` | Ultra Widget primitive layer under `lib/core/ux/uwidget/` |
 | `Ux*Spec` | Definition-side UX route/paper/template/view structures under `core/model/uschema/` |
 | `GenUx` | The builder that maps `uschema` specs to concrete paper/template widgets |
 | `X` / `Xi` / `Xia` / `Xiad` / `Xiade` (under `base/`) | Business-bound transport/data shapes |
@@ -581,8 +620,10 @@ The planned backend is a **C# ASP.NET Core Minimal Web API** with a PostgreSQL b
 
 ## 9. JSON Spec & Registry Structure
 
-### aibook_spec.json
-Defines UI **composition** — what bodies exist, what widgets they contain, initial state/data:
+This section records the older AIBook JSON experiment that still appears in docs/assets history. It is not the active runtime input path in the current working tree.
+
+### Historical aibook_spec.json
+Defined UI **composition** — what bodies existed, what widgets they contained, initial state/data:
 
 ```
 {
@@ -598,8 +639,8 @@ Defines UI **composition** — what bodies exist, what widgets they contain, ini
 }
 ```
 
-### aibook_registry.json
-Defines **identity registries** — maps numeric IDs to names:
+### Historical aibook_registry.json
+Defined **identity registries** — maps numeric IDs to names:
 
 ```
 {
@@ -620,7 +661,7 @@ Defines **identity registries** — maps numeric IDs to names:
 The checked-in Dart test tree has been deleted in this checkout, so the historical test inventory from earlier snapshots no longer matches the current repo state.
 
 Current verification for this analysis:
-- `flutter analyze lib test` — passes on 2026-03-20.
+- `flutter analyze lib test` — passes on 2026-03-21.
 - The four active apps have been manually tested in this snapshot.
 - Seeded/demo `*_specs.dart` data remains intentional for now until ID-key direction is discussed.
 - `flutter analyze lib test` plus manual app runs are the active verification path for this snapshot.
@@ -633,13 +674,13 @@ Current verification for this analysis:
 
 | Capability | Status |
 |---|---|
-| App launcher with direct multi-app selection | ✅ Stable |
+| `main.dart` direct boot into AIWork | ✅ Working |
 | Four app entry points + shared login/loading/ready staging | ✅ Working |
 | `AIWork` / `AIBook` spec-driven rendering + `AIStudio` / `AICodex` dedicated shells | ✅ Working |
 | `UxPaperHost` / `UxTemplateHost` scoped state mounting | ✅ Working |
 | Action dispatch and template/paper state mutations through `Autopilot` | ✅ Working |
 | SQLite store (shared foundation) | ✅ Working |
-| Shared dark Material 3 theme | ✅ Working |
+| Shared Material 3 theme via `UxTheme` | ✅ Working |
 | Centralized toolbar/status sizing | ✅ Working |
 | Shared hybrid authoring shell (`20 / 60 / 20` dual mode) | ✅ Working |
 | `uschema` barrel + current spec imports | ✅ Working |
@@ -652,14 +693,14 @@ Current verification for this analysis:
 | Gap | Priority | Notes |
 |---|---|---|
 | No checked-in automated test suite | N/A | Test files have been deleted in this working tree; analyzer plus manual app testing are the active checks for this snapshot |
-| Mock/demo auth and route bootstrap | High | Apps still rely on `applyMockAuth` and local preset specs for ready-state entry |
+| Mock/demo auth and route bootstrap | High | Apps still rely on `applyMockAuth` and local preset specs for ready-state entry; the final client target is server-spec-driven UI |
 | Real transport integration | High | `WebClient` scaffolding exists, but active app flows are not server-backed yet |
 | Validation still partial | Medium | Core imports are fixed, but deeper semantic consistency checks can grow further |
 | Shared DB builders not wired into app flows yet | Medium | Contract/admin/client scaffolding exists, but app-level integration is still pending |
-| AIWork and AIBook are intentionally local-spec driven | N/A | This is the current ready-to-run mode; remote-backed business flows can be added later without blocking app readiness |
-| AIStudio generic editor still missing | Medium | Row list/search/draft selection works; Save/Delete editor is the next step |
-| AIStudio payload-specific UX/spec editing still missing | Medium | Common row editor comes first; catalog-specific payload editing remains after that |
-| AICodex DDL flow still missing | Medium | Right-side editing now works, but schema generation/apply preview is still pending |
+| AIWork and AIBook are intentionally local-spec driven for now | N/A | This is the current ready-to-run mode; the final client goal remains server-spec-driven UI |
+| AIStudio authoring data is still app-seeded | Medium | This is intentional for the current hard-coded authoring shell, but there is no durable save/load path yet |
+| AIStudio live preview from raw `Ux*` mutation is intentionally deferred | N/A | The current design prefers a hard-coded editor shell over a second dynamic runtime path |
+| AICodex schema apply is not wired | Medium | Local SQL preview exists, but no real backend apply/transport flow is connected yet |
 | Preview selection is debug-only | Low | Long-press in debug mode only |
 | `datasource_helper.dart` is empty | Low | Reserved placeholder |
 | Narrow direct-path routing only | N/A | Navigation uses `CopilotRoute` + preset specs rather than a large nested Navigator graph |
@@ -673,7 +714,7 @@ Current verification for this analysis:
 2. **Numeric identity** — integer IDs for action, template, widget, type, source, field references
 3. **Compact transport** — base `X` with slot-addressable `v[]` list, not human-readable property maps
 4. **Single orchestrator** — `Autopilot` owns everything; no competing state managers
-5. **Incremental refactor** — compatibility barrels reduce churn while files move
+5. **Forward-only cleanup** — remove legacy layers rather than preserving parallel runtime stacks
 6. **Narrow routing** — `CopilotRoute` handles app/page selection while each route renders one paper tree
 
 ### Key Patterns
@@ -729,31 +770,31 @@ graph LR
 
 Based on the existing handover docs and code analysis:
 
-### Phase 1: Finish AIBook Beta Hardening
+### Phase 1: Keep The Client Path Stable While Moving Toward Server Specs
 1. **Rebuild focused test coverage** — add current tests around `Autopilot`, `*_specs.dart`, `GenUx`, and `core/ux`
 2. **Extend spec validation further** — deeper consistency checks across route/paper/template/view composition
-3. **Introduce real HTTP transport/auth** — replace mock-ready-state bootstrap with real server-backed flows
+3. **Introduce real HTTP transport/auth** — replace mock-ready-state bootstrap with real server-backed flows and move toward server-spec-driven UI
 4. **Wire optional local cache where it helps** — use SQLite for offline/preset caching in AIWork/AIBook when the server path is ready
 
 ### Phase 2: Continue AIStudio
-5. **Build right panel** — UX/spec editor for common `i/a/d/e/t/n/s` shape
-6. **Add catalog-specific payload editor** — JSON/payload editing for rows that need more than the common shape
-7. **Extend AIStudio test coverage** — save/delete/editor flow on top of the current list/search/draft tests
+5. **Decide targeted persistence only if it earns its cost** — keep the hard-coded shell unless durable UX/spec authoring storage becomes clearly necessary
+6. **Tighten authoring actions inside the current shell** — keep catalog/list/inspector workflows clear without forcing live raw-spec preview
+7. **Extend AIStudio test coverage** — focus on shell state, selection, and editor actions
 
 ### Phase 3: Continue AICodex
-8. **Add DDL generation** — create/drop/function SQL + `vfun` script preview
-9. **Add transport + test coverage** — schema action dispatch, `vfun` handling, and widget tests
+8. **Keep SQL preview aligned with model selections** — create/drop/function SQL and `vfun` preview should stay coherent with the chosen model rows
+9. **Add real schema apply transport when backend flow is ready** — connect preview to action dispatch instead of keeping it display-only
+10. **Add transport + test coverage** — schema action dispatch, preview generation, and widget tests
 
 ### Phase 4: Production Hardening
-11. **Harden failure states** — malformed spec, registry, transport errors
-12. **Decide on preview mode** — debug-only vs. production feature
-13. **Expand full-flow integration coverage** — editor → preview → transport/cache paths
+11. **Harden failure states** — malformed spec, transport, and preview errors
+12. **Expand full-flow integration coverage** — editor → preview → transport/cache paths
 
 ---
 
 ## 15. File Reference
 
-### Source Files (`lib/` — 59 files)
+### Source Files (`lib/` — 79 files)
 
 | Category | Files |
 |---|---|
@@ -768,9 +809,9 @@ Based on the existing handover docs and code analysis:
 | **BSchema models** (7) | [entity_model.dart](lib/core/model/bschema/entity_model.dart), [field_model.dart](lib/core/model/bschema/field_model.dart), [relation_model.dart](lib/core/model/bschema/relation_model.dart), [function_model.dart](lib/core/model/bschema/function_model.dart), [parameter_model.dart](lib/core/model/bschema/parameter_model.dart), [table_model.dart](lib/core/model/bschema/table_model.dart), [column_model.dart](lib/core/model/bschema/column_model.dart) |
 | **Base models** (2) | [system_model.dart](lib/core/model/base/system_model.dart), [usr_model.dart](lib/core/model/base/usr_model.dart) |
 | **BData models** (1) | [user_model.dart](lib/core/model/bdata/user_model.dart) |
-| **USchema models** (7) | [ux.dart](lib/core/model/uschema/ux.dart), [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart), [ux_node_spec.dart](lib/core/model/uschema/ux_node_spec.dart), [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart), [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart), [ux_view_spec.dart](lib/core/model/uschema/ux_view_spec.dart), [uxm_template_spec.dart](lib/core/model/uschema/uxm_template_spec.dart) |
+| **USchema models** (7) | [ux_specs.dart](lib/core/model/uschema/ux_specs.dart), [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart), [ux_node_spec.dart](lib/core/model/uschema/ux_node_spec.dart), [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart), [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart), [ux_view_spec.dart](lib/core/model/uschema/ux_view_spec.dart), [uxm_template_spec.dart](lib/core/model/uschema/uxm_template_spec.dart) |
 | **Theme** | [theme.dart](lib/core/theme/theme.dart) |
-| **UX runtime** | [genux.dart](lib/core/ux/genux.dart), [paper.dart](lib/core/ux/paper.dart), [template.dart](lib/core/ux/template.dart), [ux.dart](lib/core/ux/ux.dart), [ux_register.dart](lib/core/ux/ux_register.dart), [v.dart](lib/core/ux/v.dart), plus `paper/`, `template/`, and `view/` subdirectories |
+| **UX runtime** | [genux.dart](lib/core/gen/genux.dart), [mixins.dart](lib/core/ux/mixins.dart), [ux.dart](lib/core/ux/ux.dart), plus `paper/`, `template/`, and `uwidget/` subdirectories |
 
 ### Documentation (`docs/` — 10 files)
 

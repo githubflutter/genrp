@@ -1,62 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/uschema/ux_field_spec.dart';
-import 'package:genrp/core/model/uschema/ux_paper_spec.dart';
-import 'package:genrp/core/model/uschema/uxm_template_spec.dart';
-import 'package:genrp/core/ux/paper/pfour.dart';
-import 'package:genrp/core/ux/paper/pone.dart';
-import 'package:genrp/core/ux/paper/pthree.dart';
-import 'package:genrp/core/ux/paper/ptwo.dart';
-import 'package:genrp/core/ux/paper/pzero.dart';
-import 'package:genrp/core/ux/template/tcrud.dart';
-import 'package:genrp/core/ux/template/tdboard.dart';
-import 'package:genrp/core/ux/template/tform.dart';
-import 'package:genrp/core/ux/template/treport.dart';
-import 'package:genrp/core/ux/template/tsheet.dart';
-import 'package:genrp/core/ux/template/twizard.dart';
+import 'package:genrp/core/model/uschema/ux_specs.dart';
+import 'package:genrp/core/ux/ux.dart';
 
 class GenUx {
   GenUx._();
-
-  static Widget buildPaper({
-    required UxPaperSpec spec,
-    required Autopilot autopilot,
-    String? optionalId,
-  }) {
-    final template = buildTemplate(
-      spec: spec.template,
-      autopilot: autopilot,
-      optionalId: optionalId,
-    );
+  static Widget buildPaper({required UxPaperSpec spec, required Autopilot autopilot, String? optionalId}) {
+    final template = buildTemplate(spec: spec.template, autopilot: autopilot, optionalId: optionalId);
 
     return switch (spec.pid) {
       0 => Pzero(i: spec.i, autopilot: autopilot, s: spec.s, child: template),
       1 => Pone(i: spec.i, autopilot: autopilot, s: spec.s, child: template),
-      2 => Ptwo(
-        i: spec.i,
-        autopilot: autopilot,
-        s: spec.s,
-        left: template,
-        right: template,
-      ),
-      3 => Pthree(
-        i: spec.i,
-        autopilot: autopilot,
-        s: spec.s,
-        first: template,
-        middle: template,
-        last: template,
-      ),
+      2 => Ptwo(i: spec.i, autopilot: autopilot, s: spec.s, left: template, right: template),
+      3 => Pthree(i: spec.i, autopilot: autopilot, s: spec.s, first: template, middle: template, last: template),
       4 => Pfour(i: spec.i, autopilot: autopilot, s: spec.s),
       _ => Pzero(i: spec.i, autopilot: autopilot, s: spec.s, child: template),
     };
   }
 
-  static StatelessWidget buildTemplate({
-    required UxTemplateSpec spec,
-    required Autopilot autopilot,
-    String? optionalId,
-  }) {
+  static StatelessWidget buildTemplate({required UxTemplateSpec spec, required Autopilot autopilot, String? optionalId}) {
     switch (spec.tid) {
       case 1:
         final crud = spec as UxCrudTemplateSpec;
@@ -109,10 +71,7 @@ class GenUx {
           (UxFieldSpec field) => SizedBox(
             width: field.width,
             child: TextField(
-              decoration: InputDecoration(
-                labelText: field.label,
-                hintText: field.hint,
-              ),
+              decoration: InputDecoration(labelText: field.label, hintText: field.hint),
             ),
           ),
         )

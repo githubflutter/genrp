@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/paper.dart';
-import 'package:genrp/core/ux/template.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 class Pthree extends StatelessWidget with Paper {
   // Split rule:
@@ -12,10 +11,23 @@ class Pthree extends StatelessWidget with Paper {
   // first/last or top/bottom are encoded, middle expands to the remainder
   // Precaution: 100% total limits and minimum pane clipping are not checked here.
   // API users must validate those values before passing them in.
-  const Pthree({required this.i, required this.autopilot, required this.first, required this.middle, required this.last, this.s = 0, super.key})
-    : assert(first is Template, 'Pthree first child must be a Template variant'),
-      assert(middle is Template, 'Pthree middle child must be a Template variant'),
-      assert(last is Template, 'Pthree last child must be a Template variant');
+  const Pthree({
+    required this.i,
+    required this.autopilot,
+    required this.first,
+    required this.middle,
+    required this.last,
+    this.s = 0,
+    super.key,
+  }) : assert(
+         first is Template,
+         'Pthree first child must be a Template variant',
+       ),
+       assert(
+         middle is Template,
+         'Pthree middle child must be a Template variant',
+       ),
+       assert(last is Template, 'Pthree last child must be a Template variant');
 
   @override
   final int pid = 3;
@@ -57,9 +69,13 @@ class Pthree extends StatelessWidget with Paper {
           return LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               if (vertical) {
-                return isPixelMode ? _buildVerticalPixel(constraints, raw) : _buildVerticalPercent(constraints, raw);
+                return isPixelMode
+                    ? _buildVerticalPixel(constraints, raw)
+                    : _buildVerticalPercent(constraints, raw);
               }
-              return isPixelMode ? _buildHorizontalPixel(constraints, raw) : _buildHorizontalPercent(constraints, raw);
+              return isPixelMode
+                  ? _buildHorizontalPixel(constraints, raw)
+                  : _buildHorizontalPercent(constraints, raw);
             },
           );
         },
@@ -69,7 +85,10 @@ class Pthree extends StatelessWidget with Paper {
 
   Widget _buildHorizontalPercent(BoxConstraints constraints, int raw) {
     if (constraints.maxWidth.isInfinite) {
-      return Row(mainAxisSize: MainAxisSize.min, children: <Widget>[first, middle, last]);
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[first, middle, last],
+      );
     }
     final pair = _decodePercentPair(raw);
     final firstPercent = pair.$1;
@@ -88,7 +107,10 @@ class Pthree extends StatelessWidget with Paper {
 
   Widget _buildVerticalPercent(BoxConstraints constraints, int raw) {
     if (constraints.maxHeight.isInfinite) {
-      return Column(mainAxisSize: MainAxisSize.min, children: <Widget>[first, middle, last]);
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[first, middle, last],
+      );
     }
     final pair = _decodePercentPair(raw);
     final firstPercent = pair.$1;
@@ -119,7 +141,11 @@ class Pthree extends StatelessWidget with Paper {
         ],
       );
     }
-    final scale = _pixelScale(firstExtent: firstWidth, lastExtent: lastWidth, totalExtent: constraints.maxWidth);
+    final scale = _pixelScale(
+      firstExtent: firstWidth,
+      lastExtent: lastWidth,
+      totalExtent: constraints.maxWidth,
+    );
     return Row(
       children: <Widget>[
         SizedBox(width: firstWidth * scale, child: first),
@@ -143,7 +169,11 @@ class Pthree extends StatelessWidget with Paper {
         ],
       );
     }
-    final scale = _pixelScale(firstExtent: firstHeight, lastExtent: lastHeight, totalExtent: constraints.maxHeight);
+    final scale = _pixelScale(
+      firstExtent: firstHeight,
+      lastExtent: lastHeight,
+      totalExtent: constraints.maxHeight,
+    );
     return Column(
       children: <Widget>[
         SizedBox(height: firstHeight * scale, child: first),
@@ -163,7 +193,11 @@ class Pthree extends StatelessWidget with Paper {
     return (int.parse(text.substring(0, 3)), int.parse(text.substring(3, 6)));
   }
 
-  double _pixelScale({required double firstExtent, required double lastExtent, required double totalExtent}) {
+  double _pixelScale({
+    required double firstExtent,
+    required double lastExtent,
+    required double totalExtent,
+  }) {
     final occupied = firstExtent + lastExtent;
     if (occupied <= 0 || occupied <= totalExtent) {
       return 1;

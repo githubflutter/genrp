@@ -9,23 +9,24 @@ Index of documentation files in `docs/`:
 - `aicodex_handover.md` — AICodex progressive step-by-step handover with master-detail panels and DDL generation.
 
 Current verification in this snapshot:
-- `flutter analyze lib test` passes on `2026-03-20`.
+- `flutter analyze lib test` passes on `2026-03-21`.
 - All four active apps have already been manually tested in this snapshot.
 - Checked-in Dart test files have been deleted in this working tree.
 
 Current handover status in this snapshot:
 - `AIWork` — ready-to-run spec-driven client surface; no dedicated handover doc yet.
 - `AIBook` — ready-to-run spec-driven client surface; the handover doc keeps older pre-`core/ux` steps as historical context.
-- `AIStudio` — dedicated hard-coded authoring shell with route presets and shared UX components; older step history remains as context.
-- `AICodex` — dedicated hard-coded authoring shell with route presets and shared UX components; older step history remains as context.
+- `AIStudio` — dedicated hard-coded authoring shell with app-owned seeded section data and shared UX components; older step history remains as context.
+- `AICodex` — dedicated hard-coded authoring shell with app-owned seeded section data and shared UX components; older step history remains as context.
 
 Current next focus:
-- Continue feature work on the dedicated AIStudio/AICodex shells while reusing shared UX components and keeping seeded/demo route metadata intentional for now.
+- Continue feature work on the dedicated AIStudio/AICodex shells while reusing shared UX components and keeping their current hard-coded/demo stage explicit in the docs.
+- Keep the client-app direction clear: `AIWork` / `AIBook` are local spec-driven today, but the final target is server-spec-driven UI after the real transport/bootstrap path is wired.
 - Keep using `flutter analyze lib test` plus manual app runs as the active validation path for this snapshot.
 - Add an `AIWork` handover doc when active feature work begins there.
 
 Current UI baseline in this snapshot:
-- Shared Material 3 theme via `UxTheme` across launcher and apps
+- Shared Material 3 theme via `UxTheme` across the main entry and app modules
 - Each app currently owns a dedicated login screen before the loading/ready flow
 - All four apps use the same login -> loading -> ready stage flow
 - AIStudio and AICodex still share the convergent authoring-shell direction
@@ -43,6 +44,7 @@ Current ownership reminder:
 ## Architecture & Contracts
 
 - `project_deep_analysis.md` — full architecture analysis with diagrams, subsystem breakdowns, data flow, gap analysis, and roadmap.
+- `project_deep_analysis.md` also records the phase change from the older engine/runtime/renderer/builder/generator overlap into the current single active runtime path.
 - `lib_app_readme.md` — app roles, backend transport contract, shared DB builder split, vocabulary, and naming rules.
 
 ## Code Reference

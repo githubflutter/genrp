@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/v.dart';
-import 'package:genrp/core/ux/view/empty.dart';
+import 'package:genrp/core/ux/uwidget/uwempty.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
-class UxDataTableView extends StatelessWidget with V {
-  const UxDataTableView({
+class UwDataTable extends StatelessWidget with Uwidget {
+  const UwDataTable({
     required this.i,
     required this.autopilot,
     this.s = 0,
@@ -34,27 +34,44 @@ class UxDataTableView extends StatelessWidget with V {
   final ValueChanged<int>? onSelectIndex;
 
   @override
-  final String n = 'datatableview';
+  final String n = 'datatable';
 
   @override
   Widget build(BuildContext context) {
     if (columns.isEmpty) {
-      return UxEmptyView(i: i, autopilot: autopilot, p: p.isNotEmpty ? p : 'No table definition');
+      return UwEmpty(
+        i: i,
+        autopilot: autopilot,
+        p: p.isNotEmpty ? p : 'No table definition',
+      );
     }
-    final normalizedRows = rows.map((List<Object?> row) => List<String>.generate(columns.length, (int index) => index < row.length ? '${row[index] ?? ''}' : '')).toList(growable: false);
+    final normalizedRows = rows
+        .map(
+          (List<Object?> row) => List<String>.generate(
+            columns.length,
+            (int index) => index < row.length ? '${row[index] ?? ''}' : '',
+          ),
+        )
+        .toList(growable: false);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Container(
         decoration: UxTheme.panelDecoration(context),
         padding: UxTheme.compactPadding,
         child: DataTable(
-          columns: columns.map((String label) => DataColumn(label: Text(label))).toList(growable: false),
+          columns: columns
+              .map((String label) => DataColumn(label: Text(label)))
+              .toList(growable: false),
           rows: normalizedRows.indexed
               .map(
                 ((int, List<String>) record) => DataRow(
                   selected: selectedIndex == record.$1,
-                  onSelectChanged: onSelectIndex == null ? null : (_) => onSelectIndex!(record.$1),
-                  cells: record.$2.map((String cell) => DataCell(Text(cell))).toList(growable: false),
+                  onSelectChanged: onSelectIndex == null
+                      ? null
+                      : (_) => onSelectIndex!(record.$1),
+                  cells: record.$2
+                      .map((String cell) => DataCell(Text(cell)))
+                      .toList(growable: false),
                 ),
               )
               .toList(growable: false),

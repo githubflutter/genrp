@@ -1,10 +1,15 @@
 import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/paper.dart';
-import 'package:genrp/core/ux/template.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 class Pone extends StatelessWidget with Paper {
-  const Pone({required this.i, required this.autopilot, required this.child, this.s = 0, super.key}) : assert(child is Template, 'Pone child must be a Template variant');
+  const Pone({
+    required this.i,
+    required this.autopilot,
+    required this.child,
+    this.s = 0,
+    super.key,
+  }) : assert(child is Template, 'Pone child must be a Template variant');
 
   @override
   final int pid = 1;
@@ -29,7 +34,9 @@ class Pone extends StatelessWidget with Paper {
       autopilot: autopilot,
       child: SingleChildScrollView(
         scrollDirection: isHorizontal ? Axis.horizontal : Axis.vertical,
-        child: isHorizontal ? Row(children: <Widget>[child]) : Column(children: <Widget>[child]),
+        child: isHorizontal
+            ? Row(children: <Widget>[child])
+            : Column(children: <Widget>[child]),
       ),
     );
   }

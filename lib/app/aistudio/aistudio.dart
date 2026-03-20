@@ -3,12 +3,12 @@ import 'package:genrp/app/aistudio/aistudio_specs.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/agent/copilot_route.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/view/cardview.dart';
-import 'package:genrp/core/ux/view/collectionview.dart';
-import 'package:genrp/core/ux/view/fromview.dart';
-import 'package:genrp/core/ux/view/plistview.dart';
-import 'package:genrp/core/ux/view/tabview.dart';
-import 'package:genrp/core/ux/view/toolbarview.dart';
+import 'package:genrp/core/ux/uwidget/uwcard.dart';
+import 'package:genrp/core/ux/uwidget/uwcollection.dart';
+import 'package:genrp/core/ux/uwidget/uwfrom.dart';
+import 'package:genrp/core/ux/uwidget/uwplist.dart';
+import 'package:genrp/core/ux/uwidget/uwtab.dart';
+import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 import 'package:genrp/meta.dart';
 
 class AIStudioApp extends StatelessWidget {
@@ -436,7 +436,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
           const SizedBox(height: 8),
           Text(section.subtitle, style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 12),
-          UxToolbarView(
+          UwToolbar(
             i: 40101,
             autopilot: _pilot,
             s: 30,
@@ -472,7 +472,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
   }
 
   Widget _buildMinorPanel({required AIStudioSection section}) {
-    return UxTabView(
+    return UwTab(
       i: 40110,
       autopilot: _pilot,
       s: 10,
@@ -513,7 +513,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        UxToolbarView(
+        UwToolbar(
           i: 40111,
           autopilot: _pilot,
           s: 20,
@@ -522,7 +522,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: UxCollectionView(
+          child: UwCollection(
             i: 40112,
             autopilot: _pilot,
             s: 1,
@@ -553,7 +553,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
     required int? selectedRowIndex,
     required _AIStudioRow? selectedRow,
   }) {
-    return UxTabView(
+    return UwTab(
       i: 40120,
       autopilot: _pilot,
       s: 10,
@@ -604,7 +604,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        UxToolbarView(
+        UwToolbar(
           i: 40121,
           autopilot: _pilot,
           s: 20,
@@ -619,7 +619,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
         ),
         const SizedBox(height: 12),
         Expanded(
-          child: UxCollectionView(
+          child: UwCollection(
             i: 40122,
             autopilot: _pilot,
             s: 3,
@@ -702,12 +702,12 @@ class _AIStudioHomeState extends State<AIStudioHome> {
     return Column(
       children: <Widget>[
         Expanded(
-          child: UxCardView(
+          child: UwCard(
             i: 40130,
             autopilot: _pilot,
             title: 'Inspector',
             child: SingleChildScrollView(
-              child: UxPListView(
+              child: UwPList(
                 i: 40131,
                 autopilot: _pilot,
                 properties: properties,
@@ -717,12 +717,12 @@ class _AIStudioHomeState extends State<AIStudioHome> {
         ),
         const SizedBox(height: 16),
         Expanded(
-          child: UxCardView(
+          child: UwCard(
             i: 40132,
             autopilot: _pilot,
             title: 'Editor',
             child: SingleChildScrollView(
-              child: UxFromView(
+              child: UwFrom(
                 i: 40133,
                 autopilot: _pilot,
                 p: '$selectedName Form',
@@ -877,14 +877,14 @@ class _AIStudioHomeState extends State<AIStudioHome> {
         return <_AIStudioRow>[
           _AIStudioRow(
             id: seed + 40,
-            name: 'toolbarview',
+            name: 'toolbar',
             status: 'Ready',
             owner: 'Mia',
             notes: 'Shared toolbar widget used in authoring shells.',
           ),
           _AIStudioRow(
             id: seed + 41,
-            name: 'plistview',
+            name: 'plist',
             status: 'Ready',
             owner: 'Ethan',
             notes: 'Property list widget for inspectors.',

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:genrp/app/aibook/aibook_specs.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/agent/copilot_route.dart';
-import 'package:genrp/core/model/uschema/ux.dart';
+import 'package:genrp/core/model/uschema/ux_specs.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/genux.dart';
+import 'package:genrp/core/gen/genux.dart';
 import 'package:genrp/meta.dart';
 
 class AIBookApp extends StatelessWidget {

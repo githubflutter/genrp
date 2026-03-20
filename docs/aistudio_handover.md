@@ -2,7 +2,7 @@
 
 Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
-**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aistudio/aistudio.dart` + `lib/app/aistudio/aistudio_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated three-panel authoring shell, shared `UxTheme`, and shared UX widgets such as `UxTabView`, `UxCollectionView`, `UxPListView`, and `UxFromView`. `flutter analyze lib test` passes in the current snapshot, and the active AIStudio app has already been manually tested.
+**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aistudio/aistudio.dart` + `lib/app/aistudio/aistudio_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated hybrid authoring shell, shared `UxTheme`, and shared UX widgets such as `UwTab`, `UwCollection`, `UwPList`, and `UwFrom`. `flutter analyze lib test` passes in the current snapshot, and the active AIStudio app has already been manually tested.
 
 **Current next step:** Continue the AIStudio feature plan inside the dedicated hard-coded shell while reusing shared UX components. The seeded/demo route metadata in `AIStudioSpecs` is intentional for now until ID-key rules are discussed.
 
@@ -29,7 +29,10 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 - functional UX/spec work should now continue inside that shared shell
 
 > [!NOTE]
-> The detailed step list below was written for a pre-`core/ux` snapshot where AIStudio owned more of the shell/list/editor wiring directly. The current runtime entry points are `lib/app/aistudio/aistudio.dart`, `lib/app/aistudio/aistudio_specs.dart`, `lib/core/ux/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+> The detailed step list below was written for a pre-`core/ux` snapshot where AIStudio owned more of the shell/list/editor wiring directly. The current runtime entry points are `lib/app/aistudio/aistudio.dart`, `lib/app/aistudio/aistudio_specs.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux_specs.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+
+> [!IMPORTANT]
+> Stage note from `new_experiment.md`: AIStudio is currently in the hard-coded/demo authoring-shell phase. If older sections below describe SQLite-backed row editing as the current path, treat that as archived or deferred work rather than the live app behavior.
 
 ---
 
@@ -182,9 +185,9 @@ Constraints:
 
 ---
 
-## [x] Step 3 — Middle panel with SQLite-backed UX/spec row list
+## Historical Step 3 — SQLite-backed UX/spec row list
 
-**Status:** Done in the current repo snapshot.
+**Status:** Archived from the older SQLite-backed path; not the live app stage in the current snapshot.
 
 **Goal:** The middle panel shows rows from `SqliteStore` for the selected UX/spec catalog, with search and a draft-first add/new action.
 
@@ -209,12 +212,9 @@ Constraints:
 - `flutter analyze` passes.
 - `flutter test` passes.
 
-**Snapshot notes:**
-- `AIStudio` now initializes `SqliteStore` and loads rows for the selected UX/spec catalog.
-- Search filters the visible rows by `n`.
-- Add/New creates a local draft row with `i = 0` instead of inserting immediately.
-- Selecting a row updates right-panel placeholder state for the future editor step.
-- Basic widget coverage exists in `test/aistudio_app_test.dart`.
+**Historical notes:**
+- This section belongs to the older SQLite-backed authoring path.
+- The live AIStudio app currently uses app-owned seeded/demo rows inside the hard-coded shell instead.
 
 ---
 
@@ -250,9 +250,8 @@ Continue in `/Users/Shared/dev/git/genrp`.
 You are working on AIStudio Step 4: Right panel generic editor.
 
 Current state:
-- Step 3 is done — middle panel shows SQLite-backed rows.
-- _selectedRowId is set when a row is tapped.
-- Draft rows can already be created locally with `i = 0`; the right panel still needs the real save/delete editor.
+- This step belongs to the older SQLite-backed path, not the current live shell.
+- The live AIStudio app currently uses app-owned seeded/demo rows and inspector views inside the hard-coded authoring shell.
 
 Task:
 - Load the selected row via SqliteStore.getRow.

@@ -1,5 +1,5 @@
 import 'package:genrp/core/agent/copilot_route.dart';
-import 'package:genrp/core/model/uschema/ux.dart';
+import 'package:genrp/core/model/uschema/ux_specs.dart';
 import 'package:genrp/meta.dart';
 
 class AIBookSpecs {

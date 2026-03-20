@@ -1,9 +1,15 @@
 import 'package:genrp/core/model/uschema/ux_node_spec.dart';
 import 'package:genrp/core/model/uschema/uxm_template_spec.dart';
-import 'package:genrp/core/ux/ux_register.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 class UxPaperSpec extends UxNodeSpec {
-  const UxPaperSpec({required this.pid, required super.i, required this.template, super.s, super.m});
+  const UxPaperSpec({
+    required this.pid,
+    required super.i,
+    required this.template,
+    super.s,
+    super.m,
+  });
 
   final int pid;
   final UxTemplateSpec template;

@@ -126,7 +126,7 @@ Convergent shell design
 - Search, add/create, editor tools, and schema tools should live inside the active major-tab content rather than inside the minor panel.
 
 Shared visual baseline
-- The launcher and all four apps should use the shared Material 3 theme from `lib/core/theme/theme.dart` via `UxTheme`.
+- The main entry and all four apps should use the shared Material 3 theme from `lib/core/theme/theme.dart` via `UxTheme`.
 - Font sizes should be anchored through the shared `TextTheme`, not ad-hoc per widget.
 - Current centralized values are:
   - `fontXl = 15`
@@ -180,7 +180,7 @@ AIBook transport split
 - For `AIBook`, business-bound row data should prefer the base `X` variants from `lib/core/base/x.dart`.
 - This split is intentional: composition wants readable JSON structure, while bound business transport wants the smallest and cheapest machine-oriented shape.
 - In architecture language, `base X` means the transport/data shape from `lib/core/base/x.dart`.
-- The reusable UI composition layer now lives under `lib/core/ux/` through `GenUx`, `Paper`, `Template`, and `Ux*View` widgets.
+- The reusable UI composition layer now lives under `lib/core/ux/` through `GenUx`, `Paper`, `Template`, and `Uw*` widgets in `lib/core/ux/uwidget/`.
 - HTTP transport for business data should invoke function-style actions; it should not mirror direct SQLite table writes for business tables.
 
 Request body shape
@@ -216,10 +216,10 @@ Business write rule
 - Foundation and business schema creation still belongs to the admin side; runtime clients should not generate create scripts.
 
 Planned UX spec note
-- The `lib/core/model/uschema` layer already exists and is already used by the AIBook runtime (`UxRegistry`, `UxSpecMapper`, and typed `Ux*Model` classes).
-- The editing surfaces around those UX models are still incomplete and should be treated as evolving rather than finalized.
-- For `AIBook`, those UX models already act as runtime spec support.
-- For `AIStudio`, those same UX models are still expected to become editable models.
+- The `lib/core/model/uschema` layer already exists and is the active typed UX-spec layer for the current repo.
+- `AIWork` and `AIBook` already use those typed specs through `UxRouteSpec`, `UxPaperSpec`, `UxTemplateSpec`, and `GenUx`.
+- `AIStudio` and `AICodex` currently reuse shared UX widgets, but they are in the hard-coded/demo authoring-shell stage rather than a second dynamic runtime path.
+- Future editing support around those UX specs should stay consistent with that single-runtime direction.
 
 Planned UX spec transport shape
 - The preferred JSON shape is as flat as possible for direct C# and PostgreSQL conversion.
@@ -241,7 +241,8 @@ Planned UX routing implications
 - The client should not treat incoming JSON as an arbitrary scripting engine; it should inject values into predefined templates and predefined widget slots.
 
 Registry direction
-- Registry-style support JSON may live under `assets/json`.
+- Registry-style support JSON may live under `assets/json` when that archived transport path is revisited.
+- The current live app surfaces do not load their ready-state UI from those JSON files.
 - Registry data should be separated from screen/body composition when doing so improves clarity and keeps the transport flat.
 - The current preferred example is keeping field-binding registration in a dedicated registry JSON such as `aibook_registry.json`, while `aibook_spec.json` stays focused on UI composition.
 - Action metadata is also a good candidate for the same registry JSON when the goal is to keep screen/body specs composition-only.
@@ -252,7 +253,7 @@ Registry direction
 
 Current vocabulary direction
 - `Ux*Spec` is the definition-side naming for route, paper, template, and view structures under `lib/core/model/uschema`.
-- `Ux*`, `Paper`, `Template`, and `V` are the runtime-side naming used by `lib/core/ux`.
+- `Ux*`, `Paper`, `Template`, `Uwidget`, and `Uw*` are the runtime-side naming used by `lib/core/ux`.
 - Base `X` / `Xi` / `Xia` / `Xiad` / `Xiade` is the transport/data-side naming from `lib/core/base/x.dart`.
 - Preview selection/highlighting can use the full identity scope `hostId + bodyId + widgetId`, with no effect when no selected identity is present.
 - Example pairing:
@@ -273,7 +274,7 @@ Each app:
 
 **How to run each app**
 
-App widgets now live under app-specific directories. The current `lib/main.dart` launches a small one-way selector app that can open `AIBook`, `AICodex`, or `AIStudio`. Example:
+App widgets now live under app-specific directories. The current `lib/main.dart` boots directly into `AIWorkApp`. Example:
 
 ```bash
 flutter run -t lib/main.dart

@@ -1,8 +1,14 @@
 import 'package:genrp/core/model/uschema/ux_node_spec.dart';
-import 'package:genrp/core/ux/ux_register.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 class UxViewSpec extends UxNodeSpec {
-  const UxViewSpec({required this.vid, required super.i, super.s, super.m, this.p = ''});
+  const UxViewSpec({
+    required this.vid,
+    required super.i,
+    super.s,
+    super.m,
+    this.p = '',
+  });
 
   final int vid;
   final String p;
@@ -16,7 +22,9 @@ class UxViewSpec extends UxNodeSpec {
   @override
   String get id => '$vid';
 
-  int codeFor({required int pid, required int tid}) => UxRegister.viewCode(pid: pid, tid: tid, vid: vid);
+  int codeFor({required int pid, required int tid}) =>
+      UxRegister.viewCode(pid: pid, tid: tid, vid: vid);
 
-  String idFor({required int pid, required int tid}) => UxRegister.viewId(pid: pid, tid: tid, vid: vid);
+  String idFor({required int pid, required int tid}) =>
+      UxRegister.viewId(pid: pid, tid: tid, vid: vid);
 }

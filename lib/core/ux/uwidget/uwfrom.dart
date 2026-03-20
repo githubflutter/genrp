@@ -1,11 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/ux/v.dart';
-import 'package:genrp/core/ux/view/empty.dart';
+import 'package:genrp/core/ux/uwidget/uwempty.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
-class UxFromView extends StatelessWidget with V {
-  const UxFromView({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.children = const <Widget>[], this.footer});
+class UwFrom extends StatelessWidget with Uwidget {
+  const UwFrom({
+    required this.i,
+    required this.autopilot,
+    this.s = 0,
+    super.key,
+    this.p = '',
+    this.title,
+    this.children = const <Widget>[],
+    this.footer,
+  });
 
   @override
   final int vid = 5;
@@ -23,7 +32,7 @@ class UxFromView extends StatelessWidget with V {
   final Widget? footer;
 
   @override
-  final String n = 'fromview';
+  final String n = 'from';
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +41,14 @@ class UxFromView extends StatelessWidget with V {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        if (resolvedTitle.isNotEmpty) ...<Widget>[Text(resolvedTitle, style: UxTheme.titleStyle(context)), const SizedBox(height: 12)],
-        if (children.isEmpty) UxEmptyView(i: i, autopilot: autopilot, p: 'No form content') else ...children,
+        if (resolvedTitle.isNotEmpty) ...<Widget>[
+          Text(resolvedTitle, style: UxTheme.titleStyle(context)),
+          const SizedBox(height: 12),
+        ],
+        if (children.isEmpty)
+          UwEmpty(i: i, autopilot: autopilot, p: 'No form content')
+        else
+          ...children,
         if (footer != null) ...<Widget>[const SizedBox(height: 16), footer!],
       ],
     );

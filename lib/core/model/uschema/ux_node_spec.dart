@@ -1,7 +1,11 @@
-import 'package:genrp/core/ux/ux_register.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 abstract class UxNodeSpec with Ux {
-  const UxNodeSpec({required this.i, this.s = 0, this.m = const <String, dynamic>{}});
+  const UxNodeSpec({
+    required this.i,
+    this.s = 0,
+    this.m = const <String, dynamic>{},
+  });
 
   @override
   final int i;

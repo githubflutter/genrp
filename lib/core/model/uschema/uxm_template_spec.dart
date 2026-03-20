@@ -1,7 +1,7 @@
 import 'package:genrp/core/model/uschema/ux_field_spec.dart';
 import 'package:genrp/core/model/uschema/ux_node_spec.dart';
 import 'package:genrp/core/model/uschema/ux_view_spec.dart';
-import 'package:genrp/core/ux/ux_register.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 abstract class UxTemplateSpec extends UxNodeSpec {
   const UxTemplateSpec({required this.tid, required super.i, super.s, super.m});

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/v.dart';
-import 'package:genrp/core/ux/view/empty.dart';
+import 'package:genrp/core/ux/uwidget/uwempty.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
-class UxGridView extends StatelessWidget with V {
-  const UxGridView({
+class UwGrid extends StatelessWidget with Uwidget {
+  const UwGrid({
     required this.i,
     required this.autopilot,
     this.s = 0,
@@ -33,12 +33,16 @@ class UxGridView extends StatelessWidget with V {
   final double childAspectRatio;
 
   @override
-  final String n = 'gridview';
+  final String n = 'grid';
 
   @override
   Widget build(BuildContext context) {
     if (children.isEmpty) {
-      return UxEmptyView(i: i, autopilot: autopilot, p: p.isNotEmpty ? p : 'Empty grid');
+      return UwEmpty(
+        i: i,
+        autopilot: autopilot,
+        p: p.isNotEmpty ? p : 'Empty grid',
+      );
     }
     final effectiveCount = s > 1 ? s : crossAxisCount;
     return GridView.count(

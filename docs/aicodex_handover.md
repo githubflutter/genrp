@@ -2,7 +2,7 @@
 
 Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and schema-application surface.
 
-**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aicodex/aicodex.dart` + `lib/app/aicodex/aicodex_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated three-panel authoring shell, shared `UxTheme`, and shared UX widgets such as `UxTabView`, `UxCollectionView`, `UxPListView`, and `UxFromView`. `flutter analyze lib test` passes in the current snapshot, and the active AICodex app has already been manually tested.
+**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aicodex/aicodex.dart` + `lib/app/aicodex/aicodex_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated hybrid authoring shell, shared `UxTheme`, and shared UX widgets such as `UwTab`, `UwCollection`, `UwPList`, and `UwFrom`. `flutter analyze lib test` passes in the current snapshot, and the active AICodex app has already been manually tested.
 
 **Current next step:** Continue the AICodex feature plan inside the dedicated hard-coded shell while reusing shared UX components. The seeded/demo route metadata in `AICodexSpecs` is intentional for now until ID-key rules are discussed.
 
@@ -31,7 +31,10 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 - functional data-model CRUD and schema work should now continue inside that shared shell
 
 > [!NOTE]
-> The detailed step list below was written for a pre-`core/ux` snapshot where AICodex owned more of the shell/master/detail implementation directly. The current runtime entry points are `lib/app/aicodex/aicodex.dart`, `lib/app/aicodex/aicodex_specs.dart`, `lib/core/ux/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+> The detailed step list below was written for a pre-`core/ux` snapshot where AICodex owned more of the shell/master/detail implementation directly. The current runtime entry points are `lib/app/aicodex/aicodex.dart`, `lib/app/aicodex/aicodex_specs.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux_specs.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+
+> [!IMPORTANT]
+> Stage note from `new_experiment.md`: AICodex is currently in the hard-coded/demo authoring-shell phase. If older sections below describe SQLite-backed CRUD editing as the current path, treat that as archived or deferred work rather than the live app behavior.
 
 ---
 
@@ -191,9 +194,9 @@ Constraints:
 
 ---
 
-## [x] Step 2 — Master list from SQLite
+## Historical Step 2 — Master list from SQLite
 
-**Status:** Done in the current repo snapshot.
+**Status:** Archived from the older SQLite-backed path; not the live app stage in the current snapshot.
 
 **Goal:** The middle panel shows model-definition rows from `SqliteStore` for the selected model type and supports the first CRUD entrypoint into that catalog.
 
@@ -249,9 +252,9 @@ Constraints:
 
 ---
 
-## [x] Step 3 — Detail panel with data-model editor
+## Historical Step 3 — Detail panel with data-model editor
 
-**Status:** Done in the current repo snapshot.
+**Status:** Archived from the older SQLite-backed path; not the live app stage in the current snapshot.
 
 **Goal:** The right-side workspace inside the active major tab shows the selected model-definition row in editable form so AICodex can own sensitive data-model CRUD locally before schema generation.
 
@@ -306,11 +309,11 @@ Constraints:
 
 ---
 
-## [ ] Step 4 — DDL and function-script generation display
+## Historical Step 4 — DDL and function-script generation display
 
 **Goal:** Add schema action buttons and SQL/script preview to the detail panel after the row editing surface exists. This is what makes AICodex different from AIStudio — it both owns sensitive data-model CRUD and shows the generated table DDL and function/`vfun` scripts for the selected model.
 
-**Current state:** Step 3 is done — selected rows now load into the right panel, `n/s/a/payload` can be edited, new rows start as unsaved drafts with `i = 0`, and save/delete already round-trip through SQLite with widget coverage.
+**Current state:** This section belongs to the older SQLite-backed path. The live AICodex app currently uses app-owned seeded/demo model rows plus local SQL preview inside the hard-coded authoring shell.
 
 **Files to change:**
 - `lib/app/aicodex/aicodex.dart`

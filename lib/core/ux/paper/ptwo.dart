@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/ux/paper.dart';
-import 'package:genrp/core/ux/template.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 class Ptwo extends StatelessWidget with Paper {
   // Minimum pane width/height should stay around 50px to avoid touch/layout issues.
@@ -12,9 +11,15 @@ class Ptwo extends StatelessWidget with Paper {
   // s <= -100     -> top height in px (using abs(s))
   // Precaution: 100% total limits and minimum pane clipping are not checked here.
   // API users must validate those values before passing them in.
-  const Ptwo({required this.i, required this.autopilot, required this.left, required this.right, this.s = 0, super.key})
-    : assert(left is Template, 'Ptwo left child must be a Template variant'),
-      assert(right is Template, 'Ptwo right child must be a Template variant');
+  const Ptwo({
+    required this.i,
+    required this.autopilot,
+    required this.left,
+    required this.right,
+    this.s = 0,
+    super.key,
+  }) : assert(left is Template, 'Ptwo left child must be a Template variant'),
+       assert(right is Template, 'Ptwo right child must be a Template variant');
 
   @override
   final int pid = 2;
@@ -49,7 +54,10 @@ class Ptwo extends StatelessWidget with Paper {
                 return Column(
                   children: <Widget>[
                     Expanded(flex: topSize, child: left),
-                    Expanded(flex: bottomFlex <= 0 ? 1 : bottomFlex, child: right),
+                    Expanded(
+                      flex: bottomFlex <= 0 ? 1 : bottomFlex,
+                      child: right,
+                    ),
                   ],
                 );
               }
@@ -63,7 +71,10 @@ class Ptwo extends StatelessWidget with Paper {
 
             if (topSize < 100) {
               final topHeight = maxHeight * (topSize / 100);
-              final bottomHeight = (maxHeight - topHeight).clamp(0.0, maxHeight);
+              final bottomHeight = (maxHeight - topHeight).clamp(
+                0.0,
+                maxHeight,
+              );
               return Column(
                 children: <Widget>[
                   SizedBox(height: topHeight, child: left),

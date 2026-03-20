@@ -2,10 +2,13 @@
 
 Progressive step-by-step plan to reach constrained AIBook beta.
 
-**Current status:** Ready-to-run spec-driven client surface in the live snapshot. Numeric-first body routing and reference validation are in place, and shared DB/request scaffolding already exists. AIBook still uses `MockTransport` at runtime, and the active AIBook app has also been manually tested in this snapshot.
+**Current status:** Ready-to-run spec-driven client surface in the live snapshot. Typed route/paper/template specs are active through `AIBookSpecs` + `GenUx`, shared DB/request scaffolding already exists, and the active AIBook app has also been manually tested in this snapshot.
 
 > [!NOTE]
-> This handover was written for a pre-`core/ux` refactor snapshot. The current runtime entry points are `lib/app/aibook/aibook.dart`, `lib/app/aibook/aibook_specs.dart`, `lib/core/ux/genux.dart`, `lib/core/ux/ux.dart`, and `lib/core/model/uschema/ux.dart`. References below to `autopilotgo.dart`, `MockTransport`, `boilerplate_generator.dart`, or wrapped `X*` widgets should be treated as historical guidance unless those files return in a later snapshot.
+> This handover was written for a pre-`core/ux` refactor snapshot. The current runtime entry points are `lib/app/aibook/aibook.dart`, `lib/app/aibook/aibook_specs.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, and `lib/core/model/uschema/ux_specs.dart`. References below to `autopilotgo.dart`, `MockTransport`, `boilerplate_generator.dart`, or wrapped `X*` widgets should be treated as historical guidance unless those files return in a later snapshot.
+
+> [!IMPORTANT]
+> The historical checklist below comes from the older JSON/registry runtime path. The live AIBook app in this snapshot is the seeded `UxRouteSpec` + `GenUx` path, not the old `MockTransport` path.
 
 **Current next step:** Keep the spec-driven runtime stable as the active path. Archived Step 3 remains the next historical hardening step if deeper AIBook runtime work resumes.
 
