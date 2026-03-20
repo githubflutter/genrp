@@ -11,7 +11,9 @@ class DataSet {
   void operator []=(String key, dynamic value) {
     if (key.startsWith('x_row.v.')) {
       final index = int.tryParse(key.substring(8));
-      if (index != null && _items['x_row'] != null && _items['x_row'].v != null) {
+      if (index != null &&
+          _items['x_row'] != null &&
+          _items['x_row'].v != null) {
         if (index >= 0 && index < _items['x_row'].v.length) {
           _items['x_row'].v[index] = value;
           return;

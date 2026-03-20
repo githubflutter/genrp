@@ -1,415 +1,319 @@
+import 'package:genrp/core/agent/action_set.dart';
+import 'package:genrp/core/agent/copilot_route.dart';
 import 'package:flutter/foundation.dart';
-import 'package:genrp/core/agent/copilot_data.dart';
-import 'package:genrp/core/agent/copilot_ux.dart';
-import 'package:genrp/core/base/x.dart';
 import 'package:genrp/core/agent/data_set.dart';
 import 'package:genrp/core/agent/state_set.dart';
+import 'package:genrp/core/model/base/usr_model.dart';
+import 'package:genrp/core/model/bdata/user_model.dart';
 
-abstract class Autopilot extends ChangeNotifier {
-  Autopilot() {
-    dataSet = DataSet();
-    stateSet = StateSet();
-    copilotData = CopilotData(this);
-    copilotUX = CopilotUX(this);
+class Autopilot extends ChangeNotifier {
+  Autopilot({this.v, this.f, this.c, this.usr, this.user});
+
+  static const String mockUsername = 'admin';
+  static const String mockPassword = 'admin';
+  static const UsrModel _mockUsr = UsrModel(
+    i: 0,
+    d: 0,
+    e: 0,
+    a: true,
+    u: mockUsername,
+    p: mockPassword,
+    n: 'Administrator',
+    x: 0,
+    l: 0,
+  );
+  static const UserModel _mockUser = UserModel(
+    i: 0,
+    d: 0,
+    e: 0,
+    a: true,
+    u: mockUsername,
+    p: mockPassword,
+    n: 'Administrator',
+    x: 0,
+    l: 0,
+  );
+
+  final DataSet dataSet = DataSet();
+  final StateSet stateSet = StateSet();
+  final ActionSet actions = ActionSet();
+
+  String? v;
+  String? f;
+  String? c;
+  Object? usr;
+  Object? user;
+
+  CopilotRoute? _currentRoute;
+  String? _currentPaperScope;
+  int? _currentPaperI;
+  final Set<String> _templateScopes = <String>{};
+
+  CopilotRoute? get currentRoute => _currentRoute;
+  String? get currentPaperScope => _currentPaperScope;
+  int? get currentPaperI => _currentPaperI;
+  Set<String> get currentTemplateScopes =>
+      Set<String>.unmodifiable(_templateScopes);
+
+  bool validateMockCredentials({
+    required String username,
+    required String password,
+  }) {
+    return username == mockUsername && password == mockPassword;
   }
 
-  late final CopilotData copilotData;
-  late final CopilotUX copilotUX;
-  late final DataSet dataSet;
-  late final StateSet stateSet;
-  final Map<int, String> _stateFieldPaths = {};
-  final Map<int, String> _dataSourceFieldPaths = {};
-  final Map<int, String> _dataSetFieldPaths = {};
-
-  final Map<int, int> _dataSourceFieldSlots = {};
-  final Map<int, int> _dataSetFieldSlots = {};
-
-  int? _selectedHostId;
-  int? _selectedBodyId;
-  int? _selectedWidgetId;
-
-  int? get selectedHostId => _selectedHostId;
-  int? get selectedBodyId => _selectedBodyId;
-  int? get selectedWidgetId => _selectedWidgetId;
-
-  void clearSelectedUxIdentity({bool notify = true}) {
-    if (_selectedHostId == null &&
-        _selectedBodyId == null &&
-        _selectedWidgetId == null) {
-      return;
-    }
-    _selectedHostId = null;
-    _selectedBodyId = null;
-    _selectedWidgetId = null;
-    if (notify) publishChange();
-  }
-
-  void selectUxIdentity({
-    required int hostId,
-    required int bodyId,
-    required int widgetId,
+  bool applyMockAuth({
+    String username = mockUsername,
+    String password = mockPassword,
     bool notify = true,
   }) {
-    if (_selectedHostId == hostId &&
-        _selectedBodyId == bodyId &&
-        _selectedWidgetId == widgetId) {
-      return;
-    }
-    _selectedHostId = hostId;
-    _selectedBodyId = bodyId;
-    _selectedWidgetId = widgetId;
-    if (notify) publishChange();
-  }
-
-  bool isSelectedUxIdentity({
-    required int hostId,
-    required int bodyId,
-    required int widgetId,
-  }) {
-    if (_selectedHostId == null ||
-        _selectedBodyId == null ||
-        _selectedWidgetId == null) {
+    if (!validateMockCredentials(username: username, password: password)) {
       return false;
     }
-    return _selectedHostId == hostId &&
-        _selectedBodyId == bodyId &&
-        _selectedWidgetId == widgetId;
+    setContext(usr: _mockUsr, user: _mockUser, notify: notify);
+    return true;
   }
 
-  String selectionStateKey({
-    required int hostId,
-    required int bodyId,
-    int? widgetId,
-  }) {
-    if (widgetId == null) {
-      return 'selection.$hostId.$bodyId';
-    }
-    return 'selection.$hostId.$bodyId.$widgetId';
-  }
-
-  String selectionSetStateKey({
-    required int hostId,
-    required int bodyId,
-    int? widgetId,
-  }) {
-    if (widgetId == null) {
-      return 'selections.$hostId.$bodyId';
-    }
-    return 'selections.$hostId.$bodyId.$widgetId';
-  }
-
-  int? selectedIndexFor({
-    required int hostId,
-    required int bodyId,
-    int? widgetId,
-  }) {
-    final value = copilotUX.getValue(
-      selectionStateKey(hostId: hostId, bodyId: bodyId, widgetId: widgetId),
-    );
-    return (value as num?)?.toInt();
-  }
-
-  void selectIndex({
-    required int hostId,
-    required int bodyId,
-    required int index,
-    int? widgetId,
+  void setContext({
+    String? v,
+    String? f,
+    String? c,
+    Object? usr,
+    Object? user,
     bool notify = true,
   }) {
-    final key = selectionStateKey(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-    );
-    final current = copilotUX.getValue(key);
-    if (current == index) return;
-    copilotUX.setValue(key, index, notify: notify);
-  }
-
-  void clearSelectedIndex({
-    required int hostId,
-    required int bodyId,
-    int? widgetId,
-    bool notify = true,
-  }) {
-    final key = selectionStateKey(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-    );
-    if (copilotUX.getValue(key) == null) return;
-    copilotUX.setValue(key, null, notify: notify);
-  }
-
-  bool isSelectedIndex({
-    required int hostId,
-    required int bodyId,
-    required int index,
-    int? widgetId,
-  }) {
-    return selectedIndexFor(
-          hostId: hostId,
-          bodyId: bodyId,
-          widgetId: widgetId,
-        ) ==
-        index;
-  }
-
-  List<int> selectedIndexesFor({
-    required int hostId,
-    required int bodyId,
-    int? widgetId,
-  }) {
-    final value = copilotUX.getValue(
-      selectionSetStateKey(hostId: hostId, bodyId: bodyId, widgetId: widgetId),
-    );
-    if (value is List) {
-      final result =
-          value
-              .whereType<num>()
-              .map((item) => item.toInt())
-              .toSet()
-              .toList(growable: false)
-            ..sort();
-      return result;
+    this.v = v ?? this.v;
+    this.f = f ?? this.f;
+    this.c = c ?? this.c;
+    this.usr = usr ?? this.usr;
+    this.user = user ?? this.user;
+    if (notify) {
+      notifyListeners();
     }
-    return const <int>[];
   }
 
-  void setSelectedIndexes({
-    required int hostId,
-    required int bodyId,
-    required List<int> indexes,
-    int? widgetId,
-    bool notify = true,
-  }) {
-    final normalized = indexes.toSet().toList(growable: false)..sort();
-    final key = selectionSetStateKey(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-    );
-    final current = selectedIndexesFor(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-    );
-    if (listEquals(current, normalized)) return;
-    copilotUX.setValue(key, normalized, notify: notify);
+  void navigate(String rawRoute, {bool notify = true}) {
+    mountRoute(CopilotRoute.parse(rawRoute), notify: notify);
   }
 
-  void toggleSelectedIndex({
-    required int hostId,
-    required int bodyId,
-    required int index,
-    int? widgetId,
-    bool notify = true,
-  }) {
-    final current = selectedIndexesFor(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-    );
-    final next = current.toSet();
-    if (!next.add(index)) {
-      next.remove(index);
+  void mountRoute(CopilotRoute route, {bool notify = true}) {
+    clearRoute(notify: false);
+    _currentRoute = route;
+    stateSet.patchChrome(<String, dynamic>{
+      'route.path': route.path,
+      'route.scope': route.scopeKey,
+      'route.app': route.appName,
+      'route.pageSpecId': route.pageSpecId,
+      'route.optionalId': route.optionalId,
+    });
+    if (notify) {
+      notifyListeners();
     }
-    setSelectedIndexes(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-      indexes: next.toList(growable: false),
+  }
+
+  String mountPaper({
+    required int paperI,
+    Map<String, dynamic> initialState = const <String, dynamic>{},
+    bool notify = true,
+  }) {
+    final scope = paperScopeFor(paperI);
+    _currentPaperScope = scope;
+    _currentPaperI = paperI;
+    stateSet.patchChrome(<String, dynamic>{
+      'paper.scope': scope,
+      'paper.i': paperI,
+    });
+    if (initialState.isNotEmpty) {
+      stateSet.patchPaper(scope, initialState);
+    }
+    if (notify) {
+      notifyListeners();
+    }
+    return scope;
+  }
+
+  String mountTemplate({
+    required int paperI,
+    required int templateI,
+    Map<String, dynamic> initialState = const <String, dynamic>{},
+    bool notify = true,
+  }) {
+    final scope = templateScopeFor(paperI: paperI, templateI: templateI);
+    _templateScopes.add(scope);
+    if (initialState.isNotEmpty) {
+      stateSet.patchTemplate(scope, initialState);
+    }
+    if (notify) {
+      notifyListeners();
+    }
+    return scope;
+  }
+
+  String mountCurrentTemplate({
+    required int templateI,
+    Map<String, dynamic> initialState = const <String, dynamic>{},
+    bool notify = true,
+  }) {
+    final paperI = _currentPaperI;
+    if (paperI == null) {
+      throw StateError(
+        'Cannot mount template $templateI without an active paper',
+      );
+    }
+    return mountTemplate(
+      paperI: paperI,
+      templateI: templateI,
+      initialState: initialState,
       notify: notify,
     );
   }
 
-  void clearSelectedIndexes({
-    required int hostId,
-    required int bodyId,
-    int? widgetId,
-    bool notify = true,
-  }) {
-    final key = selectionSetStateKey(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-    );
-    final current = selectedIndexesFor(
-      hostId: hostId,
-      bodyId: bodyId,
-      widgetId: widgetId,
-    );
-    if (current.isEmpty) return;
-    copilotUX.setValue(key, const <int>[], notify: notify);
+  String paperScopeFor(int paperI) {
+    final routeScope = _currentRoute?.scopeKey ?? 'default';
+    return 'paper.$routeScope.$paperI';
   }
 
-  void clearFieldPaths() {
-    _stateFieldPaths.clear();
-    _dataSourceFieldPaths.clear();
-    _dataSetFieldPaths.clear();
-    _dataSourceFieldSlots.clear();
-    _dataSetFieldSlots.clear();
+  String templateScopeFor({required int paperI, required int templateI}) {
+    final routeScope = _currentRoute?.scopeKey ?? 'default';
+    return 'template.$routeScope.$paperI.$templateI';
   }
 
-  void clearActions();
+  T? paperState<T>(String scope, String key) =>
+      stateSet.getPaper<T>(scope, key);
 
-  void resetRuntime({
-    bool clearData = true,
-    bool clearUxState = true,
-    bool clearActionRegistry = true,
-    bool clearBindings = true,
-    bool clearSelectionIdentity = true,
+  void setPaperState(
+    String scope,
+    String key,
+    dynamic value, {
     bool notify = true,
   }) {
-    if (clearActionRegistry) {
-      clearActions();
+    stateSet.setPaper(scope, key, value);
+    if (notify) {
+      notifyListeners();
     }
-    if (clearData) {
-      copilotData.clear(notify: false);
+  }
+
+  void patchPaperState(
+    String scope,
+    Map<String, dynamic> values, {
+    bool notify = true,
+  }) {
+    stateSet.patchPaper(scope, values);
+    if (notify) {
+      notifyListeners();
     }
-    if (clearUxState) {
-      copilotUX.clear(notify: false);
+  }
+
+  T? templateState<T>(String scope, String key) =>
+      stateSet.getTemplate<T>(scope, key);
+
+  void setTemplateState(
+    String scope,
+    String key,
+    dynamic value, {
+    bool notify = true,
+  }) {
+    stateSet.setTemplate(scope, key, value);
+    if (notify) {
+      notifyListeners();
     }
-    if (clearBindings) {
-      clearFieldPaths();
+  }
+
+  void patchTemplateState(
+    String scope,
+    Map<String, dynamic> values, {
+    bool notify = true,
+  }) {
+    stateSet.patchTemplate(scope, values);
+    if (notify) {
+      notifyListeners();
     }
-    if (clearSelectionIdentity) {
-      clearSelectedUxIdentity(notify: false);
+  }
+
+  dynamic data(String key) => dataSet[key];
+
+  void setData(String key, dynamic value, {bool notify = true}) {
+    dataSet[key] = value;
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void patchData(Map<String, dynamic> values, {bool notify = true}) {
+    dataSet.patch(values);
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void clearTemplateScope(String scope, {bool notify = true}) {
+    stateSet.clearTemplate(scope);
+    _templateScopes.remove(scope);
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void clearPaperScope(String scope, {bool notify = true}) {
+    stateSet.clearPaper(scope);
+    _templateScopes.removeWhere((String templateScope) {
+      final prefix = scope.replaceFirst('paper.', 'template.');
+      if (templateScope.startsWith(prefix)) {
+        stateSet.clearTemplate(templateScope);
+        return true;
+      }
+      return false;
+    });
+    if (_currentPaperScope == scope) {
+      _currentPaperScope = null;
+      _currentPaperI = null;
+      stateSet.patchChrome(<String, dynamic>{
+        'paper.scope': null,
+        'paper.i': null,
+      });
     }
     if (notify) {
-      publishChange();
+      notifyListeners();
     }
   }
 
-  dynamic resolve(String path) {
-    if (path.startsWith('data.')) {
-      return copilotData.getValue(path.substring(5));
+  void clearRoute({bool notify = true}) {
+    if (_currentPaperScope != null) {
+      stateSet.clearPaper(_currentPaperScope!);
+      _currentPaperScope = null;
     }
-    if (path.startsWith('ux.')) return copilotUX.getValue(path.substring(3));
-    if (path.startsWith('state.')) return copilotUX.getValue(path.substring(6));
-    return copilotData.getValue(path);
+
+    for (final scope in _templateScopes.toList(growable: false)) {
+      stateSet.clearTemplate(scope);
+    }
+    _templateScopes.clear();
+
+    stateSet.patchChrome(<String, dynamic>{
+      'route.path': null,
+      'route.scope': null,
+      'route.app': null,
+      'route.pageSpecId': null,
+      'route.optionalId': null,
+      'paper.scope': null,
+      'paper.i': null,
+    });
+    _currentRoute = null;
+    _currentPaperI = null;
+
+    if (notify) {
+      notifyListeners();
+    }
   }
 
-  void registerFieldPath(int src, int fieldId, String path) {
-    if (path.isEmpty) return;
-    switch (src) {
-      case 0:
-        _stateFieldPaths[fieldId] = path;
-      case 1:
-        _dataSourceFieldPaths[fieldId] = path;
-      case 2:
-        _dataSetFieldPaths[fieldId] = path;
+  void clearAll({bool notify = true}) {
+    clearRoute(notify: false);
+    dataSet.clear();
+    stateSet.clear();
+    actions.clear();
+    if (notify) {
+      notifyListeners();
     }
-  }
-
-  void registerFieldSlot(int src, int fieldId, int slot) {
-    switch (src) {
-      case 1:
-        _dataSourceFieldSlots[fieldId] = slot;
-      case 2:
-        _dataSetFieldSlots[fieldId] = slot;
-    }
-  }
-
-  int? _resolveFieldSlot(int? src, int? fieldId) {
-    if (src != null && fieldId != null) {
-      return switch (src) {
-        1 => _dataSourceFieldSlots[fieldId],
-        2 => _dataSetFieldSlots[fieldId],
-        _ => null,
-      };
-    }
-    return null;
-  }
-
-  dynamic resolveFieldBinding({int? src, int? fieldId, String? fallbackPath}) {
-    final slot = _resolveFieldSlot(src, fieldId);
-    if (slot != null && (src == 1 || src == 2)) {
-      final value = copilotData.getValue('x_row');
-      if (value is X) {
-        if (slot >= 0 && slot < value.v.length) {
-          return value.v[slot];
-        }
-        return null;
-      }
-    }
-
-    final resolvedPath = _resolveFieldPath(
-      src: src,
-      fieldId: fieldId,
-      fallbackPath: fallbackPath,
-    );
-    if (resolvedPath == null || resolvedPath.isEmpty) return null;
-    return resolve(resolvedPath);
-  }
-
-  void updateBinding(String path, dynamic value) {
-    if (path.startsWith('data.')) {
-      copilotData.setValue(path.substring(5), value);
-      return;
-    }
-    if (path.startsWith('ux.')) {
-      copilotUX.setValue(path.substring(3), value);
-      return;
-    }
-    if (path.startsWith('state.')) {
-      copilotUX.setValue(path.substring(6), value);
-      return;
-    }
-    copilotData.setValue(path, value);
-  }
-
-  void updateFieldBinding({
-    int? src,
-    int? fieldId,
-    String? fallbackPath,
-    required dynamic value,
-  }) {
-    final slot = _resolveFieldSlot(src, fieldId);
-    if (slot != null && (src == 1 || src == 2)) {
-      final xRow = copilotData.getValue('x_row');
-      if (xRow is X) {
-        if (slot >= 0 && slot < xRow.v.length) {
-          xRow.v[slot] = value;
-        } else {
-          // If the list is too short, we pad it with nulls
-          while (xRow.v.length <= slot) {
-            xRow.v.add(null);
-          }
-          xRow.v[slot] = value;
-        }
-        publishChange();
-        return;
-      }
-    }
-
-    final resolvedPath = _resolveFieldPath(
-      src: src,
-      fieldId: fieldId,
-      fallbackPath: fallbackPath,
-    );
-    if (resolvedPath == null || resolvedPath.isEmpty) return;
-    updateBinding(resolvedPath, value);
-  }
-
-  String? _resolveFieldPath({int? src, int? fieldId, String? fallbackPath}) {
-    if (src != null && fieldId != null) {
-      final path = switch (src) {
-        0 => _stateFieldPaths[fieldId],
-        1 => _dataSourceFieldPaths[fieldId],
-        2 => _dataSetFieldPaths[fieldId],
-        _ => null,
-      };
-      if (path != null && path.isNotEmpty) return path;
-    }
-    return fallbackPath;
   }
 
   void publishChange() => notifyListeners();
-
-  Future<void> triggerActionById(int id, [dynamic payload]) async {}
-
-  String actionLabelForId(int id) => '';
-
-  bool hasAction(int id) => false;
 }

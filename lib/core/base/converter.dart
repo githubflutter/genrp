@@ -40,8 +40,12 @@ class Converter {
     if (value is num) return value != 0;
     if (value is String) {
       final v = value.trim().toLowerCase();
-      if (v == 'true' || v == '1' || v == 'yes' || v == 'y' || v == 'on') return true;
-      if (v == 'false' || v == '0' || v == 'no' || v == 'n' || v == 'off') return false;
+      if (v == 'true' || v == '1' || v == 'yes' || v == 'y' || v == 'on') {
+        return true;
+      }
+      if (v == 'false' || v == '0' || v == 'no' || v == 'n' || v == 'off') {
+        return false;
+      }
       return orElse;
     }
     return orElse;
@@ -59,7 +63,9 @@ class Converter {
     if (value == null) return null;
     if (value is int) return value;
     if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? double.tryParse(value)?.toInt();
+    if (value is String) {
+      return int.tryParse(value) ?? double.tryParse(value)?.toInt();
+    }
     try {
       return value.toInt();
     } catch (_) {

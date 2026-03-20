@@ -17,41 +17,119 @@ restructure on top of the existing data foundation.
 
 ## App Structure
 
-The product family is:
+The active app surfaces are:
 
+- `AIWork`
 - `AIBook`
 - `AICodex`
 - `AIStudio`
-- `WorkSpace`
 
-Each app should have its own central autopilot implementation:
+Purpose guardrails:
 
-- `AIBook` -> `PilotBook`
-- `AICodex` -> `PilotCode`
-- `AIStudio` -> `PilotStudio`
-- `WorkSpace` -> `PilotWorkspace`
+- `AIWork` remains a desktop/tablet-centric client app.
+- `AIBook` remains a mobile-centric client app.
+- `AIWork` and `AIBook` are client CRUD apps only.
+- `AIWork` and `AIBook` do not include data designer or UX designer scope.
+- `AICodex` and `AIStudio` keep their original purpose unchanged.
+
+The runtime should be shaped around:
+
+- `MainApp` -> launcher or direct app boot
+- app wrapper -> `GenrpApp` / `GenrpHome`
+- app session -> `UxAppSession`
 
 `Autopilot` remains the shared base runtime/controller contract.  
-Each pilot owns its own orchestration, load flow, action policy, and app-level
-state behavior.
+`UxAppSession` owns orchestration, load flow, action policy, and app-level
+state behavior for each app shell.
+
+## Main Migration Decision
+
+The experiment is now strong enough to become the **main forward direction**
+for UX/runtime work.
+
+That means:
+
+- the experiment is a subset under the original implementation
+- the final merge target is responsibility-based under `core/*`
+- the old `core/ux` staging idea is gone
+- `AIWork`, `AIBook`, `AICodex`, and `AIStudio` share the canonical
+  implementation path
+- route/runtime agent logic should merge under `core/agent`
+- schema/spec models should merge under `core/model/uschema`
+- generator-side creation should merge under `core/generator`
+- template implementation should merge under `core/template`
+- if paper/view become necessary as first-class surfaces, create them only when
+  they earn their own directories
+- the old runtime is treated as legacy and migration source only
+
+This is a **forward-only** migration decision.
+
+Do not plan around backward compatibility.
+Do not add compatibility shims just to preserve the old runtime shape.
+Do not keep dual architectures alive longer than necessary.
+
+Rules:
+
+- new architecture work should be designed for eventual merge into:
+  - `core/agent`
+  - `core/generator`
+  - `core/model/uschema`
+  - `core/template`
+- old runtime paths get fixes only if needed to keep the repo buildable during
+  migration
+- migration should prefer rewrite/replacement over wrapping/adapting old paths
+- once a slice is migrated and verified, the old slice should become a delete
+  candidate
+
+## Active Core Structure
+
+The active architecture now lives directly under `lib/core`.
+
+- `lib/core`
+  - is now the active core architecture
+  - contains `agent`, `generator`, `layout`, `model`, `paper`, `template`,
+    `theme`, `view`, and supporting roots
+  - uses one generic node-spec tree instead of separate paper/template/view
+    spec subclasses where that keeps the runtime simpler
+  - uses generic node scopes derived from spec-id paths
+  - does not keep separate `p/t/v` contract wrappers unless they prove useful
+
+Working rule:
+
+- treat legacy shapes as input-only when a migration bridge is still needed
+- put new architecture work directly into `core/*`
+- do not reintroduce archived architecture boundaries into the active tree
+
+Current runtime note:
+
+- `MainApp` shows the app launcher by default
+- `MainApp` can still boot directly into a specific app from an incoming route
+- route state mounts once
+- scoped runtime state is owned by the app runtime path under
+  `core/agent`
+- `Paper -> Template -> View` is the active UI composition model
+- the active implementation should stay small and practical, not carry extra
+  staging layers
 
 For future discussion in this experiment:
 
-- **our app** means `WorkSpace`
+- **our app** means one of the four active app shells
+- shared runtime work should stay app-agnostic unless a specific app earns a
+  specialized branch
 
-## WorkSpace Startup Flow
+## App Startup Flow
 
-After successful login, `WorkSpace` should not jump directly into a partially
+After successful login, an app should not jump directly into a partially
 loaded shell.
 
 Instead, the flow should be:
 
 1. login succeeds
 2. show a dedicated loading page
-3. in background, `PilotWorkspace` loads:
+3. in background, `UxAppSession` loads:
    - current `usr`
    - current `user`
-   - navigation map for the current user
+   - route presets for the current app
    - dynamic UX schema/spec for the startup route
 4. when bootstrap is ready, replace the loading page with the resolved route
 
@@ -70,9 +148,9 @@ This avoids:
 - mixing login flow with route/bootstrap flow
 - leaking stale startup state across users
 
-### PilotWorkspace Responsibility
+### UxAppSession Responsibility
 
-`PilotWorkspace` should own this bootstrap sequence.
+`UxAppSession` should own this bootstrap sequence.
 
 That means:
 
@@ -92,7 +170,7 @@ Recommended loading tasks:
 - user profile resolution
 - permission / navigation map resolution
 - startup route resolution
-- dynamic UX document fetch for that route
+- route-specific UX schema/spec fetch for that route
 
 ## Core Rule
 
@@ -382,9 +460,9 @@ This gives us one stable baseline:
 
 **data architecture stays familiar, UX architecture is where the experiment happens**
 
-## WorkSpace UX Philosophy
+## AIWork UX Philosophy
 
-The current `WorkSpace` UX direction is:
+The current `AIWork` UX direction is:
 
 - route resolves to a `Paper` variant
 - `Paper` is the largest UX host
@@ -406,6 +484,10 @@ Important rules:
 - `i` on `Paper`, `Template`, and `View` is the spec id anchor
 - `n` is the stable name
 - `s` is style/layout selection, not mutable runtime state
+- `Paper` owns the paper host lifecycle in `paper.dart`
+- `Template` owns the template host lifecycle in `template.dart`
+- `View` does not get an equivalent shared host unless a future view becomes a
+  true scoped runtime owner
 
 ### Layout Rule
 
@@ -443,19 +525,23 @@ Possibly later:
 
 Current experimental implementation direction:
 
-- shared base contract in `lib/core/ux/ux.dart`
-- `Ux` owns common fields:
+- shared base contract is still useful, but its final home should follow
+  responsibility:
+  - model/schema pieces -> `core/model/uschema`
+  - runtime/agent pieces -> `core/agent`
+  - generator helpers -> `core/generator`
+  - template implementations -> `core/template`
+- the common node identity currently owns:
   - `i`
   - `n`
   - `s`
   - `m`
-- `Paper`, `Template`, and `View` implement that shared contract
-- `UxRegister` holds the current paper/template/view type-name registries
-- `UxRegister` also builds serialized structural ids such as:
+- structural registration currently builds ids such as:
   - paper id -> `pid`
   - template id -> `pid.tid`
   - view id -> `pid.tid.vid`
-- `UxRegister` also builds packed numeric structural codes using 3 digits per
+- structural registration also builds packed numeric structural codes using 3
+  digits per
   tier:
   - paper code -> `pid * 1,000,000`
   - template code -> `pid * 1,000,000 + tid * 1,000`
@@ -611,8 +697,8 @@ Route management may be reshaped if that gives a safer and faster runtime.
 Current direction:
 
 - `PilotWorkspace` owns route management
-- `WorkSpace` uses replace-only navigation
-- `WorkSpace` does not keep a user-facing back stack
+- `AIWork` uses replace-only navigation
+- `AIWork` does not keep a user-facing back stack
 - route addresses should remain future-deep-link friendly
 - route is an address and lifecycle boundary, not another UX layer
 
@@ -624,14 +710,14 @@ Recommended route shape:
 
 Examples:
 
-- `workspace/10001`
-- `workspace/10001/345`
+- `aiwork/10001`
+- `aiwork/10001/345`
 - `aibook/20001`
 - `aibook/20001/99`
 
 Where:
 
-- `appname` selects the app root such as `workspace` or `aibook`
+- `appname` selects the app root such as `aiwork` or `aibook`
 - `page_spec_id` selects the `UxPaperSpec.i`
 - `optional_id` identifies the business working context when needed
 
@@ -656,14 +742,14 @@ On route replacement/dispose:
 
 ### Back Stack Rule
 
-- no back stack in normal `WorkSpace` navigation
+- no back stack in normal `AIWork` navigation
 - menu and route changes replace the current route
 - startup loading page is replaced, not retained behind the route
 - future deep links should still be resolvable directly to a route address
 
 Back stack guideline:
 
-- do not model normal `WorkSpace` navigation around browser/app history
+- do not model normal `AIWork` navigation around browser/app history
 - do not require route-level back behavior for CRUD/template workflows
 - route change means dispose current paper/template scopes and mount the next route
 - incoming deep links are supported as an entry path only
@@ -691,7 +777,7 @@ the lifecycle boundary explicit.
 
 ## Tcrud Analysis
 
-`Tcrud` should be the focused CRUD workspace template.
+`Tcrud` should be the focused CRUD aiwork template.
 
 It is not just a form and not just a collection browser. It should keep the
 common business CRUD workflow in one place:
@@ -728,7 +814,7 @@ Recommended body:
 
 Recommended detail-region switching:
 
-- no selection -> `emptyview`
+- browse with no selection -> stay in `collectionview`
 - inspect -> `plistview`
 - create/edit -> `fromview`
 - error/conflict -> `alertview`
@@ -882,7 +968,7 @@ Build the first real `Tcrud` with:
 
 Recommended first detail switching:
 
-- empty
+- browse collection
 - plist
 - form
 - alert
@@ -934,7 +1020,63 @@ After the first working CRUD slice:
   narrow layouts
 - decide whether long-click behavior is worth standardizing
 
-The goal is to prove one clean CRUD workspace first, then generalize carefully.
+The goal is to prove one clean CRUD flow first, then generalize carefully.
+
+## Current Status
+
+The repo is already operating on the new-experiment direction:
+
+- `AIWork`, `AIBook`, `AICodex`, and `AIStudio` are active app surfaces
+- `MainApp` launches those app shells from one chooser
+- the old document-driven runtime path is removed
+- `Paper -> Template -> View` is the live composition rule
+- route/runtime state lives under `core/agent`
+- schema/spec state for this flow lives under `core/model/uschema`
+- template implementation lives under `core/template`
+
+What that means in practice:
+
+- a small multi-app launcher is back
+- no `AutopilotGo` path
+- no old body-switch runtime kept alive beside the current app-shell flow
+
+## Remaining Cleanup
+
+The architecture is now in the consolidation phase, not the migration phase.
+
+Main cleanup targets:
+
+1. normalize active naming inside `core/agent` and `core/model/uschema`
+2. remove any leftover parallel files that are no longer read by the active
+   app shells
+3. keep tests focused on the active app runtime and the stable data
+   layer
+4. only add new features through the route-first app-shell path
+5. avoid rebuilding generic staging layers unless the active app truly needs
+   them
+
+## Migration Guardrails
+
+To keep the migration clean:
+
+- no backward compatibility shims
+- no dual-write state logic
+- no reintroduction of removed runtime paths
+- no route/body hybrid model
+- no preserving old abstractions only because they already exist
+- no “temporary” adapter layers unless they unblock a specific short migration
+  step
+
+## Definition Of Current Success
+
+The current direction is healthy when:
+
+1. new UX/runtime work happens only in the corrected original structure under
+   `core/*`
+2. `AIWork` proves the main route/paper/template/view flow
+3. scoped paper/template lifecycle fully replaces old body-switch state logic
+4. the active app path stays small enough to understand and extend
+5. new templates and views can be added without reviving removed legacy layers
 
 ## Beta Test Plan
 
@@ -1053,7 +1195,7 @@ Expected result:
 
 Test:
 
-- no selection -> `emptyview`
+- browse with no selection -> `collectionview`
 - single selection -> local `inspect` -> `plistview`
 - edit/new -> `fromview`
 - error state -> `alertview`
@@ -1067,7 +1209,7 @@ Expected result:
 
 - detail region switches correctly
 - selection state is reflected correctly in toolbars and footer
-- CRUD flow feels coherent in one workspace
+- CRUD flow feels coherent in one aiwork
 
 ### Beta Test Execution Style
 
@@ -1087,7 +1229,7 @@ Track at least:
 - route replacement failures
 - stale state leakage cases
 - wrong selection state cases
-- wrong detail-pane switching cases
+- wrong active-body switching cases
 - packed-code collision or decode failures
 - toolbar mode layout regressions
 - CRUD completion success for the chosen beta workflow

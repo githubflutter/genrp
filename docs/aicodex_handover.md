@@ -8,6 +8,8 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 
 **Role:** AICodex is the **sensitive data-model CRUD and schema configurator**. It owns CRUD for model definitions such as Entity, Field, Table, Column, Function, and related rows because those edits can require database recreation or schema regeneration. It also applies those definitions as **create, drop, and function/script** operations against the PostgreSQL backend and SQLite foundation. It does not consume runtime row data the way AIBook does.
 
+**Boundary reminder:** `AIWork` and `AIBook` are client apps, not designer apps. They should not absorb AICodex schema-definition or schema-application responsibilities.
+
 **Database rule:** PostgreSQL and SQLite are not mirror backends. PostgreSQL can use real foundation/business functions. SQLite should represent function-like behavior through a `vfun` table/model that stores scripts to run. Foundation tables allow direct CRUD; business tables go through function/script paths only. `ALTER TABLE` is not part of this project. If `vfun` blocks current implementation progress, it can be deferred temporarily.
 
 **Authority rule:** The data-model layer is the foundation schema layer of the whole system. It is the single origin, single source of truth, and single-user/admin-side editing surface. Multi-user concurrent schema editing is intentionally unsupported.

@@ -20,6 +20,10 @@ Current UI baseline in this snapshot:
 - Scaffold FABs are gone; actions should live in headers or active panel content
 
 Current ownership reminder:
+- `AIWork` is a desktop/tablet-centric client app.
+- `AIBook` is a mobile-centric client app.
+- `AIWork` and `AIBook` are client CRUD apps only.
+- `AIWork` and `AIBook` do not own data designer or UX designer surfaces.
 - `AIStudio` owns UX/spec CRUD.
 - `AICodex` owns sensitive data-model CRUD plus schema apply/generation work.
 - `AIBook` owns runtime business-data consumption through function-style actions.

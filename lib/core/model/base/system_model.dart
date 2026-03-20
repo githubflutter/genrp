@@ -120,9 +120,12 @@ String _canonicalJsonText(Object? value) => jsonEncode(_normalizeJson(value));
 Object? _normalizeJson(Object? value) {
   if (value is Map) {
     final entries = value.entries.toList()
-      ..sort((left, right) => left.key.toString().compareTo(right.key.toString()));
+      ..sort(
+        (left, right) => left.key.toString().compareTo(right.key.toString()),
+      );
     return <String, Object?>{
-      for (final entry in entries) entry.key.toString(): _normalizeJson(entry.value),
+      for (final entry in entries)
+        entry.key.toString(): _normalizeJson(entry.value),
     };
   }
   if (value is List) {

@@ -8,6 +8,8 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
 **Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio is now narrowed to UX/spec CRUD and should stay on that path.
 
+**Boundary reminder:** `AIWork` and `AIBook` are client apps, not designer apps. AIStudio should not move UX/spec authoring work into those client surfaces.
+
 **Special rule:** `System` and `Usr` are base-side models under `lib/core/model/base/`, not normal `i/a/d/e/t/n/s` rows. `SystemModel` is structural metadata (`sid`, `n`, `fv`, `cv`, `ld`, `lds`, `ldu`, `ctm`, `uxm`, `m1`, `m2`) and belongs to the sensitive data-model side owned by `AICodex`.
 
 **UX integer rule:** For `uschema`, `i` and `e` stay `int4`. New drafts should start with `i = 0`, and save/edit decides insert vs update: `i = 0` allocates `max(i) + 1`, while `i > 0` updates in place. `d` stays the last date/time integer, usually UTC epoch milliseconds, and should remain web-safe `int^53`. UX rows should not become real database foreign-key owners of the data-model layer.

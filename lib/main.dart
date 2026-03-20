@@ -2,179 +2,164 @@ import 'package:flutter/material.dart';
 import 'package:genrp/app/aibook/aibook.dart';
 import 'package:genrp/app/aicodex/aicodex.dart';
 import 'package:genrp/app/aistudio/aistudio.dart';
-import 'package:genrp/app/workspace/workspace.dart';
-import 'package:genrp/core/ux/a/a.dart';
-import 'package:genrp/core/theme/genrp_theme.dart';
+import 'package:genrp/app/aiwork/aiwork.dart';
+import 'package:genrp/app/aiwork/aiwork_specs.dart';
+import 'package:genrp/app/aibook/aibook_specs.dart';
+import 'package:genrp/app/aicodex/aicodex_specs.dart';
+import 'package:genrp/app/aistudio/aistudio_specs.dart';
+import 'package:genrp/core/agent/copilot_route.dart';
+import 'package:genrp/core/theme/theme.dart';
 
 void main() {
   runApp(const MainApp());
 }
 
-enum _SelectedApp { workspaceDemo, workspace, aibook, aicodex, aistudio }
+class MainApp extends StatelessWidget {
+  const MainApp({super.key, this.initialRoutePath, this.autoSignIn = false});
 
-class MainApp extends StatefulWidget {
-  const MainApp({super.key});
-
-  @override
-  State<MainApp> createState() => _MainAppState();
-}
-
-class _MainAppState extends State<MainApp> {
-  late final String? _initialWorkspacePath = UxWorkspaceBootstrap.directPath(
-    currentUri: Uri.base,
-  );
-  _SelectedApp? _selectedApp;
+  final String? initialRoutePath;
+  final bool autoSignIn;
 
   @override
-  void initState() {
-    super.initState();
-    if (_initialWorkspacePath != null) {
-      _selectedApp = _SelectedApp.workspace;
+  Widget build(BuildContext context) {
+    final directPath = initialRoutePath ?? Uri.base.path;
+    final directAppName = _directAppName(directPath);
+    if (directAppName != null) {
+      return _buildApp(
+        directAppName,
+        initialRoutePath: directPath,
+        autoSignIn: autoSignIn,
+      );
     }
-  }
 
-  void _open(_SelectedApp app) {
-    if (_selectedApp != null) return;
-    setState(() {
-      _selectedApp = app;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (_selectedApp) {
-      _SelectedApp.workspaceDemo => WorkSpaceApp(
-        initialRoutePath:
-            _initialWorkspacePath ??
-            '/workspace/${UxWorkspaceSpecs.paperZeroSpecId}/42',
-        autoSignIn: true,
-      ),
-      _SelectedApp.workspace => WorkSpaceApp(
-        initialRoutePath: _initialWorkspacePath,
-      ),
-      _SelectedApp.aibook => const AIBookApp(),
-      _SelectedApp.aicodex => const AICodexApp(),
-      _SelectedApp.aistudio => const AIStudioApp(),
-      null => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'GenRP',
-        theme: GenrpTheme.lightTheme(),
-        darkTheme: GenrpTheme.darkTheme(),
-        themeMode: ThemeMode.dark,
-        home: _LauncherHome(onSelect: _open),
-      ),
-    };
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'GenRP',
+      theme: UxTheme.lightTheme(),
+      darkTheme: UxTheme.darkTheme(),
+      themeMode: ThemeMode.dark,
+      home: MainLauncher(autoSignIn: autoSignIn),
+    );
   }
 }
 
-class _LauncherHome extends StatelessWidget {
-  const _LauncherHome({required this.onSelect});
+class MainLauncher extends StatelessWidget {
+  const MainLauncher({super.key, this.autoSignIn = false});
 
-  final ValueChanged<_SelectedApp> onSelect;
+  final bool autoSignIn;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
-      appBar: AppBar(title: const Text('GenRP')),
-      body: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          return SingleChildScrollView(
+      appBar: AppBar(title: const Text('Choose App')),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: ListView(
             padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight - 48,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 720),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Choose App',
-                        style: theme.textTheme.headlineMedium,
-                        textAlign: TextAlign.center,
+            shrinkWrap: true,
+            children: _launcherEntries
+                .map<Widget>(
+                  (_LauncherEntry app) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (BuildContext context) =>
+                                _buildHome(app.name, autoSignIn: autoSignIn),
+                          ),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(app.title),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Selection is one-way for this runtime session.',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 28),
-                      _LauncherButton(
-                        title: 'WorkSpace Demo',
-                        subtitle:
-                            'One-tap mock sign-in to the CRUD concept screen',
-                        onPressed: () => onSelect(_SelectedApp.workspaceDemo),
-                      ),
-                      const SizedBox(height: 12),
-                      _LauncherButton(
-                        title: 'WorkSpace',
-                        subtitle:
-                            'Experimental route-first UX runtime with login',
-                        onPressed: () => onSelect(_SelectedApp.workspace),
-                      ),
-                      const SizedBox(height: 12),
-                      _LauncherButton(
-                        title: 'AIBook',
-                        subtitle: 'Runtime reader and preview flow',
-                        onPressed: () => onSelect(_SelectedApp.aibook),
-                      ),
-                      const SizedBox(height: 12),
-                      _LauncherButton(
-                        title: 'AICodex',
-                        subtitle: 'Configurator and schema application surface',
-                        onPressed: () => onSelect(_SelectedApp.aicodex),
-                      ),
-                      const SizedBox(height: 12),
-                      _LauncherButton(
-                        title: 'AIStudio',
-                        subtitle: 'Model-row editing surface',
-                        onPressed: () => onSelect(_SelectedApp.aistudio),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
-          );
-        },
+                )
+                .toList(growable: false),
+          ),
+        ),
       ),
     );
   }
 }
 
-class _LauncherButton extends StatelessWidget {
-  const _LauncherButton({
-    required this.title,
-    required this.subtitle,
-    required this.onPressed,
-  });
+Widget _buildApp(
+  String appName, {
+  String? initialRoutePath,
+  bool autoSignIn = false,
+}) {
+  switch (appName) {
+    case 'aibook':
+      return AIBookApp(
+        initialRoutePath: initialRoutePath,
+        autoSignIn: autoSignIn,
+      );
+    case 'aicodex':
+      return AICodexApp(
+        initialRoutePath: initialRoutePath,
+        autoSignIn: autoSignIn,
+      );
+    case 'aistudio':
+      return AIStudioApp(
+        initialRoutePath: initialRoutePath,
+        autoSignIn: autoSignIn,
+      );
+    case 'aiwork':
+    default:
+      return AIWorkApp(
+        initialRoutePath: initialRoutePath,
+        autoSignIn: autoSignIn,
+      );
+  }
+}
 
+Widget _buildHome(String appName, {bool autoSignIn = false}) {
+  switch (appName) {
+    case 'aibook':
+      return AIBookHome(autoSignIn: autoSignIn);
+    case 'aicodex':
+      return AICodexHome(autoSignIn: autoSignIn);
+    case 'aistudio':
+      return AIStudioHome(autoSignIn: autoSignIn);
+    case 'aiwork':
+    default:
+      return AIWorkHome(autoSignIn: autoSignIn);
+  }
+}
+
+String? _directAppName(String? raw) {
+  if (raw == null || raw.trim().isEmpty || raw == '/') {
+    return null;
+  }
+  try {
+    final route = CopilotRoute.parse(raw);
+    switch (route.appName) {
+      case AIWorkSpecs.appName:
+      case AIBookSpecs.appName:
+      case AICodexSpecs.appName:
+      case AIStudioSpecs.appName:
+        return route.appName;
+      default:
+        return null;
+    }
+  } on FormatException {
+    return null;
+  }
+}
+
+class _LauncherEntry {
+  const _LauncherEntry(this.name, this.title);
+
+  final String name;
   final String title;
-  final String subtitle;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 88,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [Text(title), const SizedBox(height: 4), Text(subtitle)],
-        ),
-      ),
-    );
-  }
 }
+
+const List<_LauncherEntry> _launcherEntries = <_LauncherEntry>[
+  _LauncherEntry(AIWorkSpecs.appName, AIWorkSpecs.title),
+  _LauncherEntry(AIBookSpecs.appName, AIBookSpecs.title),
+  _LauncherEntry(AICodexSpecs.appName, AICodexSpecs.title),
+  _LauncherEntry(AIStudioSpecs.appName, AIStudioSpecs.title),
+];

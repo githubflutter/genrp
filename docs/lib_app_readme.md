@@ -1,4 +1,4 @@
-**Apps: AIBook, AICodex, AIStudio**
+**Apps: AIWork, AIBook, AICodex, AIStudio**
 
 - **Purpose:** Combined documentation for the app entry points under `lib/app/`.
 - **Location:** [lib/app](lib/app)
@@ -7,6 +7,7 @@
 
 This document describes the current app entry widgets:
 
+- `AIWork` — [lib/app/aiwork/aiwork.dart](lib/app/aiwork/aiwork.dart)
 - `AIBook` — [lib/app/aibook/aibook.dart](lib/app/aibook/aibook.dart)
 - `AICodex` — [lib/app/aicodex/aicodex.dart](lib/app/aicodex/aicodex.dart)
 - `AIStudio` — [lib/app/aistudio/aistudio.dart](lib/app/aistudio/aistudio.dart)
@@ -25,17 +26,23 @@ Identifier precaution
 - The move from text keys to integers is primarily for smaller payloads, cheaper comparisons, simpler routing, and lower runtime overhead.
 
 Current semantic split
+- `AIWork` is a desktop/tablet-centric client app.
+- `AIBook` is a mobile-centric client app.
+- `AIWork` and `AIBook` are client CRUD apps only.
+- `AIWork` and `AIBook` do not own data designer or UX designer surfaces.
 - GenRP has three CRUD domains: data-model CRUD, UX model-spec CRUD, and business-model/runtime CRUD.
 - Data models are the foundation of the whole system because they are the actual schema layer: the sitting table/function definitions from which the rest of the stack is derived.
 - Data-model definitions are single origin, single source of truth, and single user.
 - Sensitive data-model CRUD belongs to `AICodex` because those changes can require database recreation or schema regeneration.
 - UX model-spec CRUD belongs to `AIStudio`.
-- Business-model/runtime CRUD belongs to `AIBook` through function-style actions rather than direct business-table writes.
+- Business-model/runtime CRUD belongs to the client apps, with `AIWork` and `AIBook` consuming runtime/business data through function-style actions rather than direct business-table writes.
 - `AIStudio` is the UX/spec editing surface. It should focus on CRUD for UX-side model/spec rows rather than the sensitive data-model layer.
 - `AIStudio` is now narrowed to the UX/spec explorer/editor path; it should not carry the data-model explorer/collection surface.
 - `AICodex` is the sensitive data-model CRUD and schema-application surface. It owns CRUD for data models such as `EntityModel`, `FieldModel`, `TableModel`, and related definition rows because those changes may require database recreation. It also creates/drops structures and generates function/script definitions for PostgreSQL and SQLite. `ALTER TABLE` is not part of the planned flow.
 - `AICodex` also owns the data-model explorer/collection flow that was previously shown in AIStudio.
-- `AIBook` is the runtime/business-data consumer. It uses the generated structures produced from those models and should invoke function-style actions for business-table CRUD rather than doing direct table CRUD.
+- `AIWork` is the desktop/tablet client for runtime/business CRUD in broader workspace-style flows.
+- `AIBook` is the mobile client for runtime/business CRUD in narrower consumption-oriented flows.
+- Both client apps use the generated structures produced from those models and should invoke function-style actions for business-table CRUD rather than doing direct table CRUD.
 - `SystemModel` and `UsrModel` are special base models under `lib/core/model/base/`, not normal generic data rows.
 - `SystemModel` carries system/version/timestamp info plus JSON-based bootstrap maps.
 - Physical database names should not be assumed to match model names directly.
@@ -255,7 +262,7 @@ Current vocabulary direction
 Each app:
 
 - Is a minimal `MaterialApp` with `debugShowCheckedModeBanner: false`.
-- Exposes a top-level widget (`AIBookApp`, `AICodexApp`, `AIStudioApp`) under its own app directory — no `main()` inside these files.
+- Exposes a top-level widget (`AIWorkApp`, `AIBookApp`, `AICodexApp`, `AIStudioApp`) under its own app directory — no `main()` inside these files.
 - Uses the shared Material 3 dark theme and centralized shell sizing.
 - Does not rely on a scaffold-level FAB; actions should be surfaced inside the current toolbar/header or active panel content.
 - Shows a right-aligned bottom status bar in the `BottomAppBar` containing:

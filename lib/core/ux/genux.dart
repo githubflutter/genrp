@@ -1,0 +1,121 @@
+import 'package:flutter/material.dart';
+import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/model/uschema/ux_field_spec.dart';
+import 'package:genrp/core/model/uschema/ux_paper_spec.dart';
+import 'package:genrp/core/model/uschema/uxm_template_spec.dart';
+import 'package:genrp/core/ux/paper/pfour.dart';
+import 'package:genrp/core/ux/paper/pone.dart';
+import 'package:genrp/core/ux/paper/pthree.dart';
+import 'package:genrp/core/ux/paper/ptwo.dart';
+import 'package:genrp/core/ux/paper/pzero.dart';
+import 'package:genrp/core/ux/template/tcrud.dart';
+import 'package:genrp/core/ux/template/tdboard.dart';
+import 'package:genrp/core/ux/template/tform.dart';
+import 'package:genrp/core/ux/template/treport.dart';
+import 'package:genrp/core/ux/template/tsheet.dart';
+import 'package:genrp/core/ux/template/twizard.dart';
+
+class GenUx {
+  GenUx._();
+
+  static Widget buildPaper({
+    required UxPaperSpec spec,
+    required Autopilot autopilot,
+    String? optionalId,
+  }) {
+    final template = buildTemplate(
+      spec: spec.template,
+      autopilot: autopilot,
+      optionalId: optionalId,
+    );
+
+    return switch (spec.pid) {
+      0 => Pzero(i: spec.i, autopilot: autopilot, s: spec.s, child: template),
+      1 => Pone(i: spec.i, autopilot: autopilot, s: spec.s, child: template),
+      2 => Ptwo(
+        i: spec.i,
+        autopilot: autopilot,
+        s: spec.s,
+        left: template,
+        right: template,
+      ),
+      3 => Pthree(
+        i: spec.i,
+        autopilot: autopilot,
+        s: spec.s,
+        first: template,
+        middle: template,
+        last: template,
+      ),
+      4 => Pfour(i: spec.i, autopilot: autopilot, s: spec.s),
+      _ => Pzero(i: spec.i, autopilot: autopilot, s: spec.s, child: template),
+    };
+  }
+
+  static StatelessWidget buildTemplate({
+    required UxTemplateSpec spec,
+    required Autopilot autopilot,
+    String? optionalId,
+  }) {
+    switch (spec.tid) {
+      case 1:
+        final crud = spec as UxCrudTemplateSpec;
+        return Tcrud(
+          i: crud.i,
+          autopilot: autopilot,
+          s: crud.s,
+          oid: optionalId ?? '-',
+          summaryText: crud.summaryText,
+          collectionTitle: crud.collectionTitle,
+          collectionColumns: crud.collectionColumns,
+          collectionRows: crud.collectionRows,
+          collectionViewModes: crud.collectionViewModes,
+          properties: crud.properties,
+          formChildren: _buildFormFields(crud.formFields),
+          formFooter: Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 8,
+              children: <Widget>[
+                FilledButton(onPressed: () {}, child: const Text('Save')),
+                OutlinedButton(onPressed: () {}, child: const Text('Cancel')),
+              ],
+            ),
+          ),
+          emptyTitle: crud.emptyTitle,
+          emptyMessage: crud.emptyMessage,
+          defaultAlertMessage: crud.defaultAlertMessage,
+          collectionFlex: crud.collectionFlex,
+          detailFlex: crud.detailFlex,
+        );
+      case 2:
+        return Tsheet(i: spec.i, autopilot: autopilot, s: spec.s);
+      case 3:
+        return Treport(i: spec.i, autopilot: autopilot, s: spec.s);
+      case 4:
+        return Tdboard(i: spec.i, autopilot: autopilot, s: spec.s);
+      case 5:
+        return Twizard(i: spec.i, autopilot: autopilot, s: spec.s);
+      case 6:
+        return Tform(i: spec.i, autopilot: autopilot, s: spec.s);
+      default:
+        return Tform(i: spec.i, autopilot: autopilot, s: spec.s);
+    }
+  }
+
+  static List<Widget> _buildFormFields(List<UxFieldSpec> fields) {
+    return fields
+        .map<Widget>(
+          (UxFieldSpec field) => SizedBox(
+            width: field.width,
+            child: TextField(
+              decoration: InputDecoration(
+                labelText: field.label,
+                hintText: field.hint,
+              ),
+            ),
+          ),
+        )
+        .toList(growable: false);
+  }
+}

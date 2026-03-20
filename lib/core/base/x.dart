@@ -18,7 +18,10 @@ class Xi extends X {
   const Xi({required dynamic i, super.v}) : i = i as int;
 
   factory Xi.fromJson(Map<String, dynamic> json) {
-    return Xi(i: json['i'], v: (json['v'] as List<dynamic>?) ?? const <dynamic>[]);
+    return Xi(
+      i: json['i'],
+      v: (json['v'] as List<dynamic>?) ?? const <dynamic>[],
+    );
   }
 
   @override
@@ -31,10 +34,16 @@ class Xia extends X {
   final int i;
   final bool a;
 
-  const Xia({required dynamic i, required dynamic a, super.v}) : i = i as int, a = a as bool;
+  const Xia({required dynamic i, required dynamic a, super.v})
+    : i = i as int,
+      a = a as bool;
 
   factory Xia.fromJson(Map<String, dynamic> json) {
-    return Xia(i: json['i'], a: json['a'], v: (json['v'] as List<dynamic>?) ?? const <dynamic>[]);
+    return Xia(
+      i: json['i'],
+      a: json['a'],
+      v: (json['v'] as List<dynamic>?) ?? const <dynamic>[],
+    );
   }
 
   @override
@@ -48,10 +57,22 @@ class Xiad extends X {
   final bool a;
   final int d;
 
-  const Xiad({required dynamic i, required dynamic a, required dynamic d, super.v}) : i = i as int, a = a as bool, d = d as int;
+  const Xiad({
+    required dynamic i,
+    required dynamic a,
+    required dynamic d,
+    super.v,
+  }) : i = i as int,
+       a = a as bool,
+       d = d as int;
 
   factory Xiad.fromJson(Map<String, dynamic> json) {
-    return Xiad(i: json['i'], a: json['a'], d: json['d'], v: (json['v'] as List<dynamic>?) ?? const <dynamic>[]);
+    return Xiad(
+      i: json['i'],
+      a: json['a'],
+      d: json['d'],
+      v: (json['v'] as List<dynamic>?) ?? const <dynamic>[],
+    );
   }
 
   @override
@@ -66,10 +87,25 @@ class Xiade extends X {
   final int d;
   final int e;
 
-  const Xiade({required dynamic i, required dynamic a, required dynamic d, required dynamic e, super.v}) : i = i as int, a = a as bool, d = d as int, e = e as int;
+  const Xiade({
+    required dynamic i,
+    required dynamic a,
+    required dynamic d,
+    required dynamic e,
+    super.v,
+  }) : i = i as int,
+       a = a as bool,
+       d = d as int,
+       e = e as int;
 
   factory Xiade.fromJson(Map<String, dynamic> json) {
-    return Xiade(i: json['i'], a: json['a'], d: json['d'], e: json['e'], v: (json['v'] as List<dynamic>?) ?? const <dynamic>[]);
+    return Xiade(
+      i: json['i'],
+      a: json['a'],
+      d: json['d'],
+      e: json['e'],
+      v: (json['v'] as List<dynamic>?) ?? const <dynamic>[],
+    );
   }
 
   @override

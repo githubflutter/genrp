@@ -1,196 +1,116 @@
-/// UX state container with chrome/body/template partitions.
 class StateSet {
-  StateSet();
-
-  static const Set<String> _legacyTemplateFields = <String>{
-    'mode',
-    'selection',
-    'selections',
-  };
-
   final Map<String, dynamic> _chrome = <String, dynamic>{};
-  final Map<String, Map<String, dynamic>> _bodies =
+  final Map<String, Map<String, dynamic>> _papers =
       <String, Map<String, dynamic>>{};
   final Map<String, Map<String, dynamic>> _templates =
       <String, Map<String, dynamic>>{};
 
-  T? get<T>(String key) {
-    final access = _resolveAccess(key);
-    final store = _storeFor(access, create: false);
-    if (store == null || !store.containsKey(access.field)) return null;
-    return store[access.field] as T;
+  T? chrome<T>(String key) =>
+      _chrome.containsKey(key) ? _chrome[key] as T : null;
+
+  T? get<T>(String key) => chrome<T>(key);
+
+  void setChrome(String key, dynamic value) {
+    if (value == null) {
+      _chrome.remove(key);
+      return;
+    }
+    _chrome[key] = value;
   }
 
   void set(String key, dynamic value) {
-    if (key == 'currentBody') {
-      _switchBody(value);
-      return;
-    }
+    setChrome(key, value);
+  }
 
-    final access = _resolveAccess(key);
-    final store = _storeFor(access, create: true)!;
-    if (value == null) {
-      store.remove(access.field);
-      _trimEmpty(access);
-      return;
+  void patchChrome(Map<String, dynamic> values) {
+    for (final entry in values.entries) {
+      setChrome(entry.key, entry.value);
     }
-    store[access.field] = value;
   }
 
   void patch(Map<String, dynamic> values) {
+    patchChrome(values);
+  }
+
+  T? getPaper<T>(String scope, String key) {
+    final store = _papers[scope];
+    if (store == null || !store.containsKey(key)) return null;
+    return store[key] as T;
+  }
+
+  void setPaper(String scope, String key, dynamic value) {
+    final store = _papers.putIfAbsent(scope, () => <String, dynamic>{});
+    if (value == null) {
+      store.remove(key);
+      if (store.isEmpty) {
+        _papers.remove(scope);
+      }
+      return;
+    }
+    store[key] = value;
+  }
+
+  void patchPaper(String scope, Map<String, dynamic> values) {
     for (final entry in values.entries) {
-      set(entry.key, entry.value);
+      setPaper(scope, entry.key, entry.value);
     }
   }
 
-  void clearBodyScope(String scopeKey) {
-    _bodies.remove(scopeKey);
+  T? getTemplate<T>(String scope, String key) {
+    final store = _templates[scope];
+    if (store == null || !store.containsKey(key)) return null;
+    return store[key] as T;
   }
 
-  void clearTemplateScope(String scopeKey) {
-    _templates.remove(scopeKey);
+  void setTemplate(String scope, String key, dynamic value) {
+    final store = _templates.putIfAbsent(scope, () => <String, dynamic>{});
+    if (value == null) {
+      store.remove(key);
+      if (store.isEmpty) {
+        _templates.remove(scope);
+      }
+      return;
+    }
+    store[key] = value;
   }
 
-  void clearBodyScopesForBody(String bodyKey) {
-    _bodies.removeWhere((scopeKey, _) => _matchesBodyScope(scopeKey, bodyKey));
+  void patchTemplate(String scope, Map<String, dynamic> values) {
+    for (final entry in values.entries) {
+      setTemplate(scope, entry.key, entry.value);
+    }
   }
 
-  void clearTemplateScopesForBody(String bodyKey) {
-    _templates.removeWhere(
-      (scopeKey, _) => _matchesTemplateScope(scopeKey, bodyKey),
-    );
+  void clearPaper(String scope) {
+    _papers.remove(scope);
+  }
+
+  void clearTemplate(String scope) {
+    _templates.remove(scope);
+  }
+
+  void clearChrome() {
+    _chrome.clear();
+  }
+
+  void clear() {
+    _chrome.clear();
+    _papers.clear();
+    _templates.clear();
   }
 
   Map<String, dynamic> snapshot() => <String, dynamic>{
     'chrome': Map<String, dynamic>.unmodifiable(_chrome),
-    'bodies': Map<String, Map<String, dynamic>>.unmodifiable(
-      _bodies.map(
-        (key, value) => MapEntry(key, Map<String, dynamic>.unmodifiable(value)),
+    'papers': Map<String, Map<String, dynamic>>.unmodifiable(
+      _papers.map(
+        (String key, Map<String, dynamic> value) =>
+            MapEntry(key, Map<String, dynamic>.unmodifiable(value)),
       ),
     ),
     'templates': Map<String, Map<String, dynamic>>.unmodifiable(
       _templates.map(
-        (key, value) => MapEntry(key, Map<String, dynamic>.unmodifiable(value)),
+        (String key, Map<String, dynamic> value) =>
+            MapEntry(key, Map<String, dynamic>.unmodifiable(value)),
       ),
     ),
   };
-
-  void clear() {
-    _chrome.clear();
-    _bodies.clear();
-    _templates.clear();
-  }
-
-  void _switchBody(dynamic nextBody) {
-    final currentBody = _chrome['currentBody'];
-    if (currentBody == nextBody) return;
-
-    if (currentBody != null) {
-      final previousBodyKey = currentBody.toString();
-      clearBodyScopesForBody(previousBodyKey);
-      clearTemplateScopesForBody(previousBodyKey);
-    }
-
-    if (nextBody == null) {
-      _chrome.remove('currentBody');
-      return;
-    }
-    _chrome['currentBody'] = nextBody;
-  }
-
-  Map<String, dynamic>? _storeFor(_StateAccess access, {required bool create}) {
-    switch (access.partition) {
-      case _StatePartition.chrome:
-        return _chrome;
-      case _StatePartition.body:
-        final scopeKey = access.scopeKey!;
-        if (create) {
-          return _bodies.putIfAbsent(scopeKey, () => <String, dynamic>{});
-        }
-        return _bodies[scopeKey];
-      case _StatePartition.template:
-        final scopeKey = access.scopeKey!;
-        if (create) {
-          return _templates.putIfAbsent(scopeKey, () => <String, dynamic>{});
-        }
-        return _templates[scopeKey];
-    }
-  }
-
-  void _trimEmpty(_StateAccess access) {
-    final scopeKey = access.scopeKey;
-    if (scopeKey == null) return;
-    switch (access.partition) {
-      case _StatePartition.chrome:
-        return;
-      case _StatePartition.body:
-        if (_bodies[scopeKey]?.isEmpty ?? false) {
-          _bodies.remove(scopeKey);
-        }
-        return;
-      case _StatePartition.template:
-        if (_templates[scopeKey]?.isEmpty ?? false) {
-          _templates.remove(scopeKey);
-        }
-        return;
-    }
-  }
-
-  _StateAccess _resolveAccess(String key) {
-    final parts = key.split('.');
-    if (parts.length >= 3 && parts.first == 'body') {
-      return _StateAccess(
-        partition: _StatePartition.body,
-        scopeKey: parts.sublist(1, parts.length - 1).join('.'),
-        field: parts.last,
-      );
-    }
-    if (parts.length >= 3 && parts.first == 'template') {
-      return _StateAccess(
-        partition: _StatePartition.template,
-        scopeKey: parts.sublist(1, parts.length - 1).join('.'),
-        field: parts.last,
-      );
-    }
-    if (parts.length >= 3 && _legacyTemplateFields.contains(parts.first)) {
-      return _StateAccess(
-        partition: _StatePartition.template,
-        scopeKey: parts.sublist(1).join('.'),
-        field: parts.first,
-      );
-    }
-    return _StateAccess(
-      partition: _StatePartition.chrome,
-      scopeKey: null,
-      field: key,
-    );
-  }
-
-  bool _matchesBodyScope(String scopeKey, String bodyKey) {
-    if (scopeKey == bodyKey) return true;
-    final parts = scopeKey.split('.');
-    return parts.isNotEmpty && parts.last == bodyKey;
-  }
-
-  bool _matchesTemplateScope(String scopeKey, String bodyKey) {
-    if (scopeKey == bodyKey) return true;
-    final parts = scopeKey.split('.');
-    if (parts.isEmpty) return false;
-    if (parts.last == bodyKey) return true;
-    return parts.length >= 2 && parts[1] == bodyKey;
-  }
-}
-
-enum _StatePartition { chrome, body, template }
-
-class _StateAccess {
-  const _StateAccess({
-    required this.partition,
-    required this.scopeKey,
-    required this.field,
-  });
-
-  final _StatePartition partition;
-  final String? scopeKey;
-  final String field;
 }

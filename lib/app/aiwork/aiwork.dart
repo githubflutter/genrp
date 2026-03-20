@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:genrp/app/aistudio/aistudio_specs.dart';
+import 'package:genrp/app/aiwork/aiwork_specs.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/agent/copilot_route.dart';
 import 'package:genrp/core/model/uschema/ux.dart';
@@ -7,12 +7,8 @@ import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/genux.dart';
 import 'package:genrp/meta.dart';
 
-class AIStudioApp extends StatelessWidget {
-  const AIStudioApp({
-    super.key,
-    this.initialRoutePath,
-    this.autoSignIn = false,
-  });
+class AIWorkApp extends StatelessWidget {
+  const AIWorkApp({super.key, this.initialRoutePath, this.autoSignIn = false});
 
   final String? initialRoutePath;
   final bool autoSignIn;
@@ -21,11 +17,11 @@ class AIStudioApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: AIStudioSpecs.title,
+      title: AIWorkSpecs.title,
       theme: UxTheme.lightTheme(),
       darkTheme: UxTheme.darkTheme(),
       themeMode: ThemeMode.dark,
-      home: AIStudioHome(
+      home: AIWorkHome(
         initialRoutePath: initialRoutePath,
         autoSignIn: autoSignIn,
       ),
@@ -33,41 +29,37 @@ class AIStudioApp extends StatelessWidget {
   }
 }
 
-class AIStudioHome extends StatefulWidget {
-  const AIStudioHome({
-    super.key,
-    this.initialRoutePath,
-    this.autoSignIn = false,
-  });
+class AIWorkHome extends StatefulWidget {
+  const AIWorkHome({super.key, this.initialRoutePath, this.autoSignIn = false});
 
   final String? initialRoutePath;
   final bool autoSignIn;
 
   @override
-  State<AIStudioHome> createState() => _AIStudioHomeState();
+  State<AIWorkHome> createState() => _AIWorkHomeState();
 }
 
-enum _AIStudioStage { login, loading, ready }
+enum _AIWorkStage { login, loading, ready }
 
-class _AIStudioHomeState extends State<AIStudioHome> {
+class _AIWorkHomeState extends State<AIWorkHome> {
   late final Autopilot _pilot;
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
 
-  _AIStudioStage _stage = _AIStudioStage.login;
+  _AIWorkStage _stage = _AIWorkStage.login;
   String? _errorMessage;
   List<UxRouteSpec> _presets = const <UxRouteSpec>[];
   String? _routePath;
 
   CopilotRoute get _route =>
       _pilot.currentRoute ??
-      AIStudioSpecs.initialRoute(
+      AIWorkSpecs.initialRoute(
         explicitPath: widget.initialRoutePath,
         currentUri: Uri.base,
         presets: _presets,
       );
 
-  UxRouteSpec get _spec => AIStudioSpecs.resolve(_route, presets: _presets);
+  UxRouteSpec get _spec => AIWorkSpecs.resolve(_route, presets: _presets);
 
   @override
   void initState() {
@@ -91,9 +83,9 @@ class _AIStudioHomeState extends State<AIStudioHome> {
   @override
   Widget build(BuildContext context) {
     return switch (_stage) {
-      _AIStudioStage.login => _buildLogin(context),
-      _AIStudioStage.loading => _buildLoading(),
-      _AIStudioStage.ready => _buildReady(context),
+      _AIWorkStage.login => _buildLogin(context),
+      _AIWorkStage.loading => _buildLoading(),
+      _AIWorkStage.ready => _buildReady(context),
     };
   }
 
@@ -131,13 +123,13 @@ class _AIStudioHomeState extends State<AIStudioHome> {
     if (mounted) {
       setState(() {
         _errorMessage = null;
-        _stage = _AIStudioStage.loading;
+        _stage = _AIWorkStage.loading;
       });
     }
 
     await Future<void>.delayed(Duration.zero);
-    final presets = AIStudioSpecs.presets();
-    final routePath = AIStudioSpecs.initialPath(
+    final presets = AIWorkSpecs.presets();
+    final routePath = AIWorkSpecs.initialPath(
       explicitPath: widget.initialRoutePath,
       currentUri: Uri.base,
       presets: presets,
@@ -148,13 +140,13 @@ class _AIStudioHomeState extends State<AIStudioHome> {
     setState(() {
       _presets = presets;
       _routePath = routePath;
-      _stage = _AIStudioStage.ready;
+      _stage = _AIWorkStage.ready;
     });
     return true;
   }
 
   void _openRoute(String route) {
-    if (_stage != _AIStudioStage.ready || _routePath == route) {
+    if (_stage != _AIWorkStage.ready || _routePath == route) {
       return;
     }
     _pilot.navigate(route, notify: false);
@@ -166,7 +158,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
   Widget _buildLogin(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('AIStudio Login')),
+      appBar: AppBar(title: const Text('AIWork Login')),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
@@ -229,7 +221,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
           children: <Widget>[
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Loading aistudio...'),
+            Text('Loading aiwork...'),
           ],
         ),
       ),
@@ -246,7 +238,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AIStudio'),
+        title: const Text('AIWork'),
         actions: <Widget>[
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -317,7 +309,7 @@ class _AIStudioHomeState extends State<AIStudioHome> {
           children: <Widget>[
             Text('Route: ${route.path}'),
             const Spacer(),
-            Text('AIStudio:${AIStudioSpecs.appMeta}/${AppMeta.f}/${AppMeta.v}'),
+            Text('AIWork:${AIWorkSpecs.appMeta}/${AppMeta.f}/${AppMeta.v}'),
           ],
         ),
       ),

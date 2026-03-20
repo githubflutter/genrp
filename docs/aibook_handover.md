@@ -6,6 +6,10 @@ Progressive step-by-step plan to reach constrained AIBook beta.
 
 **Current next step:** Step 3 — Clean slot-first binding path.
 
+**Role:** AIBook is a mobile-centric client app. It owns client/runtime CRUD and business-data consumption only.
+
+**Scope rule:** AIBook is not a data designer and not a UX designer. Sensitive data-model CRUD belongs to `AICodex`. UX/spec CRUD belongs to `AIStudio`. AIBook should stay focused on client runtime flows and function-style business actions.
+
 ---
 
 ## How to use this document
