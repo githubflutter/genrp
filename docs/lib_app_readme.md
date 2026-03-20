@@ -126,7 +126,7 @@ Convergent shell design
 - Search, add/create, editor tools, and schema tools should live inside the active major-tab content rather than inside the minor panel.
 
 Shared visual baseline
-- The launcher and all three apps should use the shared Material 3 dark theme from `lib/core/theme/genrp_theme.dart`.
+- The launcher and all four apps should use the shared Material 3 theme from `lib/core/theme/theme.dart` via `UxTheme`.
 - Font sizes should be anchored through the shared `TextTheme`, not ad-hoc per widget.
 - Current centralized values are:
   - `fontXl = 15`
@@ -180,7 +180,7 @@ AIBook transport split
 - For `AIBook`, business-bound row data should prefer the base `X` variants from `lib/core/base/x.dart`.
 - This split is intentional: composition wants readable JSON structure, while bound business transport wants the smallest and cheapest machine-oriented shape.
 - In architecture language, `base X` means the transport/data shape from `lib/core/base/x.dart`.
-- `X*` under `lib/core/widgets` still means wrapped implementation controls such as `XButton`, `XTextBox`, and `XCheckBox`.
+- The reusable UI composition layer now lives under `lib/core/ux/` through `GenUx`, `Paper`, `Template`, and `Ux*View` widgets.
 - HTTP transport for business data should invoke function-style actions; it should not mirror direct SQLite table writes for business tables.
 
 Request body shape
@@ -251,13 +251,13 @@ Registry direction
 - For business-bound `X` transport, field-binding registry entries should prefer slot/index metadata over property names when possible.
 
 Current vocabulary direction
-- `Ux*Model` is the definition-side naming for planned UX/UI models.
-- `X*` is the implementation-side naming for wrapped Flutter controls under `lib/core/widgets` that know how to work with `Autopilot`.
+- `Ux*Spec` is the definition-side naming for route, paper, template, and view structures under `lib/core/model/uschema`.
+- `Ux*`, `Paper`, `Template`, and `V` are the runtime-side naming used by `lib/core/ux`.
 - Base `X` / `Xi` / `Xia` / `Xiad` / `Xiade` is the transport/data-side naming from `lib/core/base/x.dart`.
 - Preview selection/highlighting can use the full identity scope `hostId + bodyId + widgetId`, with no effect when no selected identity is present.
 - Example pairing:
-  - `UxButtonModel` describes a button definition.
-  - `XButton` renders that definition as a real Flutter button.
+  - `UxCrudTemplateSpec` describes a CRUD surface definition.
+  - `GenUx` + `Tcrud` render that definition as Flutter UI.
 
 Each app:
 
