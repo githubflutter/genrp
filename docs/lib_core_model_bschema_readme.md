@@ -69,7 +69,6 @@ Files
 - `parameter_model.dart` — `ParameterModel` (fields: `int i`, `bool a`, `int d`, `int e`, `int fi`, `String n`, `String s`).
 - `entity_model.dart` — `EntityModel` (fields: `int i`, `bool a`, `int d`, `int e`, `int t`, `List<int> tis`, `String n`, `String s`).
 - `field_model.dart` — `FieldModel` (fields: `int i`, `bool a`, `int d`, `int e`, `int ci`, `int t`, `String n`, `String s`).
-- `relation_model.dart` — `RelationModel` (same fields as `TableModel`).
 
 Common API
 - All models are immutable, have a `const` constructor, and implement:

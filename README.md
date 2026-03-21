@@ -16,7 +16,7 @@ direction:
 - `Autopilot` is the single orchestrator for app state, bindings, actions, and route state.
 - `GenUx` is the spec renderer used by the spec-driven apps (`AIWork` and `AIBook`).
 - `core/ux` holds the shared UI contracts and primitives through `mixins.dart`, `paper/`, `template/`, and `uwidget/`.
-- `AIStudio` and `AICodex` no longer imply a second runtime; they are dedicated hard-coded shells that reuse the same shared UX primitives.
+- `AIStudio` and `AICodex` no longer imply a second runtime; they delegate to a shared `AdminHome` shell that reuses the same UX primitives.
 
 Historical references in older docs to things like extra session wrappers,
 body-router pipelines, `AutopilotGo`, or generator-heavy runtime layers should
@@ -28,38 +28,57 @@ be read as past experiment phases, not as the current architecture target.
 |---|---|---|---|
 | **AIWork** | Client/workflow CRUD surface | `lib/app/aiwork/aiwork.dart` | Ready to run from spec data |
 | **AIBook** | Client/runtime reader surface | `lib/app/aibook/aibook.dart` | Ready to run from spec data |
-| **AIStudio** | UX/spec editing surface | `lib/app/aistudio/aistudio.dart` | Dedicated hard-coded authoring shell |
-| **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Dedicated hard-coded authoring shell |
+| **AIStudio** | UX/spec editing surface | `lib/app/aistudio/aistudio.dart` | Shared admin shell, halfway restored |
+| **AICodex** | Sensitive data-model CRUD + schema-application surface | `lib/app/aicodex/aicodex.dart` | Shared admin shell, halfway restored |
 
 ## Quick Start
 
 ```bash
+# Default entry — boots AICodex
 flutter run -t lib/main.dart
+
+# Dedicated entry points (with autoSignIn)
+flutter run -t lib/main_aicodex.dart
+flutter run -t lib/main_aistudio.dart
 ```
 
-`main.dart` now boots directly into AIWork.
+`main.dart` boots directly into **AICodex**. Dedicated entry points for AICodex and AIStudio skip the login screen via `autoSignIn: true`.
 
 Current UI baseline:
 - Shared Material 3 theme across all apps via `UxTheme`
-- Each app owns a dedicated login screen and a dedicated loading screen
-- `AIWork` and `AIBook` are currently local spec-driven through `GenUx`; the final client goal is server-spec-driven UI
-- AIStudio and AICodex are currently in the hard-coded/demo authoring-shell stage and use the same convergent authoring direction
+- `AIWork` and `AIBook` own dedicated login → loading → ready stage flows with `Autopilot`
+- `AIStudio` and `AICodex` delegate directly to `AdminHome` with app-specific title, status text, and explorer nodes
+- `AdminHome` provides a left explorer panel + mode-driven detail area (`schema` / `preview` / `compare`)
+- `AICodex` uses flat bschema nodes (Entity, Field, Table, Column, Function, Parameter)
+- `AIStudio` uses hierarchical default nodes (Business → Entity/Field, Database → Table/Column/Function)
 - Scaffold-level FABs are removed; actions now live in headers or active panel content
+
+## Codebase at a Glance
+
+| Metric | Value |
+|---|---|
+| **Source files** (`lib/`) | 83 Dart files |
+| **Source LOC** (`lib/`) | ~8,509 lines |
+| **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
+| **Analyzer** | `flutter analyze` passes clean |
 
 ## Project Layout
 
 ```
 lib/
-├── main.dart              # Default app entry (boots AIWork)
+├── main.dart              # Default app entry (boots AICodex)
+├── main_aistudio.dart     # AIStudio dedicated entry (autoSignIn)
+├── main_aicodex.dart      # AICodex dedicated entry (autoSignIn)
 ├── meta.dart              # Static version flags
 ├── app/                   # App entry points (aiwork, aibook, aicodex, aistudio)
+├── hub/                   # Reserved (empty)
 └── core/
     ├── agent/             # Autopilot orchestrator, copilots, actions, route state
     ├── base/              # X transport classes, DataType, sys registries
     ├── db/                # SQLite store + generic PG/SQLite/remote DB builders
-    ├── gen/               # GenUx runtime builder
+    ├── gen/               # AdminHome shell, GenUx runtime, explorer, authoring panels
     ├── model/             # base, bschema, bdata, uschema (+ ux_specs.dart barrel)
-    ├── theme/             # shared Material 3 theme + UX chrome helpers
+    ├── theme/             # Shared Material 3 theme + UX chrome helpers
     └── ux/                # UX mixins, paper/template/uwidget primitives, UX barrel
 ```
 
@@ -73,6 +92,8 @@ All docs live in `docs/`. Start with:
 - `docs/aistudio_handover.md` — AIStudio progressive handover (start here for AIStudio work)
 - `docs/aicodex_handover.md` — AICodex progressive handover (start here for AICodex work)
 - `docs/lib_app_readme.md` — architecture, transport contract, vocabulary
+- `docs/bschema_uschema_reshape_plan.md` — forward plan for spec-first schema documents
+- `docs/toexperiment_after_v2_launched.md` — post-v2 experiment ideas
 
 ## Key Architecture Rules
 
@@ -84,7 +105,8 @@ All docs live in `docs/`. Start with:
 6. **Foundation vs business split** — foundation tables can use direct CRUD; business-table writes go through function/action paths only.
 7. **Admin/client DB split** — admin builders create databases, tables, and functions; client builders do CRUD or action-envelope work only.
 8. **No `ALTER TABLE` / never-null columns** — generated columns are `NOT NULL`; schema evolution is create/drop/script oriented.
-9. **Incremental** — keep analyzer green, keep tests green, keep app runnable after every step.
+9. **Convergent shell** — AIStudio and AICodex share `AdminHome` with app-specific explorer nodes and data; role differences stay semantic rather than structural.
+10. **Incremental** — keep analyzer green, keep tests green, keep app runnable after every step.
 
 ## Quality Gate
 

@@ -46,6 +46,7 @@ Current ownership reminder:
 - `project_deep_analysis.md` — full architecture analysis with diagrams, subsystem breakdowns, data flow, gap analysis, and roadmap.
 - `project_deep_analysis.md` also records the phase change from the older engine/runtime/renderer/builder/generator overlap into the current single active runtime path.
 - `lib_app_readme.md` — app roles, backend transport contract, shared DB builder split, vocabulary, and naming rules.
+- `spec_first_schema_experiments.md` — experimental plan for moving schemas to spec documents after September 2026.
 
 ## Code Reference
 

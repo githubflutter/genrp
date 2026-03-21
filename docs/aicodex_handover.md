@@ -144,7 +144,6 @@ Manual app testing has already been completed for the active snapshot.
    **Schema Source** (app-facing definitions):
    - `Entity`
    - `Field`
-   - `Relation`
    - `Function`
    - `Parameter`
 
@@ -179,7 +178,7 @@ Task:
 - Make home a StatefulWidget.
 - Add state: _selectedModelType, _selectedRowId.
 - Left panel: ListView with two sections:
-  - Schema Source: Entity, Field, Relation, Function, Parameter
+  - Schema Source: Entity, Field, Function, Parameter
   - Schema Target: Table, Column, System, User
 - Tap sets _selectedModelType, clears _selectedRowId.
 - Highlight selected item.
@@ -473,7 +472,7 @@ AICodex ──(CRUD + schema apply)──► Data Model Definitions ──(gener
 | Term | Meaning |
 |---|---|
 | DDL | Data Definition Language — CREATE, DROP, and related function/script statements |
-| Schema Source | App-facing models: Entity, Field, Relation, Function, Parameter |
+| Schema Source | App-facing models: Entity, Field, Function, Parameter |
 | Schema Target | Physical models: Table, Column, System, User |
 | `vfun` | SQLite-side script store used when function behavior needs local representation |
 | `TypeMapper` | Maps type ID → PostgreSQL/Dart/SQLite/JSON type names |

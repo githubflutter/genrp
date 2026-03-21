@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:genrp/core/gen/adminhome.dart';
+import 'package:genrp/core/gen/uexplorer.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/meta.dart';
 
@@ -23,27 +25,21 @@ class AICodexApp extends StatelessWidget {
 class AICodexHome extends StatelessWidget {
   const AICodexHome({super.key});
 
+  static const List<UExplorerNode> _bschemaNodes = <UExplorerNode>[
+    UExplorerNode(label: 'Entity'),
+    UExplorerNode(label: 'Field'),
+    UExplorerNode(label: 'Table'),
+    UExplorerNode(label: 'Column'),
+    UExplorerNode(label: 'Function'),
+    UExplorerNode(label: 'Parameter'),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    const textStyle = TextStyle(fontSize: 12);
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('AICodex', style: textStyle)),
-      body: const SizedBox.expand(),
-      bottomNavigationBar: Container(
-        height: 32,
-        color: Theme.of(context).colorScheme.surface,
-        child: Row(
-          children: <Widget>[
-            const Text('Status: Ready', style: textStyle),
-            const Spacer(),
-            Text(
-              'AICodex:${AppMeta.aicodex}/${AppMeta.f}/${AppMeta.v}',
-              style: textStyle,
-            ),
-          ],
-        ),
-      ),
+    return const AdminHome(
+      title: 'AICodex',
+      statusText: 'AICodex:${AppMeta.aicodex}/${AppMeta.f}/${AppMeta.v}',
+      nodes: _bschemaNodes,
     );
   }
 }
