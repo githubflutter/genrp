@@ -30,19 +30,18 @@ class AICodexHome extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('AICodex', style: textStyle)),
       body: const SizedBox.expand(),
-      bottomNavigationBar: BottomAppBar(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: <Widget>[
-              const Text('Status: Ready', style: textStyle),
-              const Spacer(),
-              Text(
-                'AICodex:${AppMeta.aicodex}/${AppMeta.f}/${AppMeta.v}',
-                style: textStyle,
-              ),
-            ],
-          ),
+      bottomNavigationBar: Container(
+        height: 32,
+        color: Theme.of(context).colorScheme.surface,
+        child: Row(
+          children: <Widget>[
+            const Text('Status: Ready', style: textStyle),
+            const Spacer(),
+            Text(
+              'AICodex:${AppMeta.aicodex}/${AppMeta.f}/${AppMeta.v}',
+              style: textStyle,
+            ),
+          ],
         ),
       ),
     );

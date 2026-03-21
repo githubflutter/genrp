@@ -4,16 +4,7 @@ import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
 class UwAlert extends StatelessWidget with Uwidget {
-  const UwAlert({
-    required this.i,
-    required this.autopilot,
-    this.s = 0,
-    super.key,
-    this.p = '',
-    this.title,
-    this.message,
-    this.actions = const <Widget>[],
-  });
+  const UwAlert({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.message, this.actions = const <Widget>[]});
 
   @override
   final int vid = 11;
@@ -57,14 +48,8 @@ class UwAlert extends StatelessWidget with Uwidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           Text(resolvedTitle, style: UxTheme.titleStyle(context)),
-          if (resolvedMessage.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 8),
-            Text(resolvedMessage, style: UxTheme.bodyStyle(context)),
-          ],
-          if (actions.isNotEmpty) ...<Widget>[
-            const SizedBox(height: 12),
-            Wrap(spacing: 8, runSpacing: 8, children: actions),
-          ],
+          if (resolvedMessage.isNotEmpty) ...<Widget>[const SizedBox(height: 8), Text(resolvedMessage, style: UxTheme.bodyStyle(context))],
+          if (actions.isNotEmpty) ...<Widget>[const SizedBox(height: 12), Wrap(spacing: 8, runSpacing: 8, children: actions)],
         ],
       ),
     );

@@ -200,7 +200,10 @@ class UxTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
+        titleSpacing: 8,
+        actionsPadding: const EdgeInsets.only(right: 8),
         titleTextStyle: textTheme.titleLarge?.copyWith(
+          fontSize: fontNm,
           color: scheme.onSurface,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.2,
