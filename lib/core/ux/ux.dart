@@ -22,7 +22,6 @@ export 'uwidget/uwchoose.dart';
 export 'uwidget/uwcollection.dart';
 export 'uwidget/uwdatatable.dart';
 export 'uwidget/uwempty.dart';
-export 'uwidget/uwfield.dart';
 export 'uwidget/uwfrom.dart';
 export 'uwidget/uwgrid.dart';
 export 'uwidget/uwitem.dart';
