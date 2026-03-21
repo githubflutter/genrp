@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 
-**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aistudio/aistudio.dart` + `lib/app/aistudio/aistudio_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated hybrid authoring shell, shared `UxTheme`, and shared UX widgets such as `UwTab`, `UwCollection`, `UwPList`, and `UwFrom`. `flutter analyze lib test` passes in the current snapshot, and the active AIStudio app has already been manually tested.
+**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aistudio/aistudio.dart` with mock sign-in, direct `CopilotRoute` support, app-owned hard-coded surfaces, a dedicated hybrid authoring shell, shared `UxTheme`, and shared UX widgets such as `UwTab`, `UwCollection`, `UwPList`, and `UwFrom`. `flutter analyze lib test` passes in the current snapshot, and the active AIStudio app has already been manually tested.
 
-**Current next step:** Continue the AIStudio feature plan inside the dedicated hard-coded shell while reusing shared UX components. The seeded/demo route metadata in `AIStudioSpecs` is intentional for now until ID-key rules are discussed.
+**Current next step:** Continue the AIStudio feature plan inside the dedicated hard-coded shell while reusing shared UX components. Surface metadata is now app-owned inside `aistudio.dart`, not split into a separate specs file.
 
 **Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio is now narrowed to UX/spec CRUD and should stay on that path.
 
@@ -29,7 +29,7 @@ Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
 - functional UX/spec work should now continue inside that shared shell
 
 > [!NOTE]
-> The detailed step list below was written for a pre-`core/ux` snapshot where AIStudio owned more of the shell/list/editor wiring directly. The current runtime entry points are `lib/app/aistudio/aistudio.dart`, `lib/app/aistudio/aistudio_specs.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux_specs.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+> The detailed step list below was written for a pre-`core/ux` snapshot where AIStudio owned more of the shell/list/editor wiring directly. The current runtime entry points are `lib/app/aistudio/aistudio.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux_specs.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
 
 > [!IMPORTANT]
 > Stage note from `new_experiment.md`: AIStudio is currently in the hard-coded/demo authoring-shell phase. If older sections below describe SQLite-backed row editing as the current path, treat that as archived or deferred work rather than the live app behavior.
@@ -57,11 +57,11 @@ Manual app testing has already been completed for the active snapshot.
 
 - [x] Shared `MaterialApp` flow with login -> loading -> ready stages
 - [x] Direct-path support through `CopilotRoute`
-- [x] `AIStudioSpecs.presets()` and `AIStudioSpecs.resolve(...)` produce the active hard-coded route sections
-- [x] `NavigationRail` switches between preset routes in the live app shell
+- [x] App-owned hard-coded surface metadata inside `aistudio.dart` drives the live shell
+- [x] `AppBar` surface switching replaces the older `NavigationRail` route switcher
 - [x] The ready state is a dedicated hard-coded three-panel shell that still reuses shared UX widgets
 - [x] Shared `UxTheme` owns theme data plus panel/chrome helpers
-- [x] Current seeded AIStudio route metadata lives in `AIStudioSpecs.buildSection(...)` and remains intentional for this snapshot
+- [x] Current seeded AIStudio surface metadata lives in `aistudio.dart` and remains intentional for this snapshot
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
 - [x] `flutter analyze lib test` passes in the current snapshot
 - [x] The older step history is preserved below as archival context for the pre-`core/ux` implementation path

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:genrp/app/aiwork/aiwork.dart';
+import 'package:genrp/app/aicodex/aicodex.dart';
 
 void main() {
   runApp(const MainApp());
@@ -13,9 +13,6 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AIWorkApp(
-      initialRoutePath: initialRoutePath,
-      autoSignIn: autoSignIn,
-    );
+    return AICodexApp(autoSignIn: autoSignIn);
   }
 }

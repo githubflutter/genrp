@@ -81,8 +81,8 @@ graph TB
     subgraph "App Specs"
         WSP["AIWorkSpecs"]
         BSP["AIBookSpecs"]
-        CSP["AICodexSpecs"]
-        SSP["AIStudioSpecs"]
+        CSP["AICodex App-owned Surfaces"]
+        SSP["AIStudio App-owned Surfaces"]
         URS["UxRouteSpec / UxPaperSpec / UxTemplateSpec"]
     end
 
@@ -191,11 +191,9 @@ genrp/
 │   │   │   ├── aibook.dart               # AIBook MaterialApp + stage flow
 │   │   │   └── aibook_specs.dart         # AIBook preset routes and papers
 │   │   ├── aicodex/
-│   │   │   ├── aicodex.dart              # AICodex MaterialApp + stage flow
-│   │   │   └── aicodex_specs.dart        # AICodex preset routes and papers
+│   │   │   └── aicodex.dart              # AICodex MaterialApp + hard-coded surface flow
 │   │   └── aistudio/
-│   │       ├── aistudio.dart             # AIStudio MaterialApp + stage flow
-│   │       └── aistudio_specs.dart       # AIStudio preset routes and papers
+│   │       └── aistudio.dart             # AIStudio MaterialApp + hard-coded surface flow
 │   └── core/
 │       ├── agent/
 │       │   ├── action_set.dart           # Action registry + dispatch helpers
@@ -801,8 +799,8 @@ Based on the existing handover docs and code analysis:
 | **Entry** | [main.dart](lib/main.dart), [meta.dart](lib/meta.dart) |
 | **AIWork app** | [aiwork.dart](lib/app/aiwork/aiwork.dart), [aiwork_specs.dart](lib/app/aiwork/aiwork_specs.dart) |
 | **AIBook app** | [aibook.dart](lib/app/aibook/aibook.dart), [aibook_specs.dart](lib/app/aibook/aibook_specs.dart) |
-| **AICodex app** | [aicodex.dart](lib/app/aicodex/aicodex.dart), [aicodex_specs.dart](lib/app/aicodex/aicodex_specs.dart) |
-| **AIStudio app** | [aistudio.dart](lib/app/aistudio/aistudio.dart), [aistudio_specs.dart](lib/app/aistudio/aistudio_specs.dart) |
+| **AICodex app** | [aicodex.dart](lib/app/aicodex/aicodex.dart) |
+| **AIStudio app** | [aistudio.dart](lib/app/aistudio/aistudio.dart) |
 | **Agent/Orchestration** | [autopilot.dart](lib/core/agent/autopilot.dart), [copilot_data.dart](lib/core/agent/copilot_data.dart), [copilot_route.dart](lib/core/agent/copilot_route.dart), [copilot_ux.dart](lib/core/agent/copilot_ux.dart), [data_set.dart](lib/core/agent/data_set.dart), [state_set.dart](lib/core/agent/state_set.dart), [action_set.dart](lib/core/agent/action_set.dart) |
 | **Base transport + registries** | [bootstrap.dart](lib/core/base/bootstrap.dart), [x.dart](lib/core/base/x.dart), [data_type.dart](lib/core/base/data_type.dart), [converter.dart](lib/core/base/converter.dart), [systable.dart](lib/core/base/systable.dart), [sysfunc.dart](lib/core/base/sysfunc.dart), [systype.dart](lib/core/base/systype.dart) |
 | **Persistence** | [sqlite_store.dart](lib/core/db/sqlite_store.dart), [db_contract.dart](lib/core/db/db_contract.dart), [pgsqladmin.dart](lib/core/db/pgsqladmin.dart), [pgsqlclient.dart](lib/core/db/pgsqlclient.dart), [sqliteadmin.dart](lib/core/db/sqliteadmin.dart), [sqliteclient.dart](lib/core/db/sqliteclient.dart), [webclient.dart](lib/core/db/webclient.dart), [datasource_helper.dart](lib/core/db/datasource_helper.dart) |

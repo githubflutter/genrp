@@ -2,9 +2,9 @@
 
 Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and schema-application surface.
 
-**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aicodex/aicodex.dart` + `lib/app/aicodex/aicodex_specs.dart` with mock sign-in, direct `CopilotRoute` support, hard-coded route sections, a dedicated hybrid authoring shell, shared `UxTheme`, and shared UX widgets such as `UwTab`, `UwCollection`, `UwPList`, and `UwFrom`. `flutter analyze lib test` passes in the current snapshot, and the active AICodex app has already been manually tested.
+**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aicodex/aicodex.dart` with mock sign-in, direct `CopilotRoute` support, app-owned hard-coded surfaces, a dedicated hybrid authoring shell, shared `UxTheme`, and shared UX widgets such as `UwTab`, `UwCollection`, `UwPList`, and `UwFrom`. `flutter analyze lib test` passes in the current snapshot, and the active AICodex app has already been manually tested.
 
-**Current next step:** Continue the AICodex feature plan inside the dedicated hard-coded shell while reusing shared UX components. The seeded/demo route metadata in `AICodexSpecs` is intentional for now until ID-key rules are discussed.
+**Current next step:** Continue the AICodex feature plan inside the dedicated hard-coded shell while reusing shared UX components. Surface metadata is now app-owned inside `aicodex.dart`, not split into a separate specs file.
 
 **Role:** AICodex is the **sensitive data-model CRUD and schema configurator**. It owns CRUD for model definitions such as Entity, Field, Table, Column, Function, and related rows because those edits can require database recreation or schema regeneration. It also applies those definitions as **create, drop, and function/script** operations against the PostgreSQL backend and SQLite foundation. It does not consume runtime row data the way AIBook does.
 
@@ -31,7 +31,7 @@ Progressive step-by-step plan to build the AICodex sensitive data-model CRUD and
 - functional data-model CRUD and schema work should now continue inside that shared shell
 
 > [!NOTE]
-> The detailed step list below was written for a pre-`core/ux` snapshot where AICodex owned more of the shell/master/detail implementation directly. The current runtime entry points are `lib/app/aicodex/aicodex.dart`, `lib/app/aicodex/aicodex_specs.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux_specs.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+> The detailed step list below was written for a pre-`core/ux` snapshot where AICodex owned more of the shell/master/detail implementation directly. The current runtime entry points are `lib/app/aicodex/aicodex.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux_specs.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
 
 > [!IMPORTANT]
 > Stage note from `new_experiment.md`: AICodex is currently in the hard-coded/demo authoring-shell phase. If older sections below describe SQLite-backed CRUD editing as the current path, treat that as archived or deferred work rather than the live app behavior.
@@ -61,11 +61,11 @@ Manual app testing has already been completed for the active snapshot.
 
 - [x] Shared `MaterialApp` flow with login -> loading -> ready stages
 - [x] Direct-path support through `CopilotRoute`
-- [x] `AICodexSpecs.presets()` and `AICodexSpecs.resolve(...)` produce the active hard-coded route sections
-- [x] `NavigationRail` switches between preset routes in the live app shell
+- [x] App-owned hard-coded surface metadata inside `aicodex.dart` drives the live shell
+- [x] `AppBar` surface switching replaces the older `NavigationRail` route switcher
 - [x] The ready state is a dedicated hard-coded three-panel shell that still reuses shared UX widgets
 - [x] Shared `UxTheme` owns theme data plus panel/chrome helpers
-- [x] Current seeded AICodex route metadata lives in `AICodexSpecs.buildSection(...)` and remains intentional for this snapshot
+- [x] Current seeded AICodex surface metadata lives in `aicodex.dart` and remains intentional for this snapshot
 - [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
 - [x] Backend contract remains documented (single POST endpoint, JSON passthrough, PG router function)
 - [x] `flutter analyze lib test` passes in the current snapshot
