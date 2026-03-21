@@ -38,6 +38,7 @@ class UxRegister {
     11: 'alert',
     12: 'collection',
     13: 'tab',
+    14: 'field',
   };
 
   static String paperId(int pid) => '$pid';
@@ -275,7 +276,7 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
 mixin Uwidget implements Ux {
   // vid -> 1:list, 2:grid, 3:datatable, 4:toolbar,
   // 5:from, 6:plist, 7:card, 8:item, 9:empty,
-  // 10:choose, 11:alert, 12:collection, 13:tab
+  // 10:choose, 11:alert, 12:collection, 13:tab, 14:field
   // n -> same as the mapped view name above
   // Uwidget means Ultra Widget.
   // It is a reusable primitive layer and does not get a shared runtime host by
