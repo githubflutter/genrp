@@ -26,6 +26,7 @@ export 'uwidget/uwfrom.dart';
 export 'uwidget/uwgrid.dart';
 export 'uwidget/uwitem.dart';
 export 'uwidget/uwlist.dart';
+export 'uwidget/uwfield.dart';
 export 'uwidget/uwplist.dart';
 export 'uwidget/uwtab.dart';
 export 'uwidget/uwtoolbar.dart';
