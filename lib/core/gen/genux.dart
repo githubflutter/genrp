@@ -33,7 +33,7 @@ class GenUx {
           collectionRows: crud.collectionRows,
           collectionViewModes: crud.collectionViewModes,
           properties: crud.properties,
-          formChildren: _buildFormFields(crud.formFields),
+          formChildren: _buildFormFields(crud.formFields, autopilot),
           formFooter: Align(
             alignment: Alignment.centerLeft,
             child: Wrap(
@@ -65,13 +65,18 @@ class GenUx {
     }
   }
 
-  static List<Widget> _buildFormFields(List<UxFieldSpec> fields) {
+  static List<Widget> _buildFormFields(List<UxFieldSpec> fields, Autopilot autopilot) {
     return fields
         .map<Widget>(
-          (UxFieldSpec field) => SizedBox(
-            width: field.width,
-            child: TextField(
-              decoration: InputDecoration(labelText: field.label, hintText: field.hint),
+          (UxFieldSpec field) => UwField(
+            i: 0, // Since inline form fields don't have explicit widget IDs in the current design
+            autopilot: autopilot,
+            spec: UwFieldSpec(
+              label: field.label,
+              hint: field.hint,
+              width: field.width,
+              dataTypeId: field.dataTypeId,
+              mode: field.fieldMode,
             ),
           ),
         )

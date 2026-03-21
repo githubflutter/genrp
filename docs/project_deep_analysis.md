@@ -278,7 +278,7 @@ genrp/
 │   │       ├── ux.dart                   # UX barrel export
 │   │       ├── paper/                    # 5 paper widgets
 │   │       ├── template/                 # 8 template widgets
-│   │       └── uwidget/                  # 13 reusable UX widgets
+│   │       └── uwidget/                  # 14 reusable UX widgets
 │   └── hub/                              # Empty directory (reserved)
 ├── test/                                 # No checked-in Dart tests in this working tree
 ├── assets/
@@ -421,7 +421,7 @@ flowchart LR
 2. **`GenUx`** drives the spec-based papers for `AIWork` and `AIBook`.
 3. **`mixins.dart`** centralizes `UxRegister`, `Ux`, `Paper`, `Template`, `Uwidget`, `UxPaperHost`, and `UxTemplateHost`.
 4. **`UxPaperHost` / `UxTemplateHost`** mount scoped paper/template state inside `Autopilot`.
-5. **`Uw*` widgets** (13 total): `uwlist`, `uwgrid`, `uwdatatable`, `uwtoolbar`, `uwfrom`, `uwplist`, `uwcard`, `uwitem`, `uwempty`, `uwchoose`, `uwalert`, `uwcollection`, `uwtab`.
+5. **`Uw*` widgets** (14 total): `uwlist`, `uwgrid`, `uwdatatable`, `uwtoolbar`, `uwfrom`, `uwplist`, `uwcard`, `uwitem`, `uwempty`, `uwchoose`, `uwalert`, `uwcollection`, `uwtab`, `uwfield`.
 6. **Papers** (5): `pzero` through `pfour`.
 7. **Templates** (8): `tcrud` (+ `tcrudheader`, `tcrudfooter`), `tsheet`, `treport`, `tdboard`, `twizard`, `tform`.
 
@@ -683,7 +683,7 @@ graph LR
 | **BData models** (1) | [user_model.dart](lib/core/model/bdata/user_model.dart) |
 | **USchema models** (7) | [ux_specs.dart](lib/core/model/uschema/ux_specs.dart), [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart), [ux_node_spec.dart](lib/core/model/uschema/ux_node_spec.dart), [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart), [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart), [ux_view_spec.dart](lib/core/model/uschema/ux_view_spec.dart), [uxm_template_spec.dart](lib/core/model/uschema/uxm_template_spec.dart) |
 | **Theme** | [theme.dart](lib/core/theme/theme.dart) |
-| **UX runtime** | [genux.dart](lib/core/gen/genux.dart), [mixins.dart](lib/core/ux/mixins.dart), [ux.dart](lib/core/ux/ux.dart), plus `paper/` (5), `template/` (8), and `uwidget/` (13) |
+| **UX runtime** | [genux.dart](lib/core/gen/genux.dart), [mixins.dart](lib/core/ux/mixins.dart), [ux.dart](lib/core/ux/ux.dart), plus `paper/` (5), `template/` (8), and `uwidget/` (14) |
 
 ### Documentation (`docs/` — 12 files)
 

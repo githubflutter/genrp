@@ -149,6 +149,27 @@ class Autopilot extends ChangeNotifier {
     return scope;
   }
 
+  void setChromeState(
+    String key,
+    dynamic value, {
+    bool notify = true,
+  }) {
+    stateSet.setChrome(key, value);
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
+  void patchChromeState(
+    Map<String, dynamic> values, {
+    bool notify = true,
+  }) {
+    stateSet.patchChrome(values);
+    if (notify) {
+      notifyListeners();
+    }
+  }
+
   String mountCurrentTemplate({
     required int templateI,
     Map<String, dynamic> initialState = const <String, dynamic>{},
