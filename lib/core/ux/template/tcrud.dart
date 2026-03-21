@@ -7,7 +7,7 @@ import 'package:genrp/core/ux/template/tcrudheader.dart';
 import 'package:genrp/core/ux/uwidget/uwalert.dart';
 import 'package:genrp/core/ux/uwidget/uwcollection.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
-import 'package:genrp/core/ux/uwidget/uwfrom.dart';
+import 'package:genrp/core/ux/uwidget/uwform.dart';
 import 'package:genrp/core/ux/uwidget/uwplist.dart';
 
 class Tcrud extends StatelessWidget with Template {
@@ -72,40 +72,18 @@ class Tcrud extends StatelessWidget with Template {
     return UxTemplateHost(
       i: i,
       autopilot: autopilot,
-      initialState: <String, dynamic>{
-        'mode': 'browse',
-        'viewMode': initialViewMode,
-        'selectionMode': 'single',
-        'activeId': null,
-        'activeIndex': null,
-        'selectedIds': const <Object?>[],
-      },
+      initialState: <String, dynamic>{'mode': 'browse', 'viewMode': initialViewMode, 'selectionMode': 'single', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]},
       builder: (BuildContext context, String scope) {
         return AnimatedBuilder(
           animation: autopilot,
           builder: (BuildContext context, Widget? child) {
-            final mode =
-                autopilot.templateState<String>(scope, 'mode') ?? 'browse';
-            final viewMode =
-                autopilot.templateState<int>(scope, 'viewMode') ?? 3;
-            final activeId = autopilot.templateState<Object?>(
-              scope,
-              'activeId',
-            );
-            final activeIndex = autopilot.templateState<int>(
-              scope,
-              'activeIndex',
-            );
-            final selectedIds =
-                autopilot.templateState<List<dynamic>>(scope, 'selectedIds') ??
-                const <dynamic>[];
-            final totalCount =
-                autopilot.templateState<int>(scope, 'totalCount') ??
-                collectionRows.length;
-            final errorMessage = autopilot.templateState<String>(
-              scope,
-              'error',
-            );
+            final mode = autopilot.templateState<String>(scope, 'mode') ?? 'browse';
+            final viewMode = autopilot.templateState<int>(scope, 'viewMode') ?? 3;
+            final activeId = autopilot.templateState<Object?>(scope, 'activeId');
+            final activeIndex = autopilot.templateState<int>(scope, 'activeIndex');
+            final selectedIds = autopilot.templateState<List<dynamic>>(scope, 'selectedIds') ?? const <dynamic>[];
+            final totalCount = autopilot.templateState<int>(scope, 'totalCount') ?? collectionRows.length;
+            final errorMessage = autopilot.templateState<String>(scope, 'error');
             final activeLabel = _labelForIndex(activeIndex);
             final activeProperties = _propertiesForIndex(activeIndex);
             final canInspect = collectionRows.isNotEmpty;
@@ -127,32 +105,18 @@ class Tcrud extends StatelessWidget with Template {
               children: collectionChildren,
             );
 
-            final detail = _buildDetail(
-              mode: mode,
-              activeId: activeId,
-              activeIndex: activeIndex,
-              properties: activeProperties,
-              errorMessage: errorMessage,
-            );
+            final detail = _buildDetail(mode: mode, activeId: activeId, activeIndex: activeIndex, properties: activeProperties, errorMessage: errorMessage);
 
             return LayoutBuilder(
               builder: (BuildContext context, BoxConstraints constraints) {
-                final showCollectionBody =
-                    errorMessage == null || errorMessage.isEmpty
-                    ? mode == 'browse'
-                    : false;
+                final showCollectionBody = errorMessage == null || errorMessage.isEmpty ? mode == 'browse' : false;
                 final bodyChild = showCollectionBody
                     ? collection
                     : Container(
                         decoration: UxTheme.softPanelDecoration(context),
-                        child: SingleChildScrollView(
-                          padding: UxTheme.panelPadding,
-                          child: detail,
-                        ),
+                        child: SingleChildScrollView(padding: UxTheme.panelPadding, child: detail),
                       );
-                final mainBody = constraints.hasBoundedHeight
-                    ? Expanded(child: bodyChild)
-                    : SizedBox(height: 760, child: bodyChild);
+                final mainBody = constraints.hasBoundedHeight ? Expanded(child: bodyChild) : SizedBox(height: 760, child: bodyChild);
 
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -170,43 +134,20 @@ class Tcrud extends StatelessWidget with Template {
                       },
                       onBack: () {
                         if (mode == 'edit') {
-                          _setInspect(
-                            scope,
-                            activeId: activeId,
-                            activeIndex: activeIndex,
-                          );
+                          _setInspect(scope, activeId: activeId, activeIndex: activeIndex);
                           return;
                         }
                         _setBrowse(scope);
                       },
                       onNew: () => _setCreate(scope),
-                      onInspect: canInspect
-                          ? () => _setInspect(
-                              scope,
-                              activeId: resolvedId,
-                              activeIndex: resolvedIndex,
-                            )
-                          : null,
-                      onEdit: canInspect
-                          ? () => _setEdit(
-                              scope,
-                              activeId: resolvedId,
-                              activeIndex: resolvedIndex,
-                            )
-                          : null,
+                      onInspect: canInspect ? () => _setInspect(scope, activeId: resolvedId, activeIndex: resolvedIndex) : null,
+                      onEdit: canInspect ? () => _setEdit(scope, activeId: resolvedId, activeIndex: resolvedIndex) : null,
                       onClear: () => _setBrowse(scope),
                     ),
                     const SizedBox(height: 12),
                     mainBody,
                     const SizedBox(height: 12),
-                    TcrudFooter(
-                      i: i * 100 + 3,
-                      autopilot: autopilot,
-                      totalCount: totalCount,
-                      activeLabel: activeLabel,
-                      selectedCount: selectedIds.length,
-                      summaryText: summaryText,
-                    ),
+                    TcrudFooter(i: i * 100 + 3, autopilot: autopilot, totalCount: totalCount, activeLabel: activeLabel, selectedCount: selectedIds.length, summaryText: summaryText),
                   ],
                 );
               },
@@ -217,50 +158,20 @@ class Tcrud extends StatelessWidget with Template {
     );
   }
 
-  Widget _buildDetail({
-    required String mode,
-    required Object? activeId,
-    required int? activeIndex,
-    required Map<String, Object?> properties,
-    required String? errorMessage,
-  }) {
+  Widget _buildDetail({required String mode, required Object? activeId, required int? activeIndex, required Map<String, Object?> properties, required String? errorMessage}) {
     if (errorMessage != null && errorMessage.isNotEmpty) {
-      return UwAlert(
-        i: i * 100 + 14,
-        autopilot: autopilot,
-        s: 4,
-        title: 'Error',
-        message: errorMessage.isNotEmpty ? errorMessage : defaultAlertMessage,
-      );
+      return UwAlert(i: i * 100 + 14, autopilot: autopilot, s: 4, title: 'Error', message: errorMessage.isNotEmpty ? errorMessage : defaultAlertMessage);
     }
 
     if (mode == 'create' || mode == 'edit') {
-      return UwFrom(
-        i: i * 100 + 13,
-        autopilot: autopilot,
-        p: mode == 'create'
-            ? 'Create'
-            : 'Edit${activeId == null ? '' : ' $activeId'}',
-        footer: formFooter,
-        children: formChildren,
-      );
+      return UwForm(i: i * 100 + 13, autopilot: autopilot, p: mode == 'create' ? 'Create' : 'Edit${activeId == null ? '' : ' $activeId'}', footer: formFooter, children: formChildren);
     }
 
     if (mode == 'inspect' && (activeIndex != null || activeId != null)) {
-      return UwPList(
-        i: i * 100 + 12,
-        autopilot: autopilot,
-        p: 'Properties',
-        properties: properties,
-      );
+      return UwPList(i: i * 100 + 12, autopilot: autopilot, p: 'Properties', properties: properties);
     }
 
-    return UwEmpty(
-      i: i * 100 + 11,
-      autopilot: autopilot,
-      title: emptyTitle,
-      message: emptyMessage,
-    );
+    return UwEmpty(i: i * 100 + 11, autopilot: autopilot, title: emptyTitle, message: emptyMessage);
   }
 
   void _selectIndex(String scope, int index) {
@@ -295,14 +206,8 @@ class Tcrud extends StatelessWidget with Template {
     if (index != null && index >= 0 && index < collectionRows.length) {
       final row = collectionRows[index];
       if (collectionColumns.isNotEmpty) {
-        for (
-          var columnIndex = 0;
-          columnIndex < collectionColumns.length;
-          columnIndex++
-        ) {
-          resolved[collectionColumns[columnIndex]] = columnIndex < row.length
-              ? row[columnIndex]
-              : null;
+        for (var columnIndex = 0; columnIndex < collectionColumns.length; columnIndex++) {
+          resolved[collectionColumns[columnIndex]] = columnIndex < row.length ? row[columnIndex] : null;
         }
       } else {
         for (var columnIndex = 0; columnIndex < row.length; columnIndex++) {
@@ -328,28 +233,14 @@ class Tcrud extends StatelessWidget with Template {
   }
 
   void _setBrowse(String scope) {
-    autopilot.patchTemplateState(scope, <String, dynamic>{
-      'mode': 'browse',
-      'activeId': null,
-      'activeIndex': null,
-      'selectedIds': const <Object?>[],
-    });
+    autopilot.patchTemplateState(scope, <String, dynamic>{'mode': 'browse', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
   }
 
   void _setCreate(String scope) {
-    autopilot.patchTemplateState(scope, <String, dynamic>{
-      'mode': 'create',
-      'activeId': null,
-      'activeIndex': null,
-      'selectedIds': const <Object?>[],
-    });
+    autopilot.patchTemplateState(scope, <String, dynamic>{'mode': 'create', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
   }
 
-  void _setInspect(
-    String scope, {
-    required Object? activeId,
-    required int? activeIndex,
-  }) {
+  void _setInspect(String scope, {required Object? activeId, required int? activeIndex}) {
     autopilot.patchTemplateState(scope, <String, dynamic>{
       'mode': activeId == null && activeIndex == null ? 'browse' : 'inspect',
       'activeId': activeId,
@@ -358,11 +249,7 @@ class Tcrud extends StatelessWidget with Template {
     });
   }
 
-  void _setEdit(
-    String scope, {
-    required Object? activeId,
-    required int? activeIndex,
-  }) {
+  void _setEdit(String scope, {required Object? activeId, required int? activeIndex}) {
     autopilot.patchTemplateState(scope, <String, dynamic>{
       'mode': 'edit',
       'activeId': activeId,

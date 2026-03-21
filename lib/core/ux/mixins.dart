@@ -7,29 +7,16 @@ class UxRegister {
   static const int _tierBase = 1000;
   static const int _paperScale = _tierBase * _tierBase;
 
-  static const Map<int, String> papers = <int, String>{
-    0: 'paperzero',
-    1: 'paperone',
-    2: 'papertwo',
-    3: 'paperthree',
-    4: 'paperfour',
-  };
+  static const Map<int, String> papers = <int, String>{0: 'paperzero', 1: 'paperone', 2: 'papertwo', 3: 'paperthree', 4: 'paperfour'};
 
-  static const Map<int, String> templates = <int, String>{
-    1: 'tcrud',
-    2: 'tsheet',
-    3: 'treport',
-    4: 'tdboard',
-    5: 'twizard',
-    6: 'tform',
-  };
+  static const Map<int, String> templates = <int, String>{1: 'tcrud', 2: 'tsheet', 3: 'treport', 4: 'tdboard', 5: 'twizard', 6: 'tform'};
 
   static const Map<int, String> views = <int, String>{
     1: 'list',
     2: 'grid',
     3: 'datatable',
     4: 'toolbar',
-    5: 'from',
+    5: 'form',
     6: 'plist',
     7: 'card',
     8: 'item',
@@ -45,11 +32,7 @@ class UxRegister {
 
   static String templateId({required int pid, required int tid}) => '$pid.$tid';
 
-  static String viewId({
-    required int pid,
-    required int tid,
-    required int vid,
-  }) => '$pid.$tid.$vid';
+  static String viewId({required int pid, required int tid, required int vid}) => '$pid.$tid.$vid';
 
   // Packed structural code rule:
   // pid, tid, and vid each use 3 digits.
@@ -87,11 +70,7 @@ class UxRegister {
 
   static void _validateTier(String name, int value) {
     if (value < 0 || value >= _tierBase) {
-      throw RangeError.value(
-        value,
-        name,
-        'UX tier values must be between 0 and 999',
-      );
+      throw RangeError.value(value, name, 'UX tier values must be between 0 and 999');
     }
   }
 }
@@ -127,13 +106,7 @@ mixin Paper implements Ux {
 class UxPaperHost extends StatefulWidget {
   // Paper-scoped runtime host. Keep this with Paper so lifecycle ownership is
   // obvious at the page layer.
-  const UxPaperHost({
-    required this.i,
-    required this.autopilot,
-    required this.child,
-    this.initialState = const <String, dynamic>{},
-    super.key,
-  });
+  const UxPaperHost({required this.i, required this.autopilot, required this.child, this.initialState = const <String, dynamic>{}, super.key});
 
   final int i;
   final Autopilot autopilot;
@@ -150,11 +123,7 @@ class _UxPaperHostState extends State<UxPaperHost> {
 
   void _mount() {
     _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    _scope = widget.autopilot.mountPaper(
-      paperI: widget.i,
-      initialState: widget.initialState,
-      notify: false,
-    );
+    _scope = widget.autopilot.mountPaper(paperI: widget.i, initialState: widget.initialState, notify: false);
   }
 
   @override
@@ -167,10 +136,7 @@ class _UxPaperHostState extends State<UxPaperHost> {
   void didUpdateWidget(covariant UxPaperHost oldWidget) {
     super.didUpdateWidget(oldWidget);
     final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
-    final needsRemount =
-        oldWidget.autopilot != widget.autopilot ||
-        oldWidget.i != widget.i ||
-        nextRouteScope != _routeScope;
+    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
     if (!needsRemount) return;
 
     oldWidget.autopilot.clearPaperScope(_scope, notify: false);
@@ -209,13 +175,7 @@ mixin Template implements Ux {
 class UxTemplateHost extends StatefulWidget {
   // Template-scoped runtime host. Keep this with Template so lifecycle
   // ownership stays next to the consuming layer.
-  const UxTemplateHost({
-    required this.i,
-    required this.autopilot,
-    required this.builder,
-    this.initialState = const <String, dynamic>{},
-    super.key,
-  });
+  const UxTemplateHost({required this.i, required this.autopilot, required this.builder, this.initialState = const <String, dynamic>{}, super.key});
 
   final int i;
   final Autopilot autopilot;
@@ -234,11 +194,7 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
   void _mount() {
     _routeScope = widget.autopilot.currentRoute?.scopeKey;
     _paperI = widget.autopilot.currentPaperI;
-    _scope = widget.autopilot.mountCurrentTemplate(
-      templateI: widget.i,
-      initialState: widget.initialState,
-      notify: false,
-    );
+    _scope = widget.autopilot.mountCurrentTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
   }
 
   @override
@@ -252,11 +208,7 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
     super.didUpdateWidget(oldWidget);
     final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
     final nextPaperI = widget.autopilot.currentPaperI;
-    final needsRemount =
-        oldWidget.autopilot != widget.autopilot ||
-        oldWidget.i != widget.i ||
-        nextRouteScope != _routeScope ||
-        nextPaperI != _paperI;
+    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope || nextPaperI != _paperI;
     if (!needsRemount) return;
 
     oldWidget.autopilot.clearTemplateScope(_scope, notify: false);

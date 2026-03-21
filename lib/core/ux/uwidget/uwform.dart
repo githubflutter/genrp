@@ -4,17 +4,8 @@ import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwFrom extends StatelessWidget with Uwidget {
-  const UwFrom({
-    required this.i,
-    required this.autopilot,
-    this.s = 0,
-    super.key,
-    this.p = '',
-    this.title,
-    this.children = const <Widget>[],
-    this.footer,
-  });
+class UwForm extends StatelessWidget with Uwidget {
+  const UwForm({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.children = const <Widget>[], this.footer});
 
   @override
   final int vid = 5;
@@ -41,14 +32,8 @@ class UwFrom extends StatelessWidget with Uwidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        if (resolvedTitle.isNotEmpty) ...<Widget>[
-          Text(resolvedTitle, style: UxTheme.titleStyle(context)),
-          const SizedBox(height: 12),
-        ],
-        if (children.isEmpty)
-          UwEmpty(i: i, autopilot: autopilot, p: 'No form content')
-        else
-          ...children,
+        if (resolvedTitle.isNotEmpty) ...<Widget>[Text(resolvedTitle, style: UxTheme.titleStyle(context)), const SizedBox(height: 12)],
+        if (children.isEmpty) UwEmpty(i: i, autopilot: autopilot, p: 'No form content') else ...children,
         if (footer != null) ...<Widget>[const SizedBox(height: 16), footer!],
       ],
     );

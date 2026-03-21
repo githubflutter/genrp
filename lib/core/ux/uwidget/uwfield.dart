@@ -112,14 +112,7 @@ class UwFieldCallbacks {
 }
 
 class UwField extends StatefulWidget with Uwidget {
-  const UwField({
-    required this.i,
-    required this.autopilot,
-    required this.spec,
-    this.callbacks = const UwFieldCallbacks(),
-    this.s = 0,
-    super.key,
-  });
+  const UwField({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
 
   @override
   final int vid = 14;
@@ -169,9 +162,13 @@ class _UwFieldState extends State<UwField> {
   void _syncValue() {
     final value = widget.spec.value;
     if (value != null) {
-      _controller.text = value.toString();
+      if (widget.spec.effectiveMode == UwFieldMode.bool_) {
+        _controller.text = value == true ? 'Yes' : 'No';
+      } else {
+        _controller.text = value.toString();
+      }
     } else {
-      _controller.text = '';
+      _controller.text = widget.spec.effectiveMode == UwFieldMode.bool_ ? 'No' : '';
     }
   }
 
@@ -201,36 +198,16 @@ class _UwFieldState extends State<UwField> {
         return _buildJsonMode();
       case UwFieldMode.date:
       case UwFieldMode.datetime:
-        return UwFieldPicker(
-          spec: widget.spec,
-          callbacks: widget.callbacks,
-          controller: _controller,
-          isDatetime: mode == UwFieldMode.datetime,
-        );
+        return UwFieldPicker(spec: widget.spec, callbacks: widget.callbacks, controller: _controller, isDatetime: mode == UwFieldMode.datetime);
       case UwFieldMode.combo:
       case UwFieldMode.select:
-        return UwFieldOverlay(
-          spec: widget.spec,
-          callbacks: widget.callbacks,
-          controller: _controller,
-          isSelectMode: mode == UwFieldMode.select,
-          isTagAddMode: false,
-        );
+        return UwFieldOverlay(spec: widget.spec, callbacks: widget.callbacks, controller: _controller, isSelectMode: mode == UwFieldMode.select, isTagAddMode: false);
       case UwFieldMode.link:
-        return UwFieldToggle(
-          spec: widget.spec,
-          callbacks: widget.callbacks,
-          autopilot: widget.autopilot,
-          controller: _controller,
-        );
+        return UwFieldToggle(spec: widget.spec, callbacks: widget.callbacks, autopilot: widget.autopilot, controller: _controller);
       case UwFieldMode.tag:
         return _buildTagMode();
       case UwFieldMode.filter:
-        return UwFieldFilter(
-          spec: widget.spec,
-          callbacks: widget.callbacks,
-          controller: _controller,
-        );
+        return UwFieldFilter(spec: widget.spec, callbacks: widget.callbacks, controller: _controller);
       case UwFieldMode.text:
         return _buildTextMode();
     }
@@ -250,9 +227,7 @@ class _UwFieldState extends State<UwField> {
             decoration: InputDecoration(
               labelText: widget.spec.label,
               hintText: widget.spec.hint,
-              suffixIcon: (widget.spec.rightIcon != null || _controller.text.isNotEmpty)
-                  ? _buildRightButton(widget.spec.rightIcon ?? Icons.clear, widget.spec.rightTooltip)
-                  : null,
+              suffixIcon: (widget.spec.rightIcon != null || _controller.text.isNotEmpty) ? _buildRightButton(widget.spec.rightIcon ?? Icons.clear, widget.spec.rightTooltip) : null,
             ),
             onChanged: (String val) {
               setState(() {});
@@ -271,11 +246,6 @@ class _UwFieldState extends State<UwField> {
 
   Widget _buildBoolMode() {
     final boolValue = widget.spec.value == true;
-    final textValue = boolValue ? 'Yes' : 'No';
-    if (_controller.text != textValue) {
-      _controller.text = textValue;
-    }
-
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -327,9 +297,7 @@ class _UwFieldState extends State<UwField> {
             decoration: InputDecoration(
               labelText: widget.spec.label,
               hintText: widget.spec.hint ?? '{\n  "key": "value"\n}',
-              suffixIcon: widget.spec.rightIcon != null
-                  ? _buildRightButton(widget.spec.rightIcon!, widget.spec.rightTooltip)
-                  : null,
+              suffixIcon: widget.spec.rightIcon != null ? _buildRightButton(widget.spec.rightIcon!, widget.spec.rightTooltip) : null,
             ),
             onChanged: (String val) {
               setState(() {});
@@ -347,12 +315,16 @@ class _UwFieldState extends State<UwField> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          _buildLeftButton(Icons.add, 'View tags', onPressed: () {
-            setState(() {
-              _isTagAddMode = false;
-              _controller.clear();
-            });
-          }),
+          _buildLeftButton(
+            Icons.add,
+            'View tags',
+            onPressed: () {
+              setState(() {
+                _isTagAddMode = false;
+                _controller.clear();
+              });
+            },
+          ),
           Expanded(
             child: UwFieldOverlay(
               spec: widget.spec,
@@ -374,20 +346,24 @@ class _UwFieldState extends State<UwField> {
               isTagAddMode: true,
             ),
           ),
-          _buildRightButton(Icons.add, 'Add tag', onPressed: () {
-            final val = _controller.text.trim();
-            if (val.isNotEmpty) {
-              final tags = List<dynamic>.from(widget.spec.tags ?? <dynamic>[]);
-              if (!widget.spec.allowDuplicates && tags.contains(val)) {
-                return;
+          _buildRightButton(
+            Icons.add,
+            'Add tag',
+            onPressed: () {
+              final val = _controller.text.trim();
+              if (val.isNotEmpty) {
+                final tags = List<dynamic>.from(widget.spec.tags ?? <dynamic>[]);
+                if (!widget.spec.allowDuplicates && tags.contains(val)) {
+                  return;
+                }
+                tags.add(val);
+                widget.callbacks.onTagAdded?.call(val);
+                widget.callbacks.onChanged?.call(tags);
+                _controller.clear();
+                setState(() {});
               }
-              tags.add(val);
-              widget.callbacks.onTagAdded?.call(val);
-              widget.callbacks.onChanged?.call(tags);
-              _controller.clear();
-              setState(() {});
-            }
-          }),
+            },
+          ),
         ],
       );
     }
@@ -396,12 +372,16 @@ class _UwFieldState extends State<UwField> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
-        _buildLeftButton(Icons.visibility, 'Add tags', onPressed: () {
-          setState(() {
-            _isTagAddMode = true;
-            _isDeleteMode = false;
-          });
-        }),
+        _buildLeftButton(
+          Icons.visibility,
+          'Add tags',
+          onPressed: () {
+            setState(() {
+              _isTagAddMode = true;
+              _isDeleteMode = false;
+            });
+          },
+        ),
         Expanded(
           child: UwFieldChips(
             spec: widget.spec,
@@ -416,11 +396,15 @@ class _UwFieldState extends State<UwField> {
             isDeleteMode: _isDeleteMode,
           ),
         ),
-        _buildRightButton(_isDeleteMode ? Icons.check : Icons.delete, _isDeleteMode ? 'Done' : 'Delete tags', onPressed: () {
-          setState(() {
-            _isDeleteMode = !_isDeleteMode;
-          });
-        }),
+        _buildRightButton(
+          _isDeleteMode ? Icons.check : Icons.delete,
+          _isDeleteMode ? 'Done' : 'Delete tags',
+          onPressed: () {
+            setState(() {
+              _isDeleteMode = !_isDeleteMode;
+            });
+          },
+        ),
       ],
     );
   }
@@ -438,9 +422,7 @@ class _UwFieldState extends State<UwField> {
             decoration: InputDecoration(
               labelText: widget.spec.label,
               hintText: widget.spec.hint,
-              suffixIcon: (widget.spec.rightIcon != null || _controller.text.isNotEmpty)
-                  ? _buildRightButton(widget.spec.rightIcon ?? Icons.clear, widget.spec.rightTooltip)
-                  : null,
+              suffixIcon: (widget.spec.rightIcon != null || _controller.text.isNotEmpty) ? _buildRightButton(widget.spec.rightIcon ?? Icons.clear, widget.spec.rightTooltip) : null,
             ),
             onChanged: (String val) {
               setState(() {}); // to toggle suffix icon
@@ -470,15 +452,21 @@ class _UwFieldState extends State<UwField> {
       iconSize: 16,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-      onPressed: onPressed ?? () {
-        if (widget.callbacks.onRightPressed != null) {
-          widget.callbacks.onRightPressed!();
-        } else if (icon == Icons.clear) {
-          _controller.clear();
-          widget.callbacks.onChanged?.call('');
-          setState(() {});
-        }
-      },
+      onPressed:
+          onPressed ??
+          () {
+            if (widget.callbacks.onRightPressed != null) {
+              widget.callbacks.onRightPressed!();
+            } else if (icon == Icons.clear) {
+              _controller.clear();
+              if (widget.spec.effectiveMode == UwFieldMode.number) {
+                widget.callbacks.onChanged?.call(null);
+              } else {
+                widget.callbacks.onChanged?.call('');
+              }
+              setState(() {});
+            }
+          },
     );
   }
 }
