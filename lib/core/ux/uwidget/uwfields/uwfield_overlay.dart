@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/core/ux/uwidget/uwfield.dart';
 
-class UwFieldOverlay extends StatefulWidget {
-  const UwFieldOverlay({
-    required this.spec,
-    required this.callbacks,
-    required this.controller,
-    required this.isSelectMode,
-    required this.isTagAddMode,
-    super.key,
-  });
+/// Dedicated combo/select field widget with suggestion overlay.
+///
+/// Use this directly for better performance when you know you need combo/select mode,
+/// or use [UwField] with [UwFieldMode.combo] or [UwFieldMode.select] for mode-dispatched convenience.
+class UwFieldOverlay extends StatefulWidget with Uwidget {
+  const UwFieldOverlay({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
 
-  final UwFieldSpec spec;
+  @override
+  final int vid = 14;
+  @override
+  final int s;
+  @override
+  final int i;
+  @override
+  final String n = 'field_overlay';
+
+  final Autopilot autopilot;
+  final UwFieldOverlaySpec spec;
   final UwFieldCallbacks callbacks;
-  final TextEditingController controller;
-  final bool isSelectMode;
-  final bool isTagAddMode;
 
   @override
   State<UwFieldOverlay> createState() => _UwFieldOverlayState();
@@ -26,10 +32,12 @@ class _UwFieldOverlayState extends State<UwFieldOverlay> {
   final FocusNode _focusNode = FocusNode();
   OverlayEntry? _overlayEntry;
   List<dynamic> _filteredItems = <dynamic>[];
+  late TextEditingController _controller;
 
   @override
   void initState() {
     super.initState();
+    _controller = TextEditingController(text: _formatValue(widget.spec.value));
     _filteredItems = _getAvailableItems();
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
@@ -38,32 +46,33 @@ class _UwFieldOverlayState extends State<UwFieldOverlay> {
         _hideOverlay();
       }
     });
-    if (!widget.isSelectMode && !widget.isTagAddMode) {
-      widget.controller.addListener(_onTextChanged);
+    if (!widget.spec.isSelectMode) {
+      _controller.addListener(_onTextChanged);
     }
   }
 
   @override
   void dispose() {
     _focusNode.dispose();
+    _controller.dispose();
     _hideOverlay();
-    if (!widget.isSelectMode && !widget.isTagAddMode) {
-      widget.controller.removeListener(_onTextChanged);
-    }
     super.dispose();
   }
 
-  List<dynamic> _getAvailableItems() {
-    List<dynamic> all = <dynamic>[];
-    if (widget.isTagAddMode) {
-      all.addAll(widget.spec.tags ?? <dynamic>[]);
+  String _formatValue(dynamic value) {
+    if (value == null) return '';
+    if (widget.spec.itemLabelBuilder != null) {
+      return widget.spec.itemLabelBuilder!(value);
     }
-    all.addAll(widget.spec.items ?? <dynamic>[]);
-    return all.toSet().toList(); // Quick deduplicate
+    return value.toString();
+  }
+
+  List<dynamic> _getAvailableItems() {
+    return widget.spec.items ?? <dynamic>[];
   }
 
   void _onTextChanged() {
-    final text = widget.controller.text.toLowerCase();
+    final text = _controller.text.toLowerCase();
     setState(() {
       if (text.isEmpty) {
         _filteredItems = _getAvailableItems();
@@ -105,12 +114,8 @@ class _UwFieldOverlayState extends State<UwFieldOverlay> {
                     return ListTile(
                       title: Text(label),
                       onTap: () {
-                        widget.controller.text = label;
-                        if (widget.isTagAddMode) {
-                          widget.callbacks.onTagAdded?.call(item);
-                        } else {
-                          widget.callbacks.onChanged?.call(item);
-                        }
+                        _controller.text = label;
+                        widget.callbacks.onChanged?.call(item);
                         _hideOverlay();
                         _focusNode.unfocus();
                       },
@@ -134,16 +139,16 @@ class _UwFieldOverlayState extends State<UwFieldOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    return CompositedTransformTarget(
+    Widget fieldBody = CompositedTransformTarget(
       link: _layerLink,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: <Widget>[
-          if (widget.spec.leftIcon != null || widget.spec.mode == UwFieldMode.combo || widget.spec.mode == UwFieldMode.select)
+          if (widget.spec.leftIcon != null)
             IconButton(
-              icon: Icon(widget.spec.leftIcon ?? Icons.refresh),
-              tooltip: widget.spec.leftTooltip ?? 'Refresh',
+              icon: Icon(widget.spec.leftIcon),
+              tooltip: widget.spec.leftTooltip,
               iconSize: 16,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
@@ -151,15 +156,13 @@ class _UwFieldOverlayState extends State<UwFieldOverlay> {
             ),
           Expanded(
             child: GestureDetector(
-              onTap: widget.isSelectMode ? () {
-                _focusNode.requestFocus();
-                _showOverlay();
-              } : null,
-              child: TextField(
-                controller: widget.controller,
-                focusNode: _focusNode,
-                readOnly: widget.isSelectMode,
-                enabled: !widget.spec.readOnly,
+              onTap: widget.spec.isSelectMode
+                  ? () {
+                      _focusNode.requestFocus();
+                      _showOverlay();
+                    }
+                  : null,
+              child: InputDecorator(
                 decoration: InputDecoration(
                   labelText: widget.spec.label,
                   hintText: widget.spec.hint,
@@ -169,27 +172,67 @@ class _UwFieldOverlayState extends State<UwFieldOverlay> {
                     iconSize: 16,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    onPressed: widget.spec.readOnly ? null : () {
-                      if (_focusNode.hasFocus && _overlayEntry != null) {
-                        _hideOverlay();
-                        _focusNode.unfocus();
-                      } else {
-                        _focusNode.requestFocus();
-                        _showOverlay();
-                      }
-                    },
+                    onPressed: widget.spec.readOnly
+                        ? null
+                        : () {
+                            if (_focusNode.hasFocus && _overlayEntry != null) {
+                              _hideOverlay();
+                              _focusNode.unfocus();
+                            } else {
+                              _focusNode.requestFocus();
+                              _showOverlay();
+                            }
+                          },
                   ),
                 ),
-                onSubmitted: widget.isTagAddMode ? (String val) {
-                  if (val.trim().isNotEmpty) {
-                    widget.callbacks.onTagAdded?.call(val.trim());
-                  }
-                } : null,
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  readOnly: widget.spec.isSelectMode,
+                  enabled: !widget.spec.readOnly,
+                  decoration: const InputDecoration.collapsed(hintText: ''),
+                ),
               ),
             ),
           ),
         ],
       ),
     );
+
+    if (widget.spec.width != null) {
+      fieldBody = SizedBox(width: widget.spec.width, child: fieldBody);
+    }
+    return fieldBody;
   }
+}
+
+/// Spec for [UwFieldOverlay] - combo/select with suggestion overlay.
+class UwFieldOverlaySpec {
+  const UwFieldOverlaySpec({
+    this.label,
+    this.hint,
+    this.width,
+    this.value,
+    this.readOnly = false,
+    this.isSelectMode = false,
+    this.items,
+    this.itemLabelBuilder,
+    this.leftIcon,
+    this.leftTooltip,
+    this.rightIcon,
+    this.rightTooltip,
+  });
+
+  final String? label;
+  final String? hint;
+  final double? width;
+  final dynamic value;
+  final bool readOnly;
+  final bool isSelectMode; // true = select (read-only), false = combo (editable)
+  final List<dynamic>? items;
+  final String Function(dynamic)? itemLabelBuilder;
+  final IconData? leftIcon;
+  final String? leftTooltip;
+  final IconData? rightIcon;
+  final String? rightTooltip;
 }

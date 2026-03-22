@@ -1,30 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/core/ux/uwidget/uwfield.dart';
 
-class UwFieldFilter extends StatefulWidget {
-  const UwFieldFilter({
-    required this.spec,
-    required this.callbacks,
-    required this.controller,
-    super.key,
-  });
+/// Dedicated filter field widget with operator cycling.
+///
+/// Use this directly for better performance when you know you need filter mode,
+/// or use [UwField] with [UwFieldMode.filter] for mode-dispatched convenience.
+class UwFieldFilter extends StatefulWidget with Uwidget {
+  const UwFieldFilter({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
 
-  final UwFieldSpec spec;
+  @override
+  final int vid = 14;
+  @override
+  final int s;
+  @override
+  final int i;
+  @override
+  final String n = 'field_filter';
+
+  final Autopilot autopilot;
+  final UwFieldFilterSpec spec;
   final UwFieldCallbacks callbacks;
-  final TextEditingController controller;
 
   @override
   State<UwFieldFilter> createState() => _UwFieldFilterState();
 }
 
 class _UwFieldFilterState extends State<UwFieldFilter> {
+  late TextEditingController _controller;
   late FilterOp _currentOp;
   bool _isApplied = false;
 
   @override
   void initState() {
     super.initState();
+    _controller = TextEditingController();
     _currentOp = widget.spec.filterOp;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void _cycleOp() {
@@ -53,18 +71,12 @@ class _UwFieldFilterState extends State<UwFieldFilter> {
     setState(() {
       _isApplied = true;
     });
-    widget.callbacks.onFilterApplied?.call({
-      'op': _currentOp,
-      'value': widget.controller.text,
-    });
-    widget.callbacks.onChanged?.call({
-      'op': _currentOp,
-      'value': widget.controller.text,
-    });
+    widget.callbacks.onFilterApplied?.call({'op': _currentOp, 'value': _controller.text});
+    widget.callbacks.onChanged?.call({'op': _currentOp, 'value': _controller.text});
   }
 
   void _clear() {
-    widget.controller.clear();
+    _controller.clear();
     setState(() {
       _isApplied = false;
       _currentOp = FilterOp.contains;
@@ -75,25 +87,33 @@ class _UwFieldFilterState extends State<UwFieldFilter> {
 
   String _badgeLabel() {
     switch (_currentOp) {
-      case FilterOp.contains: return 'C';
-      case FilterOp.startsWith: return 'S';
-      case FilterOp.endsWith: return 'E';
-      case FilterOp.except: return 'X';
+      case FilterOp.contains:
+        return 'C';
+      case FilterOp.startsWith:
+        return 'S';
+      case FilterOp.endsWith:
+        return 'E';
+      case FilterOp.except:
+        return 'X';
     }
   }
 
   Color _badgeColor(BuildContext context) {
     switch (_currentOp) {
-      case FilterOp.contains: return Colors.blue;
-      case FilterOp.startsWith: return Colors.green;
-      case FilterOp.endsWith: return Colors.orange;
-      case FilterOp.except: return Colors.red;
+      case FilterOp.contains:
+        return Colors.blue;
+      case FilterOp.startsWith:
+        return Colors.green;
+      case FilterOp.endsWith:
+        return Colors.orange;
+      case FilterOp.except:
+        return Colors.red;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    Widget fieldBody = Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: <Widget>[
@@ -103,10 +123,7 @@ class _UwFieldFilterState extends State<UwFieldFilter> {
             width: 24,
             height: 24,
             alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: _badgeColor(context),
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: _badgeColor(context), shape: BoxShape.circle),
             child: Text(
               _badgeLabel(),
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
@@ -116,7 +133,7 @@ class _UwFieldFilterState extends State<UwFieldFilter> {
         const SizedBox(width: 8),
         Expanded(
           child: TextField(
-            controller: widget.controller,
+            controller: _controller,
             decoration: InputDecoration(
               labelText: widget.spec.label,
               hintText: widget.spec.hint ?? 'Search...',
@@ -140,5 +157,22 @@ class _UwFieldFilterState extends State<UwFieldFilter> {
         ),
       ],
     );
+
+    if (widget.spec.width != null) {
+      fieldBody = SizedBox(width: widget.spec.width, child: fieldBody);
+    }
+    return fieldBody;
   }
+}
+
+/// Spec for [UwFieldFilter] - filter with operator cycling.
+class UwFieldFilterSpec {
+  const UwFieldFilterSpec({this.label, this.hint, this.width, this.filterOp = FilterOp.contains, this.leftTooltip, this.rightTooltip});
+
+  final String? label;
+  final String? hint;
+  final double? width;
+  final FilterOp filterOp;
+  final String? leftTooltip;
+  final String? rightTooltip;
 }

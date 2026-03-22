@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
+import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/core/ux/uwidget/uwfield.dart';
 
 class UwFieldToggle extends StatefulWidget {

@@ -75,6 +75,88 @@ class UxRegister {
   }
 }
 
+enum UwFieldMode {
+  text(1),
+  number(2),
+  combo(3),
+  select(4),
+  date(5),
+  datetime(6),
+  dates(7),
+  datetimes(8),
+  daterange(9),
+  datetimerange(10),
+  bool_(11),
+  json(12),
+  link(13),
+  tag(14),
+  filter(15),
+  file(16),
+  color(17),
+  checklist(18);
+
+  const UwFieldMode(this.code);
+
+  final int code;
+
+  static const Map<int, UwFieldMode> byCode = <int, UwFieldMode>{
+    1: text,
+    2: number,
+    3: combo,
+    4: select,
+    5: date,
+    6: datetime,
+    7: dates,
+    8: datetimes,
+    9: daterange,
+    10: datetimerange,
+    11: bool_,
+    12: json,
+    13: link,
+    14: tag,
+    15: filter,
+    16: file,
+    17: color,
+    18: checklist,
+  };
+
+  static const Map<String, UwFieldMode> _byName = <String, UwFieldMode>{
+    'text': text,
+    'number': number,
+    'combo': combo,
+    'select': select,
+    'date': date,
+    'datetime': datetime,
+    'dates': dates,
+    'datetimes': datetimes,
+    'daterange': daterange,
+    'datetimerange': datetimerange,
+    'bool_': bool_,
+    'bool': bool_,
+    'json': json,
+    'link': link,
+    'tag': tag,
+    'filter': filter,
+    'file': file,
+    'color': color,
+    'checklist': checklist,
+  };
+
+  static UwFieldMode fromCode(int? code, {UwFieldMode fallback = UwFieldMode.text}) {
+    return byCode[code] ?? fallback;
+  }
+
+  static UwFieldMode fromJsonValue(Object? raw, {UwFieldMode fallback = UwFieldMode.text}) {
+    if (raw is int) return fromCode(raw, fallback: fallback);
+    if (raw is String) {
+      return _byName[raw.trim().toLowerCase()] ?? fallback;
+    }
+    return fallback;
+  }
+}
+
+enum FilterOp { contains, startsWith, endsWith, except }
+
 mixin Ux {
   int get i;
   String get n;
