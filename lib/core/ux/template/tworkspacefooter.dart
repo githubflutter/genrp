@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
-class TcrudFooter extends StatelessWidget {
-  const TcrudFooter({
+class TworkspaceFooter extends StatelessWidget {
+  const TworkspaceFooter({
     required this.i,
     required this.autopilot,
     required this.totalCount,

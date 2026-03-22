@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/model/uschema/ux_action_holder_spec.dart';
+import 'package:genrp/core/model/uschema/ux_template_action_spec.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
-import 'package:genrp/core/ux/template/tcrudfooter.dart';
-import 'package:genrp/core/ux/template/tcrudheader.dart';
+import 'package:genrp/core/ux/draggable_fab.dart';
 import 'package:genrp/core/ux/uwidget/uwalert.dart';
 import 'package:genrp/core/ux/uwidget/uwcollection.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/uwidget/uwform.dart';
 import 'package:genrp/core/ux/uwidget/uwplist.dart';
+import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
-class Tcrud extends StatelessWidget with Template {
-  const Tcrud({
+class Tworkspace extends StatelessWidget with Template {
+  const Tworkspace({
     required this.i,
     required this.autopilot,
     this.s = 0,
@@ -23,6 +25,8 @@ class Tcrud extends StatelessWidget with Template {
     this.collectionChildren = const <Widget>[],
     this.collectionViewModes = const <int>[3],
     this.properties = const <String, Object?>{},
+    this.actions = const <UxTemplateActionSpec>[],
+    this.actionHolders = const <UxActionHolderSpec>[],
     this.formChildren = const <Widget>[],
     this.formFooter,
     this.emptyTitle = 'No selection',
@@ -51,6 +55,8 @@ class Tcrud extends StatelessWidget with Template {
   final List<Widget> collectionChildren;
   final List<int> collectionViewModes;
   final Map<String, Object?> properties;
+  final List<UxTemplateActionSpec> actions;
+  final List<UxActionHolderSpec> actionHolders;
   final List<Widget> formChildren;
   final Widget? formFooter;
   final String emptyTitle;
@@ -60,7 +66,7 @@ class Tcrud extends StatelessWidget with Template {
   final int detailFlex;
 
   @override
-  final String n = 'tcrud';
+  final String n = 'tworkspace';
 
   @override
   Widget build(BuildContext context) {
@@ -118,36 +124,49 @@ class Tcrud extends StatelessWidget with Template {
                       );
                 final mainBody = constraints.hasBoundedHeight ? Expanded(child: bodyChild) : SizedBox(height: 760, child: bodyChild);
 
-                return Column(
+                final topToolbar = _buildTopToolbar(
+                  mode: mode,
+                  currentViewMode: viewMode,
+                  availableViewModes: allowedViewModes,
+                  canInspect: canInspect,
+                  scope: scope,
+                  activeId: activeId,
+                  activeIndex: activeIndex,
+                  resolvedId: resolvedId,
+                  resolvedIndex: resolvedIndex,
+                );
+                final bottomToolbar = _buildBottomToolbar(
+                  totalCount: totalCount,
+                  activeLabel: activeLabel,
+                  selectedCount: selectedIds.length,
+                );
+                final floatingHolder = _holderFor(
+                  UxActionHolderPosition.floating,
+                  UxActionHolderPresentation.floatingIsland,
+                );
+                final bodyColumn = Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
-                    TcrudHeader(
-                      i: i * 100 + 1,
-                      autopilot: autopilot,
-                      mode: mode,
-                      currentViewMode: viewMode,
-                      availableViewModes: allowedViewModes,
-                      oid: oid,
-                      canInspect: canInspect,
-                      onViewModeChanged: (int nextMode) {
-                        autopilot.setTemplateState(scope, 'viewMode', nextMode);
-                      },
-                      onBack: () {
-                        if (mode == 'edit') {
-                          _setInspect(scope, activeId: activeId, activeIndex: activeIndex);
-                          return;
-                        }
-                        _setBrowse(scope);
-                      },
-                      onNew: () => _setCreate(scope),
-                      onInspect: canInspect ? () => _setInspect(scope, activeId: resolvedId, activeIndex: resolvedIndex) : null,
-                      onEdit: canInspect ? () => _setEdit(scope, activeId: resolvedId, activeIndex: resolvedIndex) : null,
-                      onClear: () => _setBrowse(scope),
-                    ),
-                    const SizedBox(height: 12),
+                    if (topToolbar case final Widget toolbar) ...<Widget>[
+                      toolbar,
+                      const SizedBox(height: 12),
+                    ],
                     mainBody,
-                    const SizedBox(height: 12),
-                    TcrudFooter(i: i * 100 + 3, autopilot: autopilot, totalCount: totalCount, activeLabel: activeLabel, selectedCount: selectedIds.length, summaryText: summaryText),
+                    if (bottomToolbar case final Widget toolbar) ...<Widget>[
+                      const SizedBox(height: 12),
+                      toolbar,
+                    ],
+                  ],
+                );
+
+                return Stack(
+                  children: <Widget>[
+                    bodyColumn,
+                    if (floatingHolder != null)
+                      DraggableFAB(
+                        actions: _actionsForHolder(floatingHolder),
+                        onAction: _handleTemplateAction,
+                      ),
                   ],
                 );
               },
@@ -173,6 +192,187 @@ class Tcrud extends StatelessWidget with Template {
 
     return UwEmpty(i: i * 100 + 11, autopilot: autopilot, title: emptyTitle, message: emptyMessage);
   }
+
+  Widget? _buildTopToolbar({
+    required String mode,
+    required int currentViewMode,
+    required List<int> availableViewModes,
+    required bool canInspect,
+    required String scope,
+    required Object? activeId,
+    required int? activeIndex,
+    required Object? resolvedId,
+    required int? resolvedIndex,
+  }) {
+    final holder = _holderFor(
+      UxActionHolderPosition.top,
+      UxActionHolderPresentation.toolbar,
+    );
+    if (holder == null || !holder.visible) return null;
+    return UwToolbar(
+      i: i * 100 + 1,
+      autopilot: autopilot,
+      s: 2,
+      leftChildren: <Widget>[
+        ..._buildLeadControl(
+          mode: mode,
+          currentViewMode: currentViewMode,
+          availableViewModes: availableViewModes,
+          onBack: () {
+            if (mode == 'edit') {
+              _setInspect(scope, activeId: activeId, activeIndex: activeIndex);
+              return;
+            }
+            _setBrowse(scope);
+          },
+          onViewModeChanged: (int nextMode) {
+            autopilot.setTemplateState(scope, 'viewMode', nextMode);
+          },
+        ),
+        if (oid.isNotEmpty) Text('OID $oid'),
+      ],
+      rightChildren: <Widget>[
+        TextButton(onPressed: () => _setCreate(scope), child: const Text('New')),
+        TextButton(
+          onPressed: canInspect
+              ? () => _setInspect(
+                    scope,
+                    activeId: resolvedId,
+                    activeIndex: resolvedIndex,
+                  )
+              : null,
+          child: const Text('Inspect'),
+        ),
+        TextButton(
+          onPressed: canInspect
+              ? () => _setEdit(
+                    scope,
+                    activeId: resolvedId,
+                    activeIndex: resolvedIndex,
+                  )
+              : null,
+          child: const Text('Edit'),
+        ),
+        TextButton(onPressed: () => _setBrowse(scope), child: const Text('Clear')),
+      ],
+    );
+  }
+
+  Widget? _buildBottomToolbar({
+    required int totalCount,
+    required String? activeLabel,
+    required int selectedCount,
+  }) {
+    final holder = _holderFor(
+      UxActionHolderPosition.bottom,
+      UxActionHolderPresentation.toolbar,
+    );
+    if (holder == null || !holder.visible) return null;
+    return UwToolbar(
+      i: i * 100 + 3,
+      autopilot: autopilot,
+      s: 2,
+      leftChildren: <Widget>[
+        Text('Results: $totalCount'),
+        if (activeLabel != null && activeLabel.isNotEmpty) Text('Active: $activeLabel'),
+        if (selectedCount > 0) Text('Selected: $selectedCount'),
+      ],
+      rightChildren: <Widget>[
+        if (summaryText.isNotEmpty) Text('Summary: $summaryText'),
+      ],
+    );
+  }
+
+  List<Widget> _buildLeadControl({
+    required String mode,
+    required int currentViewMode,
+    required List<int> availableViewModes,
+    required VoidCallback onBack,
+    required ValueChanged<int> onViewModeChanged,
+  }) {
+    if (mode == 'edit' || mode == 'create' || mode == 'inspect') {
+      return <Widget>[
+        IconButton.filledTonal(
+          tooltip: 'Back',
+          onPressed: onBack,
+          icon: const Icon(Icons.arrow_back_outlined),
+        ),
+      ];
+    }
+    if (availableViewModes.length <= 1) {
+      return const <Widget>[];
+    }
+    final currentIndex = availableViewModes.indexOf(currentViewMode);
+    final normalizedIndex = currentIndex < 0 ? 0 : currentIndex;
+    final nextMode = availableViewModes[(normalizedIndex + 1) % availableViewModes.length];
+    return <Widget>[
+      IconButton.filledTonal(
+        tooltip: 'Switch view (${_viewLabelFor(currentViewMode)} -> ${_viewLabelFor(nextMode)})',
+        onPressed: () => onViewModeChanged(nextMode),
+        icon: Icon(_viewIconFor(currentViewMode)),
+      ),
+    ];
+  }
+
+  UxActionHolderSpec? _holderFor(
+    UxActionHolderPosition position,
+    UxActionHolderPresentation presentation,
+  ) {
+    for (final UxActionHolderSpec holder in actionHolders) {
+      if (holder.position == position && holder.presentation == presentation) {
+        return holder;
+      }
+    }
+    return null;
+  }
+
+  List<UxTemplateActionSpec> _actionsForHolder(UxActionHolderSpec holder) {
+    if (holder.actionKinds.isEmpty) return const <UxTemplateActionSpec>[];
+    final Map<UxTemplateAction, UxTemplateActionSpec> byAction =
+        <UxTemplateAction, UxTemplateActionSpec>{
+      for (final UxTemplateActionSpec action in actions) action.action: action,
+    };
+    final List<UxTemplateActionSpec> resolved = <UxTemplateActionSpec>[];
+    for (final UxTemplateAction kind in holder.actionKinds) {
+      final UxTemplateActionSpec? action = byAction[kind];
+      if (action != null && action.visible) {
+        resolved.add(action);
+      }
+    }
+    return resolved;
+  }
+
+  void _handleTemplateAction(
+    UxTemplateAction action,
+    Map<String, Object?> payload,
+  ) {
+    switch (action) {
+      case UxTemplateAction.commit:
+        callbacksNoop();
+      case UxTemplateAction.refetch:
+        callbacksNoop();
+      case UxTemplateAction.cancel:
+        callbacksNoop();
+      case UxTemplateAction.share:
+        callbacksNoop();
+    }
+  }
+
+  void callbacksNoop() {}
+
+  String _viewLabelFor(int mode) => switch (mode) {
+    1 => 'List',
+    2 => 'Grid',
+    3 => 'Table',
+    _ => 'View $mode',
+  };
+
+  IconData _viewIconFor(int mode) => switch (mode) {
+    1 => Icons.view_list_outlined,
+    2 => Icons.grid_view_outlined,
+    3 => Icons.table_rows_outlined,
+    _ => Icons.dashboard_outlined,
+  };
 
   void _selectIndex(String scope, int index) {
     final activeId = _idForIndex(index);

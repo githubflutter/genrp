@@ -9,9 +9,9 @@ class UxRegister {
 
   static const Map<int, String> papers = <int, String>{0: 'paperzero', 1: 'paperone', 2: 'papertwo', 3: 'paperthree', 4: 'paperfour'};
 
-  static const Map<int, String> templates = <int, String>{1: 'tcrud', 2: 'tsheet', 3: 'treport', 4: 'tdboard', 5: 'twizard', 6: 'tform'};
+  static const Map<int, String> templates = <int, String>{1: 'tworkspace', 2: 'tsheet', 3: 'treport', 4: 'tdboard', 5: 'twizard', 6: 'tform'};
 
-  static const Map<int, String> views = <int, String>{
+  static const Map<int, String> scopes = <int, String>{
     1: 'list',
     2: 'grid',
     3: 'datatable',
@@ -28,17 +28,25 @@ class UxRegister {
     14: 'field',
   };
 
+  @Deprecated('Use scopes instead.')
+  static const Map<int, String> views = scopes;
+
   static String paperId(int pid) => '$pid';
 
   static String templateId({required int pid, required int tid}) => '$pid.$tid';
 
-  static String viewId({required int pid, required int tid, required int vid}) => '$pid.$tid.$vid';
+  static String scopeId({required int pid, required int tid, required int sid}) =>
+      '$pid.$tid.$sid';
+
+  @Deprecated('Use scopeId instead.')
+  static String viewId({required int pid, required int tid, required int vid}) =>
+      scopeId(pid: pid, tid: tid, sid: vid);
 
   // Packed structural code rule:
   // pid, tid, and vid each use 3 digits.
   // paper    -> pid * 1,000,000
   // template -> pid * 1,000,000 + tid * 1,000
-  // view     -> pid * 1,000,000 + tid * 1,000 + vid
+  // scope    -> pid * 1,000,000 + tid * 1,000 + sid
   static int paperCode(int pid) {
     _validateTier('pid', pid);
     return pid * _paperScale;
@@ -50,12 +58,16 @@ class UxRegister {
     return pid * _paperScale + tid * _tierBase;
   }
 
-  static int viewCode({required int pid, required int tid, required int vid}) {
+  static int scopeCode({required int pid, required int tid, required int sid}) {
     _validateTier('pid', pid);
     _validateTier('tid', tid);
-    _validateTier('vid', vid);
-    return pid * _paperScale + tid * _tierBase + vid;
+    _validateTier('sid', sid);
+    return pid * _paperScale + tid * _tierBase + sid;
   }
+
+  @Deprecated('Use scopeCode instead.')
+  static int viewCode({required int pid, required int tid, required int vid}) =>
+      scopeCode(pid: pid, tid: tid, sid: vid);
 
   static ({int pid, int tid, int vid}) decodeCode(int code) {
     if (code < 0) {
@@ -236,8 +248,8 @@ class _UxPaperHostState extends State<UxPaperHost> {
 }
 
 mixin Template implements Ux {
-  // tid -> 1:Tcrud, 2:Tsheet, 3:Treport, 4:Tdboard, 5:Twizard, 6:Tform
-  // n -> tcrud, tsheet, treport, tdboard, twizard, tform
+  // tid -> 1:Tworkspace, 2:Tsheet, 3:Treport, 4:Tdboard, 5:Twizard, 6:Tform
+  // n -> tworkspace, tsheet, treport, tdboard, twizard, tform
   // Template is the workflow layer and owns template-scoped lifecycle.
   int get tid;
 

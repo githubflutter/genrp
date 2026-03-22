@@ -2,6 +2,12 @@
 
 Index of documentation files in `docs/`:
 
+## User Guides (Help Desk SLM)
+Documents designed specifically for the embedded Small Language Model (SLM) Help Desk. These are atomic, Q&A/Intent-based markdown files for end-users.
+
+- `user_guides/common/understanding_input_fields.md` — Guide to the advanced UwField multimode inputs.
+- `user_guides/aicodex/navigating_the_explorer.md` — Guide to the Explorer and Admin Home navigation.
+
 ## Handover & Progress (start here)
 
 - `aibook_handover.md` — AIBook progressive step-by-step handover with micro-tasks and per-step prompts.

@@ -1,4 +1,5 @@
 export '../gen/genux.dart';
+export '../model/uschema/ux_template_action_spec.dart';
 export 'mixins.dart';
 
 export 'paper/pfour.dart';
@@ -7,9 +8,9 @@ export 'paper/pthree.dart';
 export 'paper/ptwo.dart';
 export 'paper/pzero.dart';
 
-export 'template/tcrud.dart';
-export 'template/tcrudfooter.dart';
-export 'template/tcrudheader.dart';
+export 'template/tworkspace.dart';
+export 'template/tworkspacefooter.dart';
+export 'template/tworkspaceheader.dart';
 export 'template/tdboard.dart';
 export 'template/tform.dart';
 export 'template/treport.dart';

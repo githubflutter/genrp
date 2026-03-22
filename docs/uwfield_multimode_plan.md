@@ -1,5 +1,7 @@
 # UwField — Multimode Input Widget Plan
 
+> **Status:** Implemented. See the end-user Help Desk guide at `user_guides/common/understanding_input_fields.md`.
+
 > **Goal:** Create a single configurable `UwField` widget that adapts its input behavior, chrome (left/right icon buttons), and value formatting based on `DataType` and an explicit `fieldMode`.
 
 ---

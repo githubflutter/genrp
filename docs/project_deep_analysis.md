@@ -3,7 +3,7 @@
 > **Project:** `genrp` — Generative Resource Planner  
 > **Platform:** Flutter (macOS, Linux, Windows, Android, iOS)  
 > **SDK:** Dart ≥3.11.0  
-> **Analysis Date:** 2026-03-21  
+> **Analysis Date:** 2026-03-22  
 
 ---
 
@@ -189,7 +189,7 @@ graph TB
 | **Test LOC** (`test/`) | 0 |
 | **Asset JSON files** | 2 files |
 | **Asset data dir** | `assets/data/` (empty, reserved) |
-| **Doc files** (`docs/`) | 12 markdown files |
+| **Doc files** (`docs/`) | 14 markdown files |
 | **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
 | **Dev Dependencies** | flutter_test, flutter_lints |
 | **Analyzer status** | `flutter analyze` passes clean on 2026-03-21 |
@@ -208,7 +208,7 @@ graph TB
 | `lib/core/gen/` | 6 | 1,129 |
 | `lib/core/model/` | 16 | 1,057 |
 | `lib/core/theme/` | 1 | 297 |
-| `lib/core/ux/` | 28 | 2,819 |
+| `lib/core/ux/` | 51 | ~5,000 |
 | Root entry files | 4 | 59 |
 
 ---
@@ -270,7 +270,7 @@ genrp/
 │   │   │   ├── bdata/                    # 1 business data model file
 │   │   │   ├── base/                     # 2 base model files
 │   │   │   ├── bschema/                  # 6 schema model files
-│   │   │   └── uschema/                  # 7 UX spec files + ux_specs.dart barrel
+│   │   │   └── uschema/                  # 8 UX spec files + ux_specs.dart barrel
 │   │   ├── theme/
 │   │   │   └── theme.dart                # Shared Material 3 theme + UX chrome helpers
 │   │   └── ux/
@@ -284,7 +284,7 @@ genrp/
 ├── assets/
 │   ├── json/                             # 2 JSON support files
 │   └── data/                             # Empty directory (reserved)
-├── docs/                                 # 12 documentation files
+├── docs/                                 # 14 documentation files
 └── pubspec.yaml
 ```
 
@@ -392,9 +392,11 @@ All are immutable with `const` constructor, `fromJson`, `toJson`, `copyWith`, `=
 |---|---|---|
 | [ux_specs.dart](lib/core/model/uschema/ux_specs.dart) | barrel export | Re-exports the active UX spec types |
 | [ux_node_spec.dart](lib/core/model/uschema/ux_node_spec.dart) | `UxNodeSpec` | Shared `i`, `s`, `m`, `code`, and `id` contract |
-| [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart) | `UxFieldSpec` | `label`, `hint`, `width` |
-| [ux_view_spec.dart](lib/core/model/uschema/ux_view_spec.dart) | `UxViewSpec` | `vid`, `p`, plus packed IDs via `UxRegister` |
-| [uxm_template_spec.dart](lib/core/model/uschema/uxm_template_spec.dart) | `UxTemplateSpec`, `UxCrudTemplateSpec` | Template identity plus CRUD configuration |
+| [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart) | `UxFieldSpec` | `label`, `hint`, `width`, `dataTypeId`, `fieldMode` |
+| [ux_app_shell_spec.dart](lib/core/model/uschema/ux_app_shell_spec.dart) | `UxAppShellSpec` | App shell layout definitions |
+| [ux_scope_spec.dart](lib/core/model/uschema/ux_scope_spec.dart) | `UxScopeSpec` | Scoped states context config |
+| [ux_template_spec.dart](lib/core/model/uschema/ux_template_spec.dart) | `UxTemplateSpec` | Template identity config |
+| [ux_template_action_spec.dart](lib/core/model/uschema/ux_template_action_spec.dart) | `UxTemplateActionSpec` | Template-level actions |
 | [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart) | `UxPaperSpec` | `pid`, `template` |
 | [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart) | `UxRouteSpec` | `appName`, `pageSpecId`, `title`, `subtitle`, `paper`, `optionalId` |
 
@@ -423,7 +425,7 @@ flowchart LR
 4. **`UxPaperHost` / `UxTemplateHost`** mount scoped paper/template state inside `Autopilot`.
 5. **`Uw*` widgets** (14 total): `uwlist`, `uwgrid`, `uwdatatable`, `uwtoolbar`, `uwfrom`, `uwplist`, `uwcard`, `uwitem`, `uwempty`, `uwchoose`, `uwalert`, `uwcollection`, `uwtab`, `uwfield`.
 6. **Papers** (5): `pzero` through `pfour`.
-7. **Templates** (8): `tcrud` (+ `tcrudheader`, `tcrudfooter`), `tsheet`, `treport`, `tdboard`, `twizard`, `tform`.
+7. **Templates** (8): `tworkspace` (+ `tworkspaceheader`, `tworkspacefooter`), `tsheet`, `treport`, `tdboard`, `twizard`, `tform`.
 
 ### 5.7 Persistence (`core/db/`)
 
@@ -681,11 +683,11 @@ graph LR
 | **BSchema models** (6) | [entity_model.dart](lib/core/model/bschema/entity_model.dart), [field_model.dart](lib/core/model/bschema/field_model.dart), [function_model.dart](lib/core/model/bschema/function_model.dart), [parameter_model.dart](lib/core/model/bschema/parameter_model.dart), [table_model.dart](lib/core/model/bschema/table_model.dart), [column_model.dart](lib/core/model/bschema/column_model.dart) |
 | **Base models** (2) | [system_model.dart](lib/core/model/base/system_model.dart), [usr_model.dart](lib/core/model/base/usr_model.dart) |
 | **BData models** (1) | [user_model.dart](lib/core/model/bdata/user_model.dart) |
-| **USchema models** (7) | [ux_specs.dart](lib/core/model/uschema/ux_specs.dart), [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart), [ux_node_spec.dart](lib/core/model/uschema/ux_node_spec.dart), [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart), [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart), [ux_view_spec.dart](lib/core/model/uschema/ux_view_spec.dart), [uxm_template_spec.dart](lib/core/model/uschema/uxm_template_spec.dart) |
+| **USchema models** (9) | [ux_specs.dart](lib/core/model/uschema/ux_specs.dart), [ux_field_spec.dart](lib/core/model/uschema/ux_field_spec.dart), [ux_node_spec.dart](lib/core/model/uschema/ux_node_spec.dart), [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart), [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart), [ux_app_shell_spec.dart](lib/core/model/uschema/ux_app_shell_spec.dart), [ux_scope_spec.dart](lib/core/model/uschema/ux_scope_spec.dart), [ux_template_action_spec.dart](lib/core/model/uschema/ux_template_action_spec.dart), [ux_template_spec.dart](lib/core/model/uschema/ux_template_spec.dart) |
 | **Theme** | [theme.dart](lib/core/theme/theme.dart) |
-| **UX runtime** | [genux.dart](lib/core/gen/genux.dart), [mixins.dart](lib/core/ux/mixins.dart), [ux.dart](lib/core/ux/ux.dart), plus `paper/` (5), `template/` (8), and `uwidget/` (14) |
+| **UX runtime** | [genux.dart](lib/core/gen/genux.dart), [mixins.dart](lib/core/ux/mixins.dart), [ux.dart](lib/core/ux/ux.dart), `draggable_fab.dart`, plus `paper/` (5), `template/` (8), `uwidget/` (14), and `uwfields/` (21) |
 
-### Documentation (`docs/` — 12 files)
+### Documentation (`docs/` — 14 files)
 
 | File | Content |
 |---|---|
@@ -700,3 +702,5 @@ graph LR
 | [lib_core_db_sqlite_store_readme.md](docs/lib_core_db_sqlite_store_readme.md) | SQLite store docs |
 | [lib_core_model_bschema_readme.md](docs/lib_core_model_bschema_readme.md) | Bschema model directory docs |
 | [spec_first_schema_experiments.md](docs/spec_first_schema_experiments.md) | Experimental post-v2 schema plan |
+| [user_guides/common/understanding_input_fields.md](docs/user_guides/common/understanding_input_fields.md) | SLM Help Desk Guide: UwField Multimode |
+| [user_guides/aicodex/navigating_the_explorer.md](docs/user_guides/aicodex/navigating_the_explorer.md) | SLM Help Desk Guide: Admin Home UExplorer |

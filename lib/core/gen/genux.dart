@@ -21,34 +21,27 @@ class GenUx {
   static StatelessWidget buildTemplate({required UxTemplateSpec spec, required Autopilot autopilot, String? optionalId}) {
     switch (spec.tid) {
       case 1:
-        final crud = spec as UxCrudTemplateSpec;
-        return Tcrud(
-          i: crud.i,
+        final workspace = spec as UxWorkspaceTemplateSpec;
+        return Tworkspace(
+          i: workspace.i,
           autopilot: autopilot,
-          s: crud.s,
+          s: workspace.s,
           oid: optionalId ?? '-',
-          summaryText: crud.summaryText,
-          collectionTitle: crud.collectionTitle,
-          collectionColumns: crud.collectionColumns,
-          collectionRows: crud.collectionRows,
-          collectionViewModes: crud.collectionViewModes,
-          properties: crud.properties,
-          formChildren: _buildFormFields(crud.formFields, autopilot),
-          formFooter: Align(
-            alignment: Alignment.centerLeft,
-            child: Wrap(
-              spacing: 8,
-              children: <Widget>[
-                FilledButton(onPressed: () {}, child: const Text('Save')),
-                OutlinedButton(onPressed: () {}, child: const Text('Cancel')),
-              ],
-            ),
-          ),
-          emptyTitle: crud.emptyTitle,
-          emptyMessage: crud.emptyMessage,
-          defaultAlertMessage: crud.defaultAlertMessage,
-          collectionFlex: crud.collectionFlex,
-          detailFlex: crud.detailFlex,
+          summaryText: workspace.summaryText,
+          collectionTitle: workspace.collectionTitle,
+          collectionColumns: workspace.collectionColumns,
+          collectionRows: workspace.collectionRows,
+          collectionViewModes: workspace.collectionViewModes,
+          properties: workspace.properties,
+          actions: workspace.actions,
+          actionHolders: workspace.actionHolders,
+          formChildren: _buildFormFields(workspace.formFields, autopilot),
+          formFooter: _buildFormFooter(workspace.actions),
+          emptyTitle: workspace.emptyTitle,
+          emptyMessage: workspace.emptyMessage,
+          defaultAlertMessage: workspace.defaultAlertMessage,
+          collectionFlex: workspace.collectionFlex,
+          detailFlex: workspace.detailFlex,
         );
       case 2:
         return Tsheet(i: spec.i, autopilot: autopilot, s: spec.s);
@@ -81,5 +74,33 @@ class GenUx {
           ),
         )
         .toList(growable: false);
+  }
+
+  static Widget? _buildFormFooter(List<UxTemplateActionSpec> actions) {
+    final List<UxTemplateActionSpec> visibleActions = actions
+        .where((UxTemplateActionSpec action) => action.visible)
+        .toList(growable: false);
+    if (visibleActions.isEmpty) return null;
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Wrap(
+        spacing: 8,
+        children: visibleActions.map<Widget>(_buildActionButton).toList(growable: false),
+      ),
+    );
+  }
+
+  static Widget _buildActionButton(UxTemplateActionSpec action) {
+    final VoidCallback? onPressed = action.enabled ? () {} : null;
+    switch (action.action) {
+      case UxTemplateAction.commit:
+        return FilledButton(onPressed: onPressed, child: Text(action.effectiveLabel));
+      case UxTemplateAction.cancel:
+        return OutlinedButton(onPressed: onPressed, child: Text(action.effectiveLabel));
+      case UxTemplateAction.refetch:
+      case UxTemplateAction.share:
+        return TextButton(onPressed: onPressed, child: Text(action.effectiveLabel));
+    }
   }
 }

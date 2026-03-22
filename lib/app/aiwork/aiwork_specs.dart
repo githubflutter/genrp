@@ -133,7 +133,7 @@ class AIWorkSpecs {
       paper: UxPaperSpec(
         pid: pid,
         i: route.pageSpecId,
-        template: UxCrudTemplateSpec(
+        template: UxWorkspaceTemplateSpec(
           i: 20001,
           collectionTitle: 'Accounts',
           collectionColumns: const <String>['ID', 'Name', 'Status'],

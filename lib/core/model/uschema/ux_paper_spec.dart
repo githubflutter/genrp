@@ -1,5 +1,5 @@
 import 'package:genrp/core/model/uschema/ux_node_spec.dart';
-import 'package:genrp/core/model/uschema/uxm_template_spec.dart';
+import 'package:genrp/core/model/uschema/ux_template_spec.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
 class UxPaperSpec extends UxNodeSpec {

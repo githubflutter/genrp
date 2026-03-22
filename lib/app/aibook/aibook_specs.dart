@@ -120,7 +120,7 @@ class AIBookSpecs {
       paper: UxPaperSpec(
         pid: pid,
         i: route.pageSpecId,
-        template: UxCrudTemplateSpec(
+        template: UxWorkspaceTemplateSpec(
           i: 21001,
           collectionTitle: 'Books',
           collectionColumns: const <String>['ID', 'Name', 'Status'],

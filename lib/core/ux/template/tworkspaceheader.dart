@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
-class TcrudHeader extends StatelessWidget {
-  const TcrudHeader({
+class TworkspaceHeader extends StatelessWidget {
+  const TworkspaceHeader({
     required this.i,
     required this.autopilot,
     required this.mode,

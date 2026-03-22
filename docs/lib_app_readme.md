@@ -257,8 +257,8 @@ Current vocabulary direction
 - Base `X` / `Xi` / `Xia` / `Xiad` / `Xiade` is the transport/data-side naming from `lib/core/base/x.dart`.
 - Preview selection/highlighting can use the full identity scope `hostId + bodyId + widgetId`, with no effect when no selected identity is present.
 - Example pairing:
-  - `UxCrudTemplateSpec` describes a CRUD surface definition.
-  - `GenUx` + `Tcrud` render that definition as Flutter UI.
+  - `UxWorkspaceTemplateSpec` describes a workspace surface definition.
+  - `GenUx` + `Tworkspace` render that definition as Flutter UI.
 
 Each app:
 
