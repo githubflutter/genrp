@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class Pfour extends StatelessWidget with Paper {
+class Pfour extends StatelessWidget with Ux {
   const Pfour({
     required this.i,
     required this.autopilot,
@@ -10,10 +10,7 @@ class Pfour extends StatelessWidget with Paper {
     super.key,
   });
 
-  @override
   final int pid = 4;
-
-  @override
   final int s;
 
   @override

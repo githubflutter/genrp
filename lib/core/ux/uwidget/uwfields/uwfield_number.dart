@@ -7,7 +7,7 @@ import 'package:genrp/core/ux/uwidget/uwfield.dart';
 ///
 /// Use this directly for better performance when you know you need number mode,
 /// or use [UwField] with [UwFieldMode.number] for mode-dispatched convenience.
-class UwFieldNumber extends StatefulWidget with Uwidget {
+class UwFieldNumber extends StatefulWidget with Ux {
   const UwFieldNumber({
     required this.i,
     required this.autopilot,
@@ -17,9 +17,7 @@ class UwFieldNumber extends StatefulWidget with Uwidget {
     super.key,
   });
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;

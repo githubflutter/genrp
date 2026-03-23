@@ -3,13 +3,10 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwAlert extends StatelessWidget with Uwidget {
+class UwAlert extends StatelessWidget with Ux {
   const UwAlert({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.message, this.actions = const <Widget>[]});
 
-  @override
-  final int vid = 11;
-
-  @override
+  final int uwid = 11;
   final int s;
 
   @override

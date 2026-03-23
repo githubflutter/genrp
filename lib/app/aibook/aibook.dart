@@ -292,8 +292,8 @@ class _AIBookHomeState extends State<AIBookHome> {
                   ),
                   const SizedBox(height: 16),
                   Expanded(
-                    child: GenUx.buildPaper(
-                      spec: spec.paper,
+                    child: GenUx.build(
+                      spec: spec.spec,
                       autopilot: _pilot,
                       optionalId: spec.optionalId,
                     ),

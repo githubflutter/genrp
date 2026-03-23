@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwGrid extends StatelessWidget with Uwidget {
+class UwGrid extends StatelessWidget with Ux {
   const UwGrid({
     required this.i,
     required this.autopilot,
@@ -16,10 +16,7 @@ class UwGrid extends StatelessWidget with Uwidget {
     this.childAspectRatio = 1.2,
   });
 
-  @override
-  final int vid = 2;
-
-  @override
+  final int uwid = 2;
   final int s;
 
   @override

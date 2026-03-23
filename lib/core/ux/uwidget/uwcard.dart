@@ -4,7 +4,7 @@ import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwCard extends StatelessWidget with Uwidget {
+class UwCard extends StatelessWidget with Ux {
   const UwCard({
     required this.i,
     required this.autopilot,
@@ -17,10 +17,7 @@ class UwCard extends StatelessWidget with Uwidget {
     this.padding = const EdgeInsets.all(16),
   });
 
-  @override
-  final int vid = 7;
-
-  @override
+  final int uwid = 7;
   final int s;
 
   @override

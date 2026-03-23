@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 
-class Tform extends StatelessWidget with Template {
+class Tform extends StatelessWidget with Ux {
   const Tform({
     required this.i,
     required this.autopilot,
@@ -11,10 +11,7 @@ class Tform extends StatelessWidget with Template {
     super.key,
   });
 
-  @override
   final int tid = 6;
-
-  @override
   final int s;
 
   @override

@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwEmpty extends StatelessWidget with Uwidget {
+class UwEmpty extends StatelessWidget with Ux {
   const UwEmpty({
     required this.i,
     required this.autopilot,
@@ -15,10 +15,7 @@ class UwEmpty extends StatelessWidget with Uwidget {
     this.icon = Icons.inbox_outlined,
   });
 
-  @override
-  final int vid = 9;
-
-  @override
+  final int uwid = 9;
   final int s;
 
   @override

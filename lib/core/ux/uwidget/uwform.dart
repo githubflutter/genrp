@@ -4,13 +4,10 @@ import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwForm extends StatelessWidget with Uwidget {
+class UwForm extends StatelessWidget with Ux {
   const UwForm({required this.i, required this.autopilot, this.s = 0, super.key, this.p = '', this.title, this.children = const <Widget>[], this.footer});
 
-  @override
-  final int vid = 5;
-
-  @override
+  final int uwid = 5;
   final int s;
 
   @override

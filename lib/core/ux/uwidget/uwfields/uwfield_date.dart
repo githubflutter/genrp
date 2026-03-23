@@ -6,12 +6,10 @@ import 'package:genrp/core/ux/uwidget/uwfields/uwfield_datetime.dart';
 
 /// Single date picker widget.
 /// Value: `int` (epoch milliseconds)
-class UwFieldDate extends StatefulWidget with Uwidget {
+class UwFieldDate extends StatefulWidget with Ux {
   const UwFieldDate({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;

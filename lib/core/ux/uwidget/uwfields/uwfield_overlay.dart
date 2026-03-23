@@ -7,12 +7,10 @@ import 'package:genrp/core/ux/uwidget/uwfield.dart';
 ///
 /// Use this directly for better performance when you know you need combo/select mode,
 /// or use [UwField] with [UwFieldMode.combo] or [UwFieldMode.select] for mode-dispatched convenience.
-class UwFieldOverlay extends StatefulWidget with Uwidget {
+class UwFieldOverlay extends StatefulWidget with Ux {
   const UwFieldOverlay({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;

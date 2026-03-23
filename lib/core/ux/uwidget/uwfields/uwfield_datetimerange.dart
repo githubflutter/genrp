@@ -6,12 +6,10 @@ import 'package:genrp/core/ux/uwidget/uwfields/uwfield_datetime.dart';
 
 /// Date + time range picker widget.
 /// Value: `List<int>` with 2 values [start, end] (epoch milliseconds)
-class UwFieldDateTimeRange extends StatefulWidget with Uwidget {
+class UwFieldDateTimeRange extends StatefulWidget with Ux {
   const UwFieldDateTimeRange({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;

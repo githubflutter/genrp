@@ -7,7 +7,7 @@ import 'package:genrp/core/ux/uwidget/uwgrid.dart';
 import 'package:genrp/core/ux/uwidget/uwlist.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwCollection extends StatelessWidget with Uwidget {
+class UwCollection extends StatelessWidget with Ux {
   // Collection mode:
   // default -> table when columns exist, otherwise list
   // s == 1  -> list
@@ -30,10 +30,7 @@ class UwCollection extends StatelessWidget with Uwidget {
     super.key,
   });
 
-  @override
-  final int vid = 12;
-
-  @override
+  final int uwid = 12;
   final int s;
 
   @override

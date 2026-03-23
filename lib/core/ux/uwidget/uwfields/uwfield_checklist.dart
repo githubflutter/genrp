@@ -20,12 +20,10 @@ class UwFieldChecklistItem {
 ///
 /// Use this directly for better performance, or use [UwField] with
 /// [UwFieldMode.checklist] for mode-dispatched convenience.
-class UwFieldChecklist extends StatefulWidget with Uwidget {
+class UwFieldChecklist extends StatefulWidget with Ux {
   const UwFieldChecklist({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;

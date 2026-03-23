@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwItem extends StatelessWidget with Uwidget {
+class UwItem extends StatelessWidget with Ux {
   const UwItem({
     required this.i,
     required this.autopilot,
@@ -17,10 +17,7 @@ class UwItem extends StatelessWidget with Uwidget {
     this.onTap,
   });
 
-  @override
-  final int vid = 8;
-
-  @override
+  final int uwid = 8;
   final int s;
 
   @override

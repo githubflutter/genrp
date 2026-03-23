@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class Pthree extends StatelessWidget with Paper {
+class Pthree extends StatelessWidget with Ux {
   // Split rule:
   // s > 0  -> horizontal
   // s < 0  -> vertical
@@ -19,20 +19,11 @@ class Pthree extends StatelessWidget with Paper {
     required this.last,
     this.s = 0,
     super.key,
-  }) : assert(
-         first is Template,
-         'Pthree first child must be a Template variant',
-       ),
-       assert(
-         middle is Template,
-         'Pthree middle child must be a Template variant',
-       ),
-       assert(last is Template, 'Pthree last child must be a Template variant');
+  }) : assert(first is Ux, 'Pthree first child must be a Ux variant'),
+       assert(middle is Ux, 'Pthree middle child must be a Ux variant'),
+       assert(last is Ux, 'Pthree last child must be a Ux variant');
 
-  @override
   final int pid = 3;
-
-  @override
   final int s;
 
   @override

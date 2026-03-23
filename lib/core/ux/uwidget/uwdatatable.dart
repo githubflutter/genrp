@@ -4,7 +4,7 @@ import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwDataTable extends StatelessWidget with Uwidget {
+class UwDataTable extends StatelessWidget with Ux {
   const UwDataTable({
     required this.i,
     required this.autopilot,
@@ -17,10 +17,7 @@ class UwDataTable extends StatelessWidget with Uwidget {
     this.onSelectIndex,
   });
 
-  @override
-  final int vid = 3;
-
-  @override
+  final int uwid = 3;
   final int s;
 
   @override

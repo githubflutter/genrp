@@ -7,7 +7,7 @@ import 'package:genrp/core/ux/uwidget/uwfield.dart';
 ///
 /// Use this directly for better performance when you know you need JSON mode,
 /// or use [UwField] with [UwFieldMode.json] for mode-dispatched convenience.
-class UwFieldJson extends StatefulWidget with Uwidget {
+class UwFieldJson extends StatefulWidget with Ux {
   const UwFieldJson({
     required this.i,
     required this.autopilot,
@@ -17,9 +17,7 @@ class UwFieldJson extends StatefulWidget with Uwidget {
     super.key,
   });
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;

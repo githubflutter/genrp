@@ -2,7 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class Ptwo extends StatelessWidget with Paper {
+class Ptwo extends StatelessWidget with Ux {
   // Minimum pane width/height should stay around 50px to avoid touch/layout issues.
   // Split rule:
   // 0 < s < 100   -> left width percentage
@@ -18,13 +18,10 @@ class Ptwo extends StatelessWidget with Paper {
     required this.right,
     this.s = 0,
     super.key,
-  }) : assert(left is Template, 'Ptwo left child must be a Template variant'),
-       assert(right is Template, 'Ptwo right child must be a Template variant');
+  }) : assert(left is Ux, 'Ptwo left child must be a Ux variant'),
+       assert(right is Ux, 'Ptwo right child must be a Ux variant');
 
-  @override
   final int pid = 2;
-
-  @override
   final int s;
 
   @override

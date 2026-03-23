@@ -3,7 +3,6 @@ import 'package:genrp/core/ux/mixins.dart';
 abstract class UxNodeSpec with Ux {
   const UxNodeSpec({
     required this.i,
-    this.s = 0,
     this.m = const <String, dynamic>{},
   });
 
@@ -11,12 +10,19 @@ abstract class UxNodeSpec with Ux {
   final int i;
 
   @override
-  final int s;
+  bool get a => true;
+
+  @override
+  int get d => 0;
+
+  @override
+  int get e => 0;
 
   @override
   final Map<String, dynamic> m;
 
   int get code;
 
-  String get id;
+  @override
+  int get t;
 }

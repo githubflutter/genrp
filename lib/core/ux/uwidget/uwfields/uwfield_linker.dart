@@ -8,7 +8,7 @@ import 'package:genrp/core/theme/theme.dart';
 ///
 /// Use this directly for better performance when you know you need link mode,
 /// or use [UwField] with [UwFieldMode.link] for mode-dispatched convenience.
-class UwFieldLinker extends StatefulWidget with Uwidget {
+class UwFieldLinker extends StatefulWidget with Ux {
   const UwFieldLinker({
     required this.i,
     required this.autopilot,
@@ -18,9 +18,7 @@ class UwFieldLinker extends StatefulWidget with Uwidget {
     super.key,
   });
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;
@@ -64,22 +62,9 @@ class _UwFieldLinkerState extends State<UwFieldLinker> {
   }
 
   void _syncFromAutopilot() {
-    if (widget.spec.stateKey == null) return;
-    dynamic value;
-    switch (widget.spec.stateSrc) {
-      case 0: // chrome
-        value = widget.autopilot.stateSet.chrome<dynamic>(widget.spec.stateKey!);
-        break;
-      case 1: // dataSet
-        value = widget.autopilot.data(widget.spec.stateKey!);
-        break;
-      case 2: // scoped
-        if (widget.spec.stateScope != null) {
-          value = widget.autopilot.stateSet.getPaper<dynamic>(widget.spec.stateScope!, widget.spec.stateKey!);
-          value ??= widget.autopilot.stateSet.getTemplate<dynamic>(widget.spec.stateScope!, widget.spec.stateKey!);
-        }
-        break;
-    }
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
+    final value = widget.autopilot.readUwState(binding);
     final text = value?.toString() ?? '';
     if (_controller.text != text) {
       _controller.text = text;
@@ -90,21 +75,10 @@ class _UwFieldLinkerState extends State<UwFieldLinker> {
   }
 
   void _pushToAutopilot() {
-    if (widget.spec.stateKey == null) return;
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
     final value = _controller.text;
-    switch (widget.spec.stateSrc) {
-      case 0:
-        widget.autopilot.setChromeState(widget.spec.stateKey!, value, notify: true);
-        break;
-      case 1:
-        widget.autopilot.setData(widget.spec.stateKey!, value, notify: true);
-        break;
-      case 2:
-        if (widget.spec.stateScope != null) {
-          widget.autopilot.setPaperState(widget.spec.stateScope!, widget.spec.stateKey!, value, notify: true);
-        }
-        break;
-    }
+    widget.autopilot.writeUwState(binding, value, notify: true);
     widget.callbacks.onPush?.call(value);
   }
 
@@ -199,4 +173,14 @@ class UwFieldLinkerSpec {
   final String? stateScope;
   final String? leftTooltip;
   final String? rightTooltip;
+
+  UwStateBindingSpec? get stateBinding {
+    final key = stateKey;
+    if (key == null || key.isEmpty) return null;
+    return UwStateBindingSpec.fromLegacy(
+      key: key,
+      sourceCode: stateSrc,
+      uwidget: stateScope,
+    );
+  }
 }

@@ -48,22 +48,9 @@ class _UwFieldToggleState extends State<UwFieldToggle> {
   }
 
   void _syncFromAutopilot() {
-    if (widget.spec.stateKey == null) return;
-    dynamic value;
-    switch (widget.spec.stateSrc) {
-      case 0: // chrome
-        value = widget.autopilot.stateSet.chrome<dynamic>(widget.spec.stateKey!);
-        break;
-      case 1: // dataSet
-        value = widget.autopilot.data(widget.spec.stateKey!);
-        break;
-      case 2: // scoped
-        if (widget.spec.stateScope != null) {
-          value = widget.autopilot.stateSet.getPaper<dynamic>(widget.spec.stateScope!, widget.spec.stateKey!);
-          value ??= widget.autopilot.stateSet.getTemplate<dynamic>(widget.spec.stateScope!, widget.spec.stateKey!);
-        }
-        break;
-    }
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
+    final value = widget.autopilot.readUwState(binding);
     final text = value?.toString() ?? '';
     if (widget.controller.text != text) {
       widget.controller.text = text;
@@ -74,21 +61,10 @@ class _UwFieldToggleState extends State<UwFieldToggle> {
   }
 
   void _pushToAutopilot() {
-    if (widget.spec.stateKey == null) return;
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
     final value = widget.controller.text;
-    switch (widget.spec.stateSrc) {
-      case 0:
-        widget.autopilot.setChromeState(widget.spec.stateKey!, value, notify: true);
-        break;
-      case 1:
-        widget.autopilot.setData(widget.spec.stateKey!, value, notify: true);
-        break;
-      case 2:
-        if (widget.spec.stateScope != null) {
-          widget.autopilot.setPaperState(widget.spec.stateScope!, widget.spec.stateKey!, value, notify: true);
-        }
-        break;
-    }
+    widget.autopilot.writeUwState(binding, value, notify: true);
     widget.callbacks.onPush?.call(value);
   }
 

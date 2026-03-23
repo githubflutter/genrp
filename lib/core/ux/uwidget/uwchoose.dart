@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwChoose extends StatelessWidget with Uwidget {
+class UwChoose extends StatelessWidget with Ux {
   const UwChoose({
     required this.i,
     required this.autopilot,
@@ -15,10 +15,7 @@ class UwChoose extends StatelessWidget with Uwidget {
     this.onSelected,
   });
 
-  @override
-  final int vid = 10;
-
-  @override
+  final int uwid = 10;
   final int s;
 
   @override

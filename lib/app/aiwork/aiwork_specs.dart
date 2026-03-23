@@ -1,5 +1,6 @@
 import 'package:genrp/core/agent/copilot_route.dart';
 import 'package:genrp/core/model/uschema/ux_specs.dart';
+import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/meta.dart';
 
 class AIWorkSpecs {
@@ -10,6 +11,8 @@ class AIWorkSpecs {
   static const int appMeta = AppMeta.aiwork;
   static const int paperZeroSpecId = 10001;
   static const int paperOneSpecId = 10002;
+
+  static const UxAppSpec appSpec = UxAppSpecs.aiwork;
 
   static List<UxRouteSpec> presets() => <UxRouteSpec>[
     buildRouteSpec(
@@ -119,45 +122,78 @@ class AIWorkSpecs {
     final status = seed.isEven ? 'Open' : 'Closed';
 
     return UxRouteSpec(
-      appName: route.appName,
-      pageSpecId: route.pageSpecId,
-      optionalId: route.optionalId,
-      title: isPaperZero
-          ? 'Paperzero / ${route.optionalId ?? '-'}'
-          : 'Paperone / ${route.optionalId ?? '-'}',
-      subtitle: isPaperZero
-          ? 'Bare container host for AIWork'
-          : route.optionalId == '84'
-          ? 'Replace-only route change for AIWork'
-          : 'Scroll host with the same AIWork flow',
-      paper: UxPaperSpec(
-        pid: pid,
+      app: appSpec,
+      route: route,
+      meta: UxRouteMeta(
+        title: isPaperZero
+            ? 'Paperzero / ${route.optionalId ?? '-'}'
+            : 'Paperone / ${route.optionalId ?? '-'}',
+        subtitle: isPaperZero
+            ? 'Bare container host for AIWork'
+            : route.optionalId == '84'
+            ? 'Replace-only route change for AIWork'
+            : 'Scroll host with the same AIWork flow',
+      ),
+      spec: UxSpec.paper(
         i: route.pageSpecId,
-        template: UxWorkspaceTemplateSpec(
-          i: 20001,
-          collectionTitle: 'Accounts',
-          collectionColumns: const <String>['ID', 'Name', 'Status'],
-          collectionViewModes: const <int>[1, 2, 3],
-          collectionRows: <List<Object?>>[
-            <Object?>[seed, name, status],
-            <Object?>[seed + 1, 'Blue Harbor ${seed + 1}', 'Pending'],
-            <Object?>[seed + 2, 'Silverline ${seed + 2}', 'Open'],
+        n: pid == 0 ? 'paperzero' : 'paperone',
+        t: pid,
+        m: const <String, dynamic>{},
+        s: const <String, dynamic>{},
+        children: <String, List<UxSpec>>{
+          UxZone.content: <UxSpec>[
+            UxSpec.template(
+            i: 20001,
+            n: 'tworkspace',
+            t: 1,
+            m: UxWorkspaceMeta(
+              collectionTitle: 'Accounts',
+              collectionColumns: const <String>['ID', 'Name', 'Status'],
+              collectionViewModes: const <int>[1, 2, 3],
+              collectionRows: <List<Object?>>[
+                <Object?>[seed, name, status],
+                <Object?>[seed + 1, 'Blue Harbor ${seed + 1}', 'Pending'],
+                <Object?>[seed + 2, 'Silverline ${seed + 2}', 'Open'],
+              ],
+              properties: <String, Object?>{
+                'id': seed,
+                'name': name,
+                'status': status,
+                'owner': owner,
+                'route': route.path,
+                'app': title,
+              },
+              formFields: <UxFieldSpec>[
+                UxFieldSpec(label: 'Name', hint: name),
+                UxFieldSpec(label: 'Status', hint: status),
+                UxFieldSpec(label: 'Owner', hint: owner),
+              ],
+              summaryText: 'app=$appName, owner=$owner, status=$status',
+            ).toJson(),
+            s: const <String, dynamic>{},
+            children: <String, List<UxSpec>>{
+              UxZone.header: <UxSpec>[
+                UxSpec.uwidget(i: 1, n: 'toolbar', t: 4),
+                UxSpec.uwidget(i: 2, n: 'toolbar', t: 4),
+              ],
+              UxZone.collection: <UxSpec>[
+                UxSpec.uwidget(i: 10, n: 'collection', t: 12),
+              ],
+              UxZone.detail: <UxSpec>[
+                UxSpec.uwidget(i: 12, n: 'plist', t: 6),
+                UxSpec.uwidget(i: 13, n: 'form', t: 5),
+              ],
+              UxZone.feedback: <UxSpec>[
+                UxSpec.uwidget(i: 11, n: 'empty', t: 9),
+                UxSpec.uwidget(i: 14, n: 'alert', t: 11),
+              ],
+              UxZone.footer: <UxSpec>[
+                UxSpec.uwidget(i: 3, n: 'toolbar', t: 4),
+              ],
+            },
+          ),
           ],
-          properties: <String, Object?>{
-            'id': seed,
-            'name': name,
-            'status': status,
-            'owner': owner,
-            'route': route.path,
-            'app': title,
-          },
-          formFields: <UxFieldSpec>[
-            UxFieldSpec(label: 'Name', hint: name),
-            UxFieldSpec(label: 'Status', hint: status),
-            UxFieldSpec(label: 'Owner', hint: owner),
-          ],
-          summaryText: 'app=$appName, owner=$owner, status=$status',
-        ),
+        },
       ),
     );
   }

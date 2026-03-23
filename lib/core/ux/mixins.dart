@@ -1,17 +1,62 @@
 import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 
+enum UxLayer {
+  app(0),
+  route(1),
+  paper(2),
+  template(3),
+  uwidget(4),
+  field(5);
+
+  const UxLayer(this.code);
+
+  final int code;
+
+  static UxLayer fromCode(int? code, {UxLayer fallback = UxLayer.uwidget}) {
+    for (final value in UxLayer.values) {
+      if (value.code == code) return value;
+    }
+    return fallback;
+  }
+}
+
+class UxZone {
+  UxZone._();
+
+  static const String app = 'app';
+  static const String content = 'content';
+  static const String header = 'header';
+  static const String collection = 'collection';
+  static const String detail = 'detail';
+  static const String feedback = 'feedback';
+  static const String footer = 'footer';
+}
+
 class UxRegister {
   UxRegister._();
 
   static const int _tierBase = 1000;
   static const int _paperScale = _tierBase * _tierBase;
 
+  static const Map<int, String> apps = <int, String>{
+    0: 'aicodex',
+    1: 'aistudio',
+    2: 'aibook',
+    3: 'aiwork',
+  };
+
+  static const Map<int, String> appShells = <int, String>{
+    1: 'appshell',
+    2: 'appshellLandscape',
+    3: 'appshellPortrait',
+  };
+
   static const Map<int, String> papers = <int, String>{0: 'paperzero', 1: 'paperone', 2: 'papertwo', 3: 'paperthree', 4: 'paperfour'};
 
   static const Map<int, String> templates = <int, String>{1: 'tworkspace', 2: 'tsheet', 3: 'treport', 4: 'tdboard', 5: 'twizard', 6: 'tform'};
 
-  static const Map<int, String> scopes = <int, String>{
+  static const Map<int, String> uwidgets = <int, String>{
     1: 'list',
     2: 'grid',
     3: 'datatable',
@@ -28,25 +73,29 @@ class UxRegister {
     14: 'field',
   };
 
-  @Deprecated('Use scopes instead.')
-  static const Map<int, String> views = scopes;
+  static final Map<String, int> _papersByName = <String, int>{
+    for (final entry in papers.entries) entry.value: entry.key,
+  };
+
+  static final Map<String, int> _templatesByName = <String, int>{
+    for (final entry in templates.entries) entry.value: entry.key,
+  };
+
+  static final Map<String, int> _uwidgetsByName = <String, int>{
+    for (final entry in uwidgets.entries) entry.value: entry.key,
+  };
 
   static String paperId(int pid) => '$pid';
 
   static String templateId({required int pid, required int tid}) => '$pid.$tid';
 
-  static String scopeId({required int pid, required int tid, required int sid}) =>
-      '$pid.$tid.$sid';
-
-  @Deprecated('Use scopeId instead.')
-  static String viewId({required int pid, required int tid, required int vid}) =>
-      scopeId(pid: pid, tid: tid, sid: vid);
+  static String uwidgetId({required int pid, required int tid, required int uwid}) => '$pid.$tid.$uwid';
 
   // Packed structural code rule:
-  // pid, tid, and vid each use 3 digits.
+  // pid, tid, and uwid each use 3 digits.
   // paper    -> pid * 1,000,000
   // template -> pid * 1,000,000 + tid * 1,000
-  // scope    -> pid * 1,000,000 + tid * 1,000 + sid
+  // uwidget    -> pid * 1,000,000 + tid * 1,000 + uwid
   static int paperCode(int pid) {
     _validateTier('pid', pid);
     return pid * _paperScale;
@@ -58,26 +107,35 @@ class UxRegister {
     return pid * _paperScale + tid * _tierBase;
   }
 
-  static int scopeCode({required int pid, required int tid, required int sid}) {
+  static int uwidgetCode({required int pid, required int tid, required int uwid}) {
     _validateTier('pid', pid);
     _validateTier('tid', tid);
-    _validateTier('sid', sid);
-    return pid * _paperScale + tid * _tierBase + sid;
+    _validateTier('uwid', uwid);
+    return pid * _paperScale + tid * _tierBase + uwid;
   }
 
-  @Deprecated('Use scopeCode instead.')
-  static int viewCode({required int pid, required int tid, required int vid}) =>
-      scopeCode(pid: pid, tid: tid, sid: vid);
+  static int localNodeCode(String name) {
+    final pid = _papersByName[name];
+    if (pid != null) return paperCode(pid);
 
-  static ({int pid, int tid, int vid}) decodeCode(int code) {
+    final tid = _templatesByName[name];
+    if (tid != null) return templateCode(pid: 0, tid: tid);
+
+    final uwid = _uwidgetsByName[name];
+    if (uwid != null) return uwidgetCode(pid: 0, tid: 0, uwid: uwid);
+
+    throw ArgumentError.value(name, 'name', 'Unknown UX node name');
+  }
+
+  static ({int pid, int tid, int uwid}) decodeCode(int code) {
     if (code < 0) {
       throw RangeError.value(code, 'code', 'UX code must be non-negative');
     }
     final pid = code ~/ _paperScale;
     final remainder = code % _paperScale;
     final tid = remainder ~/ _tierBase;
-    final vid = remainder % _tierBase;
-    return (pid: pid, tid: tid, vid: vid);
+    final uwid = remainder % _tierBase;
+    return (pid: pid, tid: tid, uwid: uwid);
   }
 
   static void _validateTier(String name, int value) {
@@ -169,36 +227,89 @@ enum UwFieldMode {
 
 enum FilterOp { contains, startsWith, endsWith, except }
 
-mixin Ux {
-  int get i;
-  String get n;
-  int get s;
+enum UwStateSource { chrome, data, paper, template }
 
-  // Shared experimental metadata bag for UX nodes.
-  Map<String, dynamic> get m;
+class UwStateBindingSpec {
+  const UwStateBindingSpec({required this.key, this.source = UwStateSource.chrome, this.uwidget});
+
+  final String key;
+  final UwStateSource source;
+  final String? uwidget;
+
+  factory UwStateBindingSpec.fromLegacy({required String? key, required int sourceCode, required String? uwidget}) {
+    if (key == null || key.isEmpty) {
+      throw ArgumentError.value(key, 'key', 'Binding key must not be empty');
+    }
+    return UwStateBindingSpec(
+      key: key,
+      source: switch (sourceCode) {
+        1 => UwStateSource.data,
+        2 => UwStateSource.paper,
+        3 => UwStateSource.template,
+        _ => UwStateSource.chrome,
+      },
+      uwidget: uwidget,
+    );
+  }
+
+  Map<String, dynamic> toJson() => <String, dynamic>{'key': key, 'source': source.name, 'uwidget': uwidget};
 }
 
-mixin Paper implements Ux {
-  // pid -> 0:Pzero, 1:Pone, 2:Ptwo, 3:Pthree, 4:Pfour
-  // n -> paperzero, paperone, papertwo, paperthree, paperfour
-  // Paper is the route-facing UX host and owns paper-scoped lifecycle.
-  abstract final int pid;
+extension UwStateAccess on Autopilot {
+  dynamic readUwState(UwStateBindingSpec binding) {
+    switch (binding.source) {
+      case UwStateSource.chrome:
+        return stateSet.chrome<dynamic>(binding.key);
+      case UwStateSource.data:
+        return data(binding.key);
+      case UwStateSource.paper:
+        return binding.uwidget == null ? null : stateSet.getPaper<dynamic>(binding.uwidget!, binding.key);
+      case UwStateSource.template:
+        return binding.uwidget == null ? null : stateSet.getTemplate<dynamic>(binding.uwidget!, binding.key);
+    }
+  }
 
-  @override
-  abstract final int s;
+  void writeUwState(UwStateBindingSpec binding, dynamic value, {bool notify = true}) {
+    switch (binding.source) {
+      case UwStateSource.chrome:
+        setChromeState(binding.key, value, notify: notify);
+      case UwStateSource.data:
+        setData(binding.key, value, notify: notify);
+      case UwStateSource.paper:
+        if (binding.uwidget != null) {
+          setPaperState(binding.uwidget!, binding.key, value, notify: notify);
+        }
+      case UwStateSource.template:
+        if (binding.uwidget != null) {
+          setTemplateState(binding.uwidget!, binding.key, value, notify: notify);
+        }
+    }
+  }
+}
 
-  @override
-  abstract final int i;
+mixin Ux {
+  int get i;
+  bool get a => true;
+  int get d => 0;
+  int get e => 0;
+  String get n;
+  int get l => -1;
 
-  @override
-  abstract final String n;
-
-  @override
+  // Shared experimental metadata bag for UX nodes.
   Map<String, dynamic> get m => const <String, dynamic>{};
+
+  // Legacy numeric style/variant slot, now stored inside metadata.
+  int get style => (m['style'] as num?)?.toInt() ?? 0;
+
+  // Numeric type identity.
+  int get t => UxRegister.localNodeCode(n);
+
+  // Human-readable structural path for logging, debugging, and display.
+  String get path => '$n.$i';
 }
 
 class UxPaperHost extends StatefulWidget {
-  // Paper-scoped runtime host. Keep this with Paper so lifecycle ownership is
+  // Paper-scoped runtime host. Keep this with the paper layer so lifecycle ownership is
   // obvious at the page layer.
   const UxPaperHost({required this.i, required this.autopilot, required this.child, this.initialState = const <String, dynamic>{}, super.key});
 
@@ -247,33 +358,14 @@ class _UxPaperHostState extends State<UxPaperHost> {
   Widget build(BuildContext context) => widget.child;
 }
 
-mixin Template implements Ux {
-  // tid -> 1:Tworkspace, 2:Tsheet, 3:Treport, 4:Tdboard, 5:Twizard, 6:Tform
-  // n -> tworkspace, tsheet, treport, tdboard, twizard, tform
-  // Template is the workflow layer and owns template-scoped lifecycle.
-  int get tid;
-
-  @override
-  int get s;
-
-  @override
-  int get i;
-
-  @override
-  String get n;
-
-  @override
-  Map<String, dynamic> get m => const <String, dynamic>{};
-}
-
 class UxTemplateHost extends StatefulWidget {
-  // Template-scoped runtime host. Keep this with Template so lifecycle
+  // Template-scoped runtime host. Keep this with the template layer so lifecycle
   // ownership stays next to the consuming layer.
   const UxTemplateHost({required this.i, required this.autopilot, required this.builder, this.initialState = const <String, dynamic>{}, super.key});
 
   final int i;
   final Autopilot autopilot;
-  final Widget Function(BuildContext context, String scope) builder;
+  final Widget Function(BuildContext context, String uwidget) builder;
   final Map<String, dynamic> initialState;
 
   @override
@@ -317,27 +409,4 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
 
   @override
   Widget build(BuildContext context) => widget.builder(context, _scope);
-}
-
-mixin Uwidget implements Ux {
-  // vid -> 1:list, 2:grid, 3:datatable, 4:toolbar,
-  // 5:from, 6:plist, 7:card, 8:item, 9:empty,
-  // 10:choose, 11:alert, 12:collection, 13:tab, 14:field
-  // n -> same as the mapped view name above
-  // Uwidget means Ultra Widget.
-  // It is a reusable primitive layer and does not get a shared runtime host by
-  // default.
-  int get vid;
-
-  @override
-  int get s;
-
-  @override
-  int get i;
-
-  @override
-  String get n;
-
-  @override
-  Map<String, dynamic> get m => const <String, dynamic>{};
 }

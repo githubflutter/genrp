@@ -7,7 +7,7 @@ import 'package:genrp/core/ux/uwidget/uwfield.dart';
 ///
 /// Use this directly for better performance when you know you need bool mode,
 /// or use [UwField] with [UwFieldMode.bool_] for mode-dispatched convenience.
-class UwFieldBool extends StatefulWidget with Uwidget {
+class UwFieldBool extends StatefulWidget with Ux {
   const UwFieldBool({
     required this.i,
     required this.autopilot,
@@ -17,9 +17,7 @@ class UwFieldBool extends StatefulWidget with Uwidget {
     super.key,
   });
 
-  @override
-  final int vid = 14;
-  @override
+  final int uwid = 14;
   final int s;
   @override
   final int i;

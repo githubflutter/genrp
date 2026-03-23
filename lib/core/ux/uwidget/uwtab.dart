@@ -5,7 +5,7 @@ import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
-class UwTab extends StatelessWidget with Uwidget {
+class UwTab extends StatelessWidget with Ux {
   UwTab({
     required this.i,
     required this.autopilot,
@@ -21,10 +21,7 @@ class UwTab extends StatelessWidget with Uwidget {
          'UwTab labels length must match children length',
        );
 
-  @override
-  final int vid = 13;
-
-  @override
+  final int uwid = 13;
   final int s;
 
   @override

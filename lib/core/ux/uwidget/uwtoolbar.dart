@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwToolbar extends StatelessWidget with Uwidget {
+class UwToolbar extends StatelessWidget with Ux {
   const UwToolbar({
     required this.i,
     required this.autopilot,
@@ -16,10 +16,7 @@ class UwToolbar extends StatelessWidget with Uwidget {
     super.key,
   });
 
-  @override
-  final int vid = 4;
-
-  @override
+  final int uwid = 4;
   final int s;
 
   @override

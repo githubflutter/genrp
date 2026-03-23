@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 
-class Tsheet extends StatelessWidget with Template {
+class Tsheet extends StatelessWidget with Ux {
   const Tsheet({
     required this.i,
     required this.autopilot,
@@ -11,10 +11,7 @@ class Tsheet extends StatelessWidget with Template {
     super.key,
   });
 
-  @override
   final int tid = 2;
-
-  @override
   final int s;
 
   @override

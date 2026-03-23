@@ -12,7 +12,11 @@ import 'package:genrp/core/ux/uwidget/uwform.dart';
 import 'package:genrp/core/ux/uwidget/uwplist.dart';
 import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
-class Tworkspace extends StatelessWidget with Template {
+class Tworkspace extends StatelessWidget with Ux {
+  // Migration note:
+  // These individual constructor parameters are transitional. The long-term
+  // direction is for workspace configuration to come from unified template
+  // metadata (`m`) rather than per-parameter plumbing.
   const Tworkspace({
     required this.i,
     required this.autopilot,
@@ -34,13 +38,24 @@ class Tworkspace extends StatelessWidget with Template {
     this.defaultAlertMessage = 'Something needs your attention.',
     this.collectionFlex = 7,
     this.detailFlex = 5,
+    this.topToolbarI,
+    this.topToolbarStyle,
+    this.bottomToolbarI,
+    this.bottomToolbarStyle,
+    this.collectionI,
+    this.collectionStyle,
+    this.plistI,
+    this.plistStyle,
+    this.formI,
+    this.formStyle,
+    this.emptyI,
+    this.emptyStyle,
+    this.alertI,
+    this.alertStyle,
     super.key,
   });
 
-  @override
   final int tid = 1;
-
-  @override
   final int s;
 
   @override
@@ -64,6 +79,20 @@ class Tworkspace extends StatelessWidget with Template {
   final String defaultAlertMessage;
   final int collectionFlex;
   final int detailFlex;
+  final int? topToolbarI;
+  final int? topToolbarStyle;
+  final int? bottomToolbarI;
+  final int? bottomToolbarStyle;
+  final int? collectionI;
+  final int? collectionStyle;
+  final int? plistI;
+  final int? plistStyle;
+  final int? formI;
+  final int? formStyle;
+  final int? emptyI;
+  final int? emptyStyle;
+  final int? alertI;
+  final int? alertStyle;
 
   @override
   final String n = 'tworkspace';
@@ -98,9 +127,9 @@ class Tworkspace extends StatelessWidget with Template {
             final allowedViewModes = _allowedViewModes();
 
             final collection = UwCollection(
-              i: i * 100 + 10,
+              i: collectionI ?? i * 100 + 10,
               autopilot: autopilot,
-              s: viewMode,
+              s: collectionStyle ?? viewMode,
               p: collectionTitle,
               columns: collectionColumns,
               rows: collectionRows,
@@ -179,18 +208,18 @@ class Tworkspace extends StatelessWidget with Template {
 
   Widget _buildDetail({required String mode, required Object? activeId, required int? activeIndex, required Map<String, Object?> properties, required String? errorMessage}) {
     if (errorMessage != null && errorMessage.isNotEmpty) {
-      return UwAlert(i: i * 100 + 14, autopilot: autopilot, s: 4, title: 'Error', message: errorMessage.isNotEmpty ? errorMessage : defaultAlertMessage);
+      return UwAlert(i: alertI ?? i * 100 + 14, autopilot: autopilot, s: alertStyle ?? 4, title: 'Error', message: errorMessage.isNotEmpty ? errorMessage : defaultAlertMessage);
     }
 
     if (mode == 'create' || mode == 'edit') {
-      return UwForm(i: i * 100 + 13, autopilot: autopilot, p: mode == 'create' ? 'Create' : 'Edit${activeId == null ? '' : ' $activeId'}', footer: formFooter, children: formChildren);
+      return UwForm(i: formI ?? i * 100 + 13, autopilot: autopilot, s: formStyle ?? 0, p: mode == 'create' ? 'Create' : 'Edit${activeId == null ? '' : ' $activeId'}', footer: formFooter, children: formChildren);
     }
 
     if (mode == 'inspect' && (activeIndex != null || activeId != null)) {
-      return UwPList(i: i * 100 + 12, autopilot: autopilot, p: 'Properties', properties: properties);
+      return UwPList(i: plistI ?? i * 100 + 12, autopilot: autopilot, s: plistStyle ?? 0, p: 'Properties', properties: properties);
     }
 
-    return UwEmpty(i: i * 100 + 11, autopilot: autopilot, title: emptyTitle, message: emptyMessage);
+    return UwEmpty(i: emptyI ?? i * 100 + 11, autopilot: autopilot, s: emptyStyle ?? 0, title: emptyTitle, message: emptyMessage);
   }
 
   Widget? _buildTopToolbar({
@@ -210,9 +239,9 @@ class Tworkspace extends StatelessWidget with Template {
     );
     if (holder == null || !holder.visible) return null;
     return UwToolbar(
-      i: i * 100 + 1,
+      i: topToolbarI ?? i * 100 + 1,
       autopilot: autopilot,
-      s: 2,
+      s: topToolbarStyle ?? 2,
       leftChildren: <Widget>[
         ..._buildLeadControl(
           mode: mode,
@@ -269,9 +298,9 @@ class Tworkspace extends StatelessWidget with Template {
     );
     if (holder == null || !holder.visible) return null;
     return UwToolbar(
-      i: i * 100 + 3,
+      i: bottomToolbarI ?? i * 100 + 3,
       autopilot: autopilot,
-      s: 2,
+      s: bottomToolbarStyle ?? 2,
       leftChildren: <Widget>[
         Text('Results: $totalCount'),
         if (activeLabel != null && activeLabel.isNotEmpty) Text('Active: $activeLabel'),

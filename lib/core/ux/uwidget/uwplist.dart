@@ -4,7 +4,7 @@ import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
-class UwPList extends StatelessWidget with Uwidget {
+class UwPList extends StatelessWidget with Ux {
   const UwPList({
     required this.i,
     required this.autopilot,
@@ -15,10 +15,7 @@ class UwPList extends StatelessWidget with Uwidget {
     this.properties = const <String, Object?>{},
   });
 
-  @override
-  final int vid = 6;
-
-  @override
+  final int uwid = 6;
   final int s;
 
   @override
