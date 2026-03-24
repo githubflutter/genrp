@@ -3,7 +3,6 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/model/uschema/ux_spec.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
-// FAB removed
 import 'package:genrp/core/ux/uwidget/uwalert.dart';
 import 'package:genrp/core/ux/uwidget/uwcollection.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
@@ -83,13 +82,13 @@ class Tworkspace extends StatelessWidget with Ux {
         return AnimatedBuilder(
           animation: autopilot,
           builder: (BuildContext context, Widget? child) {
-            final mode = autopilot.templateState<String>(scope, 'mode') ?? 'browse';
-            final viewMode = autopilot.templateState<int>(scope, 'viewMode') ?? 3;
-            final activeId = autopilot.templateState<Object?>(scope, 'activeId');
-            final activeIndex = autopilot.templateState<int>(scope, 'activeIndex');
-            final selectedIds = autopilot.templateState<List<dynamic>>(scope, 'selectedIds') ?? const <dynamic>[];
-            final totalCount = autopilot.templateState<int>(scope, 'totalCount') ?? collectionRows.length;
-            final errorMessage = autopilot.templateState<String>(scope, 'error');
+            final mode = autopilot.state.templateState<String>(scope, 'mode') ?? 'browse';
+            final viewMode = autopilot.state.templateState<int>(scope, 'viewMode') ?? 3;
+            final activeId = autopilot.state.templateState<Object?>(scope, 'activeId');
+            final activeIndex = autopilot.state.templateState<int>(scope, 'activeIndex');
+            final selectedIds = autopilot.state.templateState<List<dynamic>>(scope, 'selectedIds') ?? const <dynamic>[];
+            final totalCount = autopilot.state.templateState<int>(scope, 'totalCount') ?? collectionRows.length;
+            final errorMessage = autopilot.state.templateState<String>(scope, 'error');
             final activeLabel = _labelForIndex(activeIndex);
             final activeProperties = _propertiesForIndex(activeIndex);
             final canInspect = collectionRows.isNotEmpty;
@@ -140,7 +139,6 @@ class Tworkspace extends StatelessWidget with Ux {
                   activeLabel: activeLabel,
                   selectedCount: selectedIds.length,
                 );
-                // FAB removed
                 final bodyColumn = Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
@@ -209,7 +207,7 @@ class Tworkspace extends StatelessWidget with Ux {
             _setBrowse(scope);
           },
           onViewModeChanged: (int nextMode) {
-            autopilot.setTemplateState(scope, 'viewMode', nextMode);
+            autopilot.state.setTemplateState(scope, 'viewMode', nextMode);
           },
         ),
         if (oid.isNotEmpty) Text('OID $oid'),
@@ -292,7 +290,6 @@ class Tworkspace extends StatelessWidget with Ux {
     ];
   }
 
-  // Actions logic removed
 
   String _viewLabelFor(int mode) => switch (mode) {
     1 => 'List',
@@ -367,15 +364,15 @@ class Tworkspace extends StatelessWidget with Ux {
   }
 
   void _setBrowse(String scope) {
-    autopilot.patchTemplateState(scope, <String, dynamic>{'mode': 'browse', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
+    autopilot.state.patchTemplateState(scope, <String, dynamic>{'mode': 'browse', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
   }
 
   void _setCreate(String scope) {
-    autopilot.patchTemplateState(scope, <String, dynamic>{'mode': 'create', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
+    autopilot.state.patchTemplateState(scope, <String, dynamic>{'mode': 'create', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
   }
 
   void _setInspect(String scope, {required Object? activeId, required int? activeIndex}) {
-    autopilot.patchTemplateState(scope, <String, dynamic>{
+    autopilot.state.patchTemplateState(scope, <String, dynamic>{
       'mode': activeId == null && activeIndex == null ? 'browse' : 'inspect',
       'activeId': activeId,
       'activeIndex': activeIndex,
@@ -384,7 +381,7 @@ class Tworkspace extends StatelessWidget with Ux {
   }
 
   void _setEdit(String scope, {required Object? activeId, required int? activeIndex}) {
-    autopilot.patchTemplateState(scope, <String, dynamic>{
+    autopilot.state.patchTemplateState(scope, <String, dynamic>{
       'mode': 'edit',
       'activeId': activeId,
       'activeIndex': activeIndex,

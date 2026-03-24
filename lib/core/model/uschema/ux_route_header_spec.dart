@@ -1,19 +1,19 @@
-class CopilotRoute {
-  const CopilotRoute({
+class UxRouteHeaderSpec {
+  const UxRouteHeaderSpec({
     required this.appName,
     required this.pageSpecId,
     this.optionalId,
   });
 
-  factory CopilotRoute.fromJson(Map<String, dynamic> json) {
-    return CopilotRoute(
+  factory UxRouteHeaderSpec.fromJson(Map<String, dynamic> json) {
+    return UxRouteHeaderSpec(
       appName: json['appName'] as String? ?? '',
       pageSpecId: (json['pageSpecId'] as num?)?.toInt() ?? 0,
       optionalId: json['optionalId'] as String?,
     );
   }
 
-  factory CopilotRoute.parse(String raw) {
+  factory UxRouteHeaderSpec.parse(String raw) {
     final uri = Uri.parse(raw.startsWith('/') ? raw : '/$raw');
     final segments = uri.pathSegments;
     if (segments.length < 2) {
@@ -29,7 +29,7 @@ class CopilotRoute {
       );
     }
 
-    return CopilotRoute(
+    return UxRouteHeaderSpec(
       appName: segments[0],
       pageSpecId: pageSpecId,
       optionalId: segments.length > 2 ? segments[2] : null,

@@ -1,8 +1,7 @@
-import 'package:genrp/core/agent/copilot_route.dart';
+import 'package:genrp/core/model/uschema/uschema.dart';
 import 'package:genrp/core/gen/uschema_cache.dart';
 import 'package:genrp/core/gen/uschema_codec.dart';
 import 'package:genrp/core/gen/uschema_compiled.dart';
-import 'package:genrp/core/model/uschema/ux_specs.dart';
 
 /// Small runtime helper for compile/cache access to unified UX specs.
 ///
@@ -12,8 +11,8 @@ class UschemaRuntime {
   UschemaRuntime({
     UschemaCache? cache,
     UschemaCodec codec = const UschemaCodec(),
-  })  : _cache = cache ?? UschemaCache(),
-        _codec = codec;
+  }) : _cache = cache ?? UschemaCache(),
+       _codec = codec;
 
   final UschemaCache _cache;
   final UschemaCodec _codec;
@@ -36,10 +35,14 @@ class UschemaRuntime {
   UschemaCompiled refreshResolved(
     String routePath, {
     required List<UxRouteSpec> presets,
-    required UxRouteSpec Function(CopilotRoute route, {List<UxRouteSpec> presets}) resolve,
+    required UxRouteSpec Function(
+      UxRouteHeaderSpec route, {
+      List<UxRouteSpec> presets,
+    })
+    resolve,
   }) {
-    final route = CopilotRoute.parse(routePath);
-    final routeSpec = resolve(route, presets: presets);
+    final routeData = UxRouteHeaderSpec.parse(routePath);
+    final routeSpec = resolve(routeData, presets: presets);
     return refresh(routeSpec.spec);
   }
 

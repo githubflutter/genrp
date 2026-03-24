@@ -1,27 +1,20 @@
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/agent/copilot_route.dart';
 import 'package:genrp/core/gen/uschema_compiled.dart';
 import 'package:genrp/core/gen/uschema_runtime.dart';
-import 'package:genrp/core/model/uschema/ux_specs.dart';
+import 'package:genrp/core/model/uschema/uschema.dart';
 
 typedef RouteResolver =
-    UxRouteSpec Function(
-      CopilotRoute route, {
-      List<UxRouteSpec> presets,
-    });
+    UxRouteSpec Function(UxRouteHeaderSpec route, {List<UxRouteSpec> presets});
 
 typedef InitialRouteResolver =
-    CopilotRoute Function({
+    UxRouteHeaderSpec Function({
       String? explicitPath,
       Uri? currentUri,
       List<UxRouteSpec> presets,
     });
 
 class AppRuntimeBootstrap {
-  const AppRuntimeBootstrap({
-    required this.presets,
-    required this.routePath,
-  });
+  const AppRuntimeBootstrap({required this.presets, required this.routePath});
 
   final List<UxRouteSpec> presets;
   final String routePath;
@@ -29,10 +22,8 @@ class AppRuntimeBootstrap {
 
 /// Shared route/bootstrap runtime flow for app home shells.
 class AppRuntimeFlow {
-  AppRuntimeFlow({
-    required this.autopilot,
-    UschemaRuntime? uschemaRuntime,
-  }) : uschemaRuntime = uschemaRuntime ?? UschemaRuntime();
+  AppRuntimeFlow({required this.autopilot, UschemaRuntime? uschemaRuntime})
+    : uschemaRuntime = uschemaRuntime ?? UschemaRuntime();
 
   final Autopilot autopilot;
   final UschemaRuntime uschemaRuntime;
@@ -40,17 +31,20 @@ class AppRuntimeFlow {
   List<UxRouteSpec> presets = const <UxRouteSpec>[];
   String? routePath;
 
-  CopilotRoute route({
+  UxRouteHeaderSpec route({
     required InitialRouteResolver initialRoute,
     String? explicitPath,
     Uri? currentUri,
   }) {
-    return autopilot.currentRoute ??
-        initialRoute(
-          explicitPath: explicitPath,
-          currentUri: currentUri,
-          presets: presets,
-        );
+    final current = autopilot.currentRoute;
+    if (current != null) {
+      return current.route;
+    }
+    return initialRoute(
+      explicitPath: explicitPath,
+      currentUri: currentUri,
+      presets: presets,
+    );
   }
 
   UxRouteSpec spec({
@@ -92,39 +86,28 @@ class AppRuntimeFlow {
     String? explicitPath,
     Uri? currentUri,
   }) {
-    final resolvedRoute = initialRoute(
+    this.presets = presets;
+    final headerRoute = initialRoute(
       explicitPath: explicitPath,
       currentUri: currentUri,
       presets: presets,
     );
-    final resolvedPath = resolvedRoute.path;
-    autopilot.navigate(resolvedPath, notify: false);
-    uschemaRuntime.refreshResolved(
-      resolvedPath,
-      presets: presets,
-      resolve: resolve,
-    );
-    this.presets = presets;
+    final resolvedPath = headerRoute.path;
+    final resolvedRouteSpec = resolve(headerRoute, presets: presets);
+    autopilot.mountRoute(resolvedRouteSpec, notify: false);
+    uschemaRuntime.refresh(resolvedRouteSpec.spec);
     routePath = resolvedPath;
-    return AppRuntimeBootstrap(
-      presets: presets,
-      routePath: resolvedPath,
-    );
+    return AppRuntimeBootstrap(presets: presets, routePath: resolvedPath);
   }
 
-  bool openRoute(
-    String nextRoute, {
-    required RouteResolver resolve,
-  }) {
+  bool openRoute(String nextRoute, {required RouteResolver resolve}) {
     if (routePath == nextRoute) {
       return false;
     }
-    autopilot.navigate(nextRoute, notify: false);
-    uschemaRuntime.refreshResolved(
-      nextRoute,
-      presets: presets,
-      resolve: resolve,
-    );
+    final headerRoute = UxRouteHeaderSpec.parse(nextRoute);
+    final resolvedRouteSpec = resolve(headerRoute, presets: presets);
+    autopilot.mountRoute(resolvedRouteSpec, notify: false);
+    uschemaRuntime.refresh(resolvedRouteSpec.spec);
     routePath = nextRoute;
     return true;
   }

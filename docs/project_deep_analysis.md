@@ -61,9 +61,15 @@ pipelines, extra session wrappers, or generator-heavy runtime ownership should
 be interpreted as historical experiment context unless a future change
 explicitly reintroduces them.
 
-### 1.2 Default Entry Point Change
+### 1.2 Dedicated Entry Points
 
-As of this snapshot, `main.dart` boots **AICodex** by default (previously AIWork). Dedicated secondary entry points exist for `main_aistudio.dart` and `main_aicodex.dart`, both with `autoSignIn: true` for convenience.
+GenRP now supports dedicated entry points for each application, allowing for auto-sign-in and specific bootstrap configurations:
+- `main_aicodex.dart`
+- `main_aistudio.dart`
+- `main_aibook.dart`
+- `main_aiwork.dart`
+
+By default, `main.dart` continues to boot **AICodex** for the current snapshot.
 
 ---
 
@@ -72,24 +78,26 @@ As of this snapshot, `main.dart` boots **AICodex** by default (previously AIWork
 ```mermaid
 graph TB
     subgraph "Entry Points"
-        MAIN["main.dart<br/>AICodex default entry"]
+        MAIN["main.dart<br/>AICodex default"]
         MAINSTUDIO["main_aistudio.dart"]
         MAINCODEX["main_aicodex.dart"]
+        MAINBOOK["main_aibook.dart"]
+        MAINWORK["main_aiwork.dart"]
     end
 
     subgraph "Applications"
-        AIWORK["AIWork<br/>Client CRUD"]
-        AIBOOK["AIBook<br/>Runtime Client"]
-        AICODEX["AICodex<br/>Data-model Authoring"]
-        AISTUDIO["AIStudio<br/>UX/Spec Authoring"]
+        AIWORK["AIWork"]
+        AIBOOK["AIBook"]
+        AICODEX["AICodex"]
+        AISTUDIO["AIStudio"]
     end
 
     subgraph "App Specs"
         WSP["AIWorkSpecs"]
         BSP["AIBookSpecs"]
-        CSP["AICodex App-owned Surfaces"]
-        SSP["AIStudio App-owned Surfaces"]
-        URS["UxRouteSpec / UxPaperSpec / UxTemplateSpec"]
+        CSP["AICodex Specs"]
+        SSP["AIStudio Specs"]
+        URS["UxRouteSpec (Resolved)"]
     end
 
     subgraph "Core Orchestration"
@@ -98,7 +106,6 @@ graph TB
         CU["CopilotUX"]
         DS["DataSet"]
         SS["StateSet"]
-        AS["ActionSet"]
     end
 
     subgraph "Admin Shell"
@@ -136,6 +143,8 @@ graph TB
     MAIN --> AICODEX
     MAINSTUDIO --> AISTUDIO
     MAINCODEX --> AICODEX
+    MAINBOOK --> AIBOOK
+    MAINWORK --> AIWORK
 
     AIWORK --> WSP
     AIBOOK --> BSP
@@ -165,7 +174,7 @@ graph TB
     AP --> CU
     AP --> DS
     AP --> SS
-    AP --> AS
+    AP --> SS
     AP --> PH
     AP --> TH
     AP --> VW
@@ -219,29 +228,30 @@ graph TB
 genrp/
 ├── lib/
 │   ├── main.dart                         # Default app entry (boots AICodex)
-│   ├── main_aistudio.dart               # AIStudio dedicated entry (autoSignIn)
-│   ├── main_aicodex.dart                # AICodex dedicated entry (autoSignIn)
+│   ├── main_aistudio.dart               # AIStudio dedicated entry
+│   ├── main_aicodex.dart                # AICodex dedicated entry
+│   ├── main_aibook.dart                 # AIBook dedicated entry
+│   ├── main_aiwork.dart                 # AIWork dedicated entry
 │   ├── meta.dart                         # Static version flags
 │   ├── app/
 │   │   ├── aiwork/
-│   │   │   ├── aiwork.dart               # AIWork MaterialApp + stage flow
-│   │   │   └── aiwork_specs.dart         # AIWork preset routes and papers
+│   │   │   ├── aiwork.dart               # AIWork MaterialApp + flow
+│   │   │   └── aiwork_specs.dart         # AIWork preset routes
 │   │   ├── aibook/
-│   │   │   ├── aibook.dart               # AIBook MaterialApp + stage flow
-│   │   │   └── aibook_specs.dart         # AIBook preset routes and papers
+│   │   │   ├── aibook.dart               # AIBook MaterialApp + flow
+│   │   │   └── aibook_specs.dart         # AIBook preset routes
 │   │   ├── aicodex/
 │   │   │   └── aicodex.dart              # AICodex MaterialApp + AdminHome shell
 │   │   └── aistudio/
 │   │       └── aistudio.dart             # AIStudio MaterialApp + AdminHome shell
 │   ├── core/
 │   │   ├── agent/
-│   │   │   ├── action_set.dart           # Action registry + dispatch helpers
-│   │   │   ├── autopilot.dart            # Orchestrator + scoped state/auth/navigation
+│   │   │   ├── autopilot.dart            # Thin coordinator
 │   │   │   ├── copilot_data.dart         # Data facade over DataSet
-│   │   │   ├── copilot_route.dart        # Route parsing + path model
-│   │   │   ├── copilot_ux.dart           # UX facade over StateSet
+│   │   │   ├── copilot_ux.dart           # UX / Scoping facade
 │   │   │   ├── data_set.dart             # Key/value data store
-│   │   │   └── state_set.dart            # Key/value state store (chrome/paper/template scopes)
+│   │   │   ├── mockauth.dart             # Mock authentication utility
+│   │   │   └── state_set.dart            # Key/value state store
 │   │   ├── base/
 │   │   │   ├── bootstrap.dart            # System bootstrap defaults, seed rows, update helpers
 │   │   │   ├── converter.dart            # Tolerant type conversion helpers
@@ -258,7 +268,7 @@ genrp/
 │   │   │   ├── sqlite_store.dart         # SQLite store + SqliteCatalogRow
 │   │   │   ├── sqliteadmin.dart          # SQLite create-db/table/vfun builder
 │   │   │   ├── sqliteclient.dart         # SQLite foundation CRUD builder
-│   │   │   └── webclient.dart            # Generic remote action/CRUD envelope builder
+│   │   │   └── webclient.dart            # Generic remote CRUD envelope builder
 │   │   ├── gen/
 │   │   │   ├── admin_state.dart          # Shared admin shell state (AdminMode, master1, detail1, etc.)
 │   │   │   ├── adminhome.dart            # Shared admin shell for AIStudio/AICodex (539 LOC)
@@ -294,23 +304,23 @@ genrp/
 
 ### 5.1 Orchestration Engine (`core/agent/`)
 
-The **Autopilot** is the heart of the system — a `ChangeNotifier` that owns all runtime state:
+The **Autopilot** is the thin coordinator and central orchestrator of the system — a `ChangeNotifier` that owns the primary stores and delegates specialized logic to **Copilots**:
 
 | Component | Purpose |
 |---|---|
-| [autopilot.dart](lib/core/agent/autopilot.dart) | Orchestrator: field binding resolution, UX identity selection, action dispatch, mock auth |
-| [copilot_data.dart](lib/core/agent/copilot_data.dart) | Thin facade over `DataSet` — reads/writes business data + publishes changes |
-| [copilot_route.dart](lib/core/agent/copilot_route.dart) | Narrow app route model with `appName`, `pageSpecId`, `optionalId`, `path`, and `scopeKey` |
-| [copilot_ux.dart](lib/core/agent/copilot_ux.dart) | Thin facade over `StateSet` — reads/writes UX state + publishes changes |
-| [data_set.dart](lib/core/agent/data_set.dart) | `Map<String, dynamic>` store with smart `x_row.v.N` slot interception |
-| [state_set.dart](lib/core/agent/state_set.dart) | Three-tier scoped state: `chrome`, `paper`, `template` — each with get/set/patch/clear |
-| [action_set.dart](lib/core/agent/action_set.dart) | ID-keyed async action registry used by `Autopilot` |
+| [autopilot.dart](lib/core/agent/autopilot.dart) | **Thin Coordinator**: Owns `DataSet`, `StateSet`, and `currentRoute`. Manages cross-cutting mounting and publishing. |
+| [copilot_data.dart](lib/core/agent/copilot_data.dart) | **Data Copilot**: Body code for business data — manages shared `DataSet` updates. |
+| [copilot_ux.dart](lib/core/agent/copilot_ux.dart) | **UX Copilot**: Body code for transient UI state — manages `paper` and `template` scopes. |
+| [data_set.dart](lib/core/agent/data_set.dart) | Slot-addressable key/value data store. |
+| [state_set.dart](lib/core/agent/state_set.dart) | Three-tier scoped state: `chrome`, `paper`, `template`. |
 
 **Key design decisions:**
-- `CopilotData` and `CopilotUX` are **intentionally separate** (split concerns, never merge).
-- Binding resolution is **dual-path**: slot-first `X.v[index]` for machine transport, fallback to string path for migration.
-- Source codes: `0` = state, `1` = dataSource, `2` = dataSet.
-- UX identity is scoped as `hostId + bodyId + widgetId` — used for selection highlighting in debug mode.
+- **Copilots as "Body Code"**: Copilots are functionally part of Autopilot but separated into distinct files for cleaner review. They operate on the same store instances.
+- **Scoped UI State**: `CopilotUx` generates hierarchical scope keys derived from the `currentRoute` provided by Autopilot.
+- **Resolved Navigation**: `Autopilot.mountRoute(UxRouteSpec)` becomes the entry point for navigation after resolution.
+- **Centralized Notification**: All copilots call `autopilot.publishChange()` to ensure a single notification tick.
+- **Binding resolution** is **dual-path**: slot-first `X.v[index]` for machine transport, fallback to string path for migration.
+- **UX identity** is scoped as `hostId + bodyId + widgetId` — used for selection highlighting in debug mode.
 
 ### 5.2 Admin Shell (`core/gen/`)
 
@@ -398,28 +408,29 @@ All are immutable with `const` constructor, `fromJson`, `toJson`, `copyWith`, `=
 | [ux_template_spec.dart](lib/core/model/uschema/ux_template_spec.dart) | `UxTemplateSpec` | Template identity config |
 | [ux_template_action_spec.dart](lib/core/model/uschema/ux_template_action_spec.dart) | `UxTemplateActionSpec` | Template-level actions |
 | [ux_paper_spec.dart](lib/core/model/uschema/ux_paper_spec.dart) | `UxPaperSpec` | `pid`, `template` |
-| [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart) | `UxRouteSpec` | `appName`, `pageSpecId`, `title`, `subtitle`, `paper`, `optionalId` |
+| [ux_route_header_spec.dart](lib/core/model/uschema/ux_route_header_spec.dart) | `UxRouteHeaderSpec` | `appName`, `pageSpecId`, `optionalId` |
+| [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart) | `UxRouteSpec` | `app`, `route`, `spec`, `meta` |
 
 ### 5.6 UX Rendering Pipeline (`core/ux/`)
 
 ```mermaid
 flowchart LR
-    Route["CopilotRoute"]
+    Route["UxRouteHeaderSpec"]
     Specs["AIWork/AIBook Specs"]
-    RS["UxRouteSpec"]
+    URS["UxRouteSpec"]
     GX["GenUx.buildPaper()"]
     PH["UxPaperHost"]
     TH["UxTemplateHost"]
     VW["Uw* widgets"]
     AP["Autopilot"]
 
-    Route --> Specs --> RS --> GX --> PH --> TH --> VW
+    Route --> Specs --> URS --> GX --> PH --> TH --> VW
     AP --> PH
     AP --> TH
     AP --> VW
 ```
 
-1. **App route helpers** resolve a `CopilotRoute` into a `UxRouteSpec` (`AIWork`, `AIBook`).
+1. **App runtime flow** parses a **`UxRouteHeaderSpec`**, resolves it into a fully populated **`UxRouteSpec`**, and calls `autopilot.mountRoute()`.
 2. **`GenUx`** drives the spec-based papers for `AIWork` and `AIBook`.
 3. **`mixins.dart`** centralizes `UxRegister`, `Ux`, `Paper`, `Template`, `Uwidget`, `UxPaperHost`, and `UxTemplateHost`.
 4. **`UxPaperHost` / `UxTemplateHost`** mount scoped paper/template state inside `Autopilot`.
@@ -435,7 +446,7 @@ flowchart LR
 | `pgsqladmin.dart` | PostgreSQL create-database, create-table, create-function SQL |
 | `sqliteadmin.dart` | SQLite create-database, create-table, and `vfun` row/script generation |
 | `pgsqlclient.dart` / `sqliteclient.dart` | Direct CRUD builders for foundation targets |
-| `webclient.dart` | Generic request payload builder for remote action/function calls |
+| `webclient.dart` | Generic request payload builder for remote CRUD calls |
 | `sqlite_store.dart` | Generic local SQLite foundation with `app_kv` and `catalog_row` tables |
 | `datasource_helper.dart` | Empty placeholder |
 
@@ -467,25 +478,19 @@ flowchart LR
 sequenceDiagram
     participant User
     participant App
-    participant Specs
+    participant Flow as AppRuntimeFlow
     participant Autopilot
     participant GenUx
-    participant PaperHost
-    participant TemplateHost
 
-    User->>App: Launch app and sign in
-    App->>Autopilot: applyMockAuth()
-    App->>Specs: presets() + resolve(route)
-    Specs-->>App: UxRouteSpec
-    App->>Autopilot: navigate(route.path)
-    App->>GenUx: buildPaper(spec.paper)
-    GenUx->>PaperHost: create UxPaperHost
-    PaperHost->>Autopilot: mountPaper()
-    GenUx->>TemplateHost: create UxTemplateHost
-    TemplateHost->>Autopilot: mountCurrentTemplate()
-    User->>App: Interact with Uw* widgets
-    App->>Autopilot: setTemplateState() / setPaperState()
-    Autopilot-->>App: notifyListeners()
+    User->>App: Launch app
+    App->>App: applyMockAuth()
+    App->>Flow: bootstrap() / openRoute()
+    Flow->>Flow: resolve route header
+    Flow-->>Flow: UxRouteSpec
+    Flow->>Autopilot: mountRoute(spec)
+    Autopilot->>Autopilot: publishChange()
+    App->>GenUx: build(spec.spec, autopilot)
+    GenUx-->>User: Rendered Paper/Template
 ```
 
 ---
@@ -585,7 +590,7 @@ Current verification for this analysis:
 
 ### Design Philosophy
 1. **Performance first** — compact specs, low-overhead lookups, minimal abstraction
-2. **Numeric identity** — integer IDs for action, template, widget, type, source, field references
+2. **Numeric identity** — integer IDs for template, widget, type, source, field references
 3. **Compact transport** — base `X` with slot-addressable `v[]` list, not human-readable property maps
 4. **Single orchestrator** — `Autopilot` owns everything; no competing state managers
 5. **Forward-only cleanup** — remove legacy layers rather than preserving parallel runtime stacks
@@ -594,7 +599,6 @@ Current verification for this analysis:
 
 ### Key Patterns
 - **ChangeNotifier orchestration** — `Autopilot extends ChangeNotifier`, `AdminState extends ChangeNotifier`
-- **ID-keyed action handlers** — `ActionSet` registers async handlers by action id
 - **Spec-driven UI** — `*_Specs` build `UxRouteSpec` graphs and `GenUx` renders the runtime widgets
 - **Transport separation** — `uschema` specs describe UI structure while base `X` carries business-bound transport data
 - **Copilot split** — `CopilotData` and `CopilotUX` intentionally separate (never merge)
@@ -657,7 +661,7 @@ graph LR
 ### Phase 3: Continue AICodex
 8. **Keep SQL preview aligned with model selections** — create/drop/function SQL preview should stay coherent
 9. **Add real schema apply transport when backend flow is ready** — connect preview to action dispatch
-10. **Add transport + test coverage** — schema action dispatch, preview generation, and widget tests
+10. **Add transport + test coverage** — preview generation, and widget tests
 
 ### Phase 4: Production Hardening
 11. **Harden failure states** — malformed spec, transport, and preview errors
@@ -676,7 +680,7 @@ graph LR
 | **AIBook app** | [aibook.dart](lib/app/aibook/aibook.dart), [aibook_specs.dart](lib/app/aibook/aibook_specs.dart) |
 | **AICodex app** | [aicodex.dart](lib/app/aicodex/aicodex.dart) |
 | **AIStudio app** | [aistudio.dart](lib/app/aistudio/aistudio.dart) |
-| **Agent/Orchestration** | [autopilot.dart](lib/core/agent/autopilot.dart), [copilot_data.dart](lib/core/agent/copilot_data.dart), [copilot_route.dart](lib/core/agent/copilot_route.dart), [copilot_ux.dart](lib/core/agent/copilot_ux.dart), [data_set.dart](lib/core/agent/data_set.dart), [state_set.dart](lib/core/agent/state_set.dart), [action_set.dart](lib/core/agent/action_set.dart) |
+| **Agent/Orchestration** | [autopilot.dart](lib/core/agent/autopilot.dart), [copilot_data.dart](lib/core/agent/copilot_data.dart), [copilot_route.dart](lib/core/agent/copilot_route.dart), [copilot_ux.dart](lib/core/agent/copilot_ux.dart), [data_set.dart](lib/core/agent/data_set.dart), [state_set.dart](lib/core/agent/state_set.dart) |
 | **Base transport + registries** | [bootstrap.dart](lib/core/base/bootstrap.dart), [x.dart](lib/core/base/x.dart), [data_type.dart](lib/core/base/data_type.dart), [converter.dart](lib/core/base/converter.dart), [systable.dart](lib/core/base/systable.dart), [sysfunc.dart](lib/core/base/sysfunc.dart), [systype.dart](lib/core/base/systype.dart) |
 | **Persistence** | [sqlite_store.dart](lib/core/db/sqlite_store.dart), [db_contract.dart](lib/core/db/db_contract.dart), [pgsqladmin.dart](lib/core/db/pgsqladmin.dart), [pgsqlclient.dart](lib/core/db/pgsqlclient.dart), [sqliteadmin.dart](lib/core/db/sqliteadmin.dart), [sqliteclient.dart](lib/core/db/sqliteclient.dart), [webclient.dart](lib/core/db/webclient.dart), [datasource_helper.dart](lib/core/db/datasource_helper.dart) |
 | **Admin shell** | [adminhome.dart](lib/core/gen/adminhome.dart), [admin_state.dart](lib/core/gen/admin_state.dart), [explorer_state.dart](lib/core/gen/explorer_state.dart), [genauthoring.dart](lib/core/gen/genauthoring.dart), [uexplorer.dart](lib/core/gen/uexplorer.dart) |

@@ -18,6 +18,7 @@ Main constitution
 - Prefer flat transport shapes where possible.
 - Avoid unnecessary object conversion in C#, Flutter, and PostgreSQL boundaries.
 - Keep orchestration centralized and traceable through `Autopilot`.
+- **Specialized Copilots**: Use `CopilotUx` for UI/template state and `CopilotData` for business data. Autopilot acts as the thin coordinator.
 - Treat integer IDs in transport/runtime contracts as an intentional optimization, not just a naming preference.
 
 Identifier precaution

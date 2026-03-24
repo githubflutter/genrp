@@ -25,10 +25,10 @@ const sysFunctionEntrypoints = <SysFunctionEntry>[
     ),
   ),
   SysFunctionEntry(
-    entrypoint: 'invoke_business_action',
-    description: 'Business-table function/action entrypoint.',
+    entrypoint: 'invoke_business_function',
+    description: 'Business-table function entrypoint.',
     spec: DbFunctionSpec(
-      name: 'invoke_business_action',
+      name: 'invoke_business_function',
       schema: 'public',
       returns: 'json',
       body: '-- business function body is generated later',

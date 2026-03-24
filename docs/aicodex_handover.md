@@ -57,47 +57,6 @@ Manual app testing has already been completed for the active snapshot.
 
 ---
 
-## What is already done
-
-- [x] Shared `MaterialApp` flow with login -> loading -> ready stages
-- [x] Direct-path support through `CopilotRoute`
-- [x] App-owned hard-coded surface metadata inside `aicodex.dart` drives the live shell
-- [x] `AppBar` surface switching replaces the older `NavigationRail` route switcher
-- [x] The ready state is a dedicated hard-coded three-panel shell that still reuses shared UX widgets
-- [x] Shared `UxTheme` owns theme data plus panel/chrome helpers
-- [x] Current seeded AICodex surface metadata lives in `aicodex.dart` and remains intentional for this snapshot
-- [x] Shared DB scaffolding exists: `db_contract`, PG/SQLite admin+client builders, and system entrypoint seeds
-- [x] Backend contract remains documented (single POST endpoint, JSON passthrough, PG router function)
-- [x] `flutter analyze lib test` passes in the current snapshot
-- [x] The older step history is preserved below as archival context for the pre-`core/ux` implementation path
-
-## [x] UI convergence prerequisite — Hybrid shell
-
-**Status:** Done in the current repo snapshot.
-
-**Goal:** Replace the earlier fixed three-panel shell with the shared hybrid minor/major shell before continuing feature steps.
-
-**What to do:**
-1. Convert the current body layout into:
-   - left minor panel
-   - right major panel
-2. Add **two tabs** to the minor panel.
-3. Add **three tabs** to the major panel.
-4. Implement the three major layout modes:
-   - tab 1: single mid only
-   - tab 2: larger mid + smaller right
-   - tab 3: equal mid + right
-5. Preserve current AICodex navigation/master-list behavior inside the new shell.
-6. Keep the left explorer/navigation mechanism app-owned rather than moving it into the shell contract.
-
-**Done when:**
-- AICodex uses the shared hybrid shell.
-- The old fixed three-panel layout is gone.
-- Current navigation/master-list behavior still works inside the new shell.
-- The shared shell remains a layout/tab mechanism only.
-
----
-
 ## Panel Responsibilities
 
 ```
@@ -122,74 +81,6 @@ Manual app testing has already been completed for the active snapshot.
 | **Major / Tab 1** | Single mid-only working surface |
 | **Major / Tab 2** | Larger mid + smaller right |
 | **Major / Tab 3** | Equal mid + right working split |
-
----
-
-## [x] Step 1 — Navigation panel with model type list
-
-**Status:** Done in the current repo snapshot.
-
-**Goal:** Replace the left placeholder with a real model type list that tracks selection.
-
-**Files to change:**
-- `lib/app/aicodex/aicodex.dart`
-
-**What to do:**
-1. Convert `AICodexApp` home to a `StatefulWidget`.
-2. Add state fields:
-   - `String? _selectedModelType` (e.g., `'Entity'`, `'Table'`, `'Function'`)
-   - `int? _selectedRowId`
-3. Build the left panel as a `ListView` with these model types grouped into two sections:
-
-   **Schema Source** (app-facing definitions):
-   - `Entity`
-   - `Field`
-   - `Function`
-   - `Parameter`
-
-   **Schema Target** (physical structure):
-   - `Table`
-   - `Column`
-   - `System`
-   - `User`
-
-4. Tapping a model type sets `_selectedModelType` and clears `_selectedRowId`.
-5. Highlight the selected model type visually.
-6. Show the selected model type name in the middle panel header.
-
-**Done when:**
-- Left panel shows all model types in two groups.
-- Tapping one updates `_selectedModelType`.
-- Middle panel header reflects the selection.
-- `flutter analyze` passes.
-- `flutter test` passes.
-
-**Copy-paste prompt:**
-```text
-Continue in `/Users/Shared/dev/git/genrp`.
-You are working on AICodex Step 1: Navigation panel with model type list.
-
-Current state:
-- `lib/app/aicodex/aicodex.dart` is a static three-panel layout. All panels are placeholders.
-- 7 regular bschema models exist under `lib/core/model/bschema/`, and 2 special base models (`SystemModel`, `UsrModel`) now live under `lib/core/model/base/`.
-- `ActionModel` now lives under `lib/core/model/uschema/`.
-
-Task:
-- Make home a StatefulWidget.
-- Add state: _selectedModelType, _selectedRowId.
-- Left panel: ListView with two sections:
-  - Schema Source: Entity, Field, Function, Parameter
-  - Schema Target: Table, Column, System, User
-- Tap sets _selectedModelType, clears _selectedRowId.
-- Highlight selected item.
-- Show selected name in middle panel header.
-
-Constraints:
-- Do not touch AIBook or AIStudio.
-- Do not add route navigation.
-- Keep one Scaffold.
-- Keep analyzer green.
-```
 
 ---
 
@@ -369,36 +260,10 @@ Constraints:
 - Keep analyzer green.
 ```
 
----
-
-## [ ] Step 5 — Schema action dispatch to backend
-
-**Goal:** Add the ability to send generated DDL to the backend via the real transport endpoint.
-
-**Files to change:**
-- `lib/app/aicodex/aicodex.dart`
-- `lib/core/agent/transport.dart` (reuse from AIBook Step 4, or `mock_transport.dart` if transport isn't wired yet)
-
-**What to do:**
-1. Add an "Execute" button next to each schema action (Create Table, Create Function, Drop Table).
-2. On press, POST the DDL action to the backend using the transport contract:
-   ```json
-   {"a": <schema_action_id>, "u": "...", "p": "...", "data": {"ddl": "...", "entityId": N}}
-   ```
-3. Show a confirmation dialog before executing Drop.
-4. Show success/failure result from the server response.
-5. Add a status indicator in the detail panel showing last sync state.
-
-**Done when:**
-- Execute sends the DDL action to the backend.
-- Drop requires confirmation.
-- Success/failure is shown to the user.
-- `flutter analyze` passes.
-- `flutter test` passes.
 
 ---
 
-## [ ] Step 6 — Foundation and business function scripts
+## [ ] Step 5 — Foundation and business function scripts
 
 **Goal:** Extend generation beyond tables to support PostgreSQL foundation/business functions and SQLite `vfun` records.
 
@@ -421,7 +286,7 @@ Constraints:
 
 ---
 
-## [ ] Step 7 — AICodex test coverage
+## [ ] Step 6 — AICodex test coverage
 
 **Goal:** Add dedicated tests for AICodex panel behavior and DDL generation.
 

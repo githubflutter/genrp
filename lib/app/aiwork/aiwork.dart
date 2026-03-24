@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/app/aiwork/aiwork_specs.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/agent/copilot_route.dart';
+import 'package:genrp/core/agent/mockauth.dart';
 import 'package:genrp/core/gen/app_runtime_flow.dart';
 import 'package:genrp/core/gen/genux.dart';
 import 'package:genrp/core/gen/uschema_compiled.dart';
-import 'package:genrp/core/model/uschema/ux_specs.dart';
+import 'package:genrp/core/model/uschema/uschema.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/meta.dart';
 
@@ -52,12 +52,11 @@ class _AIWorkHomeState extends State<AIWorkHome> {
   _AIWorkStage _stage = _AIWorkStage.login;
   String? _errorMessage;
 
-  CopilotRoute get _route =>
-      _runtimeFlow.route(
-        initialRoute: AIWorkSpecs.initialRoute,
-        explicitPath: widget.initialRoutePath,
-        currentUri: Uri.base,
-      );
+  UxRouteHeaderSpec get _route => _runtimeFlow.route(
+    initialRoute: AIWorkSpecs.initialRoute,
+    explicitPath: widget.initialRoutePath,
+    currentUri: Uri.base,
+  );
 
   UxRouteSpec get _spec => _runtimeFlow.spec(
     resolve: AIWorkSpecs.resolve,
@@ -78,8 +77,8 @@ class _AIWorkHomeState extends State<AIWorkHome> {
     super.initState();
     _pilot = Autopilot(v: '${AppMeta.v}', f: '${AppMeta.f}', c: '1');
     _runtimeFlow = AppRuntimeFlow(autopilot: _pilot);
-    _usernameController = TextEditingController(text: Autopilot.mockUsername);
-    _passwordController = TextEditingController(text: Autopilot.mockPassword);
+    _usernameController = TextEditingController(text: MockAuth.username);
+    _passwordController = TextEditingController(text: MockAuth.password);
     if (widget.autoSignIn) {
       _signInWithMockCredentials();
     }
@@ -110,17 +109,15 @@ class _AIWorkHomeState extends State<AIWorkHome> {
   }
 
   Future<bool> _signInWithMockCredentials() {
-    return _signIn(
-      username: Autopilot.mockUsername,
-      password: Autopilot.mockPassword,
-    );
+    return _signIn(username: MockAuth.username, password: MockAuth.password);
   }
 
   Future<bool> _signIn({
     required String username,
     required String password,
   }) async {
-    final applied = _pilot.applyMockAuth(
+    final applied = MockAuth.apply(
+      _pilot,
       username: username,
       password: password,
       notify: false,
@@ -160,13 +157,9 @@ class _AIWorkHomeState extends State<AIWorkHome> {
     if (_stage != _AIWorkStage.ready) {
       return;
     }
-    final changed = _runtimeFlow.openRoute(
-      route,
-      resolve: AIWorkSpecs.resolve,
-    );
+    final changed = _runtimeFlow.openRoute(route, resolve: AIWorkSpecs.resolve);
     if (!changed) return;
-    setState(() {
-    });
+    setState(() {});
   }
 
   Widget _buildLogin(BuildContext context) {

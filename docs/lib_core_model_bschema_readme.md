@@ -52,7 +52,6 @@ Boundary notes
 - `FunctionModel` keeps `t` as function type and adds `tis` for zero, one, or many dependent table IDs.
 - `EntityModel` keeps `t` as entity type and adds `tis` for zero, one, or many dependent table IDs.
 - `FieldModel` keeps `t` as field type and adds `ci` for the mapped column ID.
-- `ActionModel` has been moved to `lib/core/model/uschema` because it is now treated as UX-side metadata rather than a data/schema model.
 - For `AIBook`, those model classes help define runtime meaning, but business payload transport should stay compact and index-oriented when possible.
 - For `base`, `bschema`, and `uschema`, `i` and `e` are intended to stay `int4`.
 - New schema-side drafts should start with `i = 0`.

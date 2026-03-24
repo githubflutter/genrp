@@ -113,5 +113,4 @@ class GenUx {
         .toList(growable: false);
   }
 
-  // Actions removed for presentation mode
 }

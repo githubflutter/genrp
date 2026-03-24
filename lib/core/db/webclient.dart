@@ -47,19 +47,6 @@ class WebClient {
     password: password,
   );
 
-  Map<String, Object?> buildActionRequest({
-    required int actionId,
-    required Object? data,
-    String? username,
-    String? password,
-  }) {
-    return <String, Object?>{
-      'a': actionId,
-      if (username != null && username.isNotEmpty) 'u': username,
-      if (password != null && password.isNotEmpty) 'p': password,
-      'data': data,
-    };
-  }
 
   Map<String, Object?> _buildCrudRequest({
     required String operation,
@@ -89,7 +76,7 @@ class WebClient {
   void _assertFoundation(DbCrudSpec spec) {
     if (spec.kind == DbTargetKind.business) {
       throw ArgumentError(
-        'Business-table CRUD must go through function-style actions.',
+        'Business-table CRUD is only supported through dedicated function calls.',
       );
     }
   }

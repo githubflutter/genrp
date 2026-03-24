@@ -64,7 +64,6 @@ class SystemDefaults {
     'type': 'Type',
     'widget': 'Widget',
     'fieldBinding': 'FieldBinding',
-    'uxAction': 'UX Action',
     'bodySpecNode': 'Body Spec Node',
   };
 

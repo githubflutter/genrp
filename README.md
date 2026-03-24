@@ -13,7 +13,7 @@ several partially competing stacks around the same UX problem.
 The current repo is intentionally simpler. There is now one active runtime
 direction:
 
-- `Autopilot` is the single orchestrator for app state, bindings, actions, and route state.
+- `Autopilot` is the single orchestrator and thin coordinator, delegating specialized state/logic to `CopilotUx` and `CopilotData`.
 - `GenUx` is the spec renderer used by the spec-driven apps (`AIWork` and `AIBook`).
 - `core/ux` holds the shared UI contracts and primitives through `mixins.dart`, `paper/`, `template/`, and `uwidget/`.
 - `AIStudio` and `AICodex` no longer imply a second runtime; they delegate to a shared `AdminHome` shell that reuses the same UX primitives.

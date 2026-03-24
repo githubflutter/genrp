@@ -261,7 +261,7 @@ extension UwStateAccess on Autopilot {
       case UwStateSource.chrome:
         return stateSet.chrome<dynamic>(binding.key);
       case UwStateSource.data:
-        return data(binding.key);
+        return data[binding.key];
       case UwStateSource.paper:
         return binding.uwidget == null ? null : stateSet.getPaper<dynamic>(binding.uwidget!, binding.key);
       case UwStateSource.template:
@@ -272,16 +272,16 @@ extension UwStateAccess on Autopilot {
   void writeUwState(UwStateBindingSpec binding, dynamic value, {bool notify = true}) {
     switch (binding.source) {
       case UwStateSource.chrome:
-        setChromeState(binding.key, value, notify: notify);
+        setChrome(binding.key, value, notify: notify);
       case UwStateSource.data:
-        setData(binding.key, value, notify: notify);
+        data.set(binding.key, value, notify: notify);
       case UwStateSource.paper:
         if (binding.uwidget != null) {
-          setPaperState(binding.uwidget!, binding.key, value, notify: notify);
+          state.setPaperState(binding.uwidget!, binding.key, value, notify: notify);
         }
       case UwStateSource.template:
         if (binding.uwidget != null) {
-          setTemplateState(binding.uwidget!, binding.key, value, notify: notify);
+          state.setTemplateState(binding.uwidget!, binding.key, value, notify: notify);
         }
     }
   }
@@ -330,7 +330,7 @@ class _UxPaperHostState extends State<UxPaperHost> {
 
   void _mount() {
     _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    _scope = widget.autopilot.mountPaper(paperI: widget.i, initialState: widget.initialState, notify: false);
+    _scope = widget.autopilot.state.mountPaper(paperI: widget.i, initialState: widget.initialState, notify: false);
   }
 
   @override
@@ -346,13 +346,13 @@ class _UxPaperHostState extends State<UxPaperHost> {
     final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
     if (!needsRemount) return;
 
-    oldWidget.autopilot.clearPaperScope(_scope, notify: false);
+    oldWidget.autopilot.state.clearPaperScope(_scope, notify: false);
     _mount();
   }
 
   @override
   void dispose() {
-    widget.autopilot.clearPaperScope(_scope, notify: false);
+    widget.autopilot.state.clearPaperScope(_scope, notify: false);
     super.dispose();
   }
 
@@ -381,8 +381,8 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
 
   void _mount() {
     _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    _paperI = widget.autopilot.currentPaperI;
-    _scope = widget.autopilot.mountCurrentTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
+    _paperI = widget.autopilot.state.currentPaperI;
+    _scope = widget.autopilot.state.mountCurrentTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
   }
 
   @override
@@ -395,17 +395,17 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
   void didUpdateWidget(covariant UxTemplateHost oldWidget) {
     super.didUpdateWidget(oldWidget);
     final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
-    final nextPaperI = widget.autopilot.currentPaperI;
+    final nextPaperI = widget.autopilot.state.currentPaperI;
     final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope || nextPaperI != _paperI;
     if (!needsRemount) return;
 
-    oldWidget.autopilot.clearTemplateScope(_scope, notify: false);
+    oldWidget.autopilot.state.clearTemplateScope(_scope, notify: false);
     _mount();
   }
 
   @override
   void dispose() {
-    widget.autopilot.clearTemplateScope(_scope, notify: false);
+    widget.autopilot.state.clearTemplateScope(_scope, notify: false);
     super.dispose();
   }
 

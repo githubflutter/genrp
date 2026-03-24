@@ -1,14 +1,15 @@
 import 'package:genrp/core/agent/autopilot.dart';
 
-/// Minimal CopilotData that holds a reference to the parent `Autopilot`.
 class CopilotData {
-  final Autopilot autopilot;
   CopilotData(this.autopilot);
 
-  dynamic getValue(String path) => autopilot.dataSet[path];
+  final Autopilot autopilot;
 
-  void setValue(String path, dynamic value, {bool notify = true}) {
-    autopilot.dataSet[path] = value;
+  dynamic operator [](String key) => autopilot.dataSet[key];
+  T? get<T>(String key) => autopilot.dataSet.get<T>(key);
+
+  void set(String key, dynamic value, {bool notify = true}) {
+    autopilot.dataSet[key] = value;
     if (notify) autopilot.publishChange();
   }
 
@@ -16,6 +17,8 @@ class CopilotData {
     autopilot.dataSet.patch(values);
     if (notify) autopilot.publishChange();
   }
+
+  Map<String, dynamic> snapshot() => autopilot.dataSet.snapshot();
 
   void clear({bool notify = true}) {
     autopilot.dataSet.clear();

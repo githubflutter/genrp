@@ -1,14 +1,11 @@
-import 'package:genrp/core/agent/copilot_route.dart';
+import 'package:genrp/core/model/uschema/ux_route_header_spec.dart';
 import 'package:genrp/core/model/uschema/ux_app_spec.dart';
 import 'package:genrp/core/model/uschema/ux_spec.dart';
 import 'package:genrp/core/ux/mixins.dart';
 
 /// Typed route presentation metadata stored next to a unified `UxSpec`.
 class UxRouteMeta {
-  const UxRouteMeta({
-    this.title = '',
-    this.subtitle = '',
-  });
+  const UxRouteMeta({this.title = '', this.subtitle = ''});
 
   factory UxRouteMeta.fromJson(Map<String, dynamic> json) {
     return UxRouteMeta(
@@ -30,7 +27,7 @@ class UxRouteMeta {
 ///
 /// `UxSpec` is the primary structural schema. This wrapper still exists
 /// because routing concerns have a small amount of non-structural context:
-/// current app identity and the parsed `CopilotRoute`.
+/// current app identity and the parsed `UxRouteHeaderSpec`.
 class UxRouteSpec {
   const UxRouteSpec({
     required this.app,
@@ -40,7 +37,7 @@ class UxRouteSpec {
   });
 
   final UxAppSpec app;
-  final CopilotRoute route;
+  final UxRouteHeaderSpec route;
   final UxSpec spec;
   final UxRouteMeta meta;
 
@@ -68,15 +65,15 @@ class UxRouteSpec {
   };
 
   factory UxRouteSpec.fromJson(Map<String, dynamic> json) {
-    final route = CopilotRoute.fromJson(
+    final routeData = UxRouteHeaderSpec.fromJson(
       (json['route'] as Map<dynamic, dynamic>?)?.map(
             (key, value) => MapEntry(key.toString(), value),
           ) ??
           const <String, dynamic>{},
     );
     return UxRouteSpec(
-      app: UxAppSpecs.byName(json['appName'] as String? ?? route.appName),
-      route: route,
+      app: UxAppSpecs.byName(json['appName'] as String? ?? routeData.appName),
+      route: routeData,
       meta: UxRouteMeta.fromJson(
         (json['meta'] as Map<dynamic, dynamic>?)?.map(
               (key, value) => MapEntry(key.toString(), value),
