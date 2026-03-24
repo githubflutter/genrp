@@ -1,4 +1,4 @@
-import 'package:genrp/core/agent/action_set.dart';
+// import removed
 import 'package:genrp/core/agent/copilot_route.dart';
 import 'package:flutter/foundation.dart';
 import 'package:genrp/core/agent/data_set.dart';
@@ -36,7 +36,7 @@ class Autopilot extends ChangeNotifier {
 
   final DataSet dataSet = DataSet();
   final StateSet stateSet = StateSet();
-  final ActionSet actions = ActionSet();
+  // ActionSet actions = ... removed
 
   String? v;
   String? f;
@@ -330,7 +330,7 @@ class Autopilot extends ChangeNotifier {
     clearRoute(notify: false);
     dataSet.clear();
     stateSet.clear();
-    actions.clear();
+    // actions.clear() removed
     if (notify) {
       notifyListeners();
     }

@@ -140,7 +140,7 @@ class AIWorkSpecs {
         t: pid,
         m: const <String, dynamic>{},
         s: const <String, dynamic>{},
-        children: <String, List<UxSpec>>{
+        uxzones: <String, List<UxSpec>>{
           UxZone.content: <UxSpec>[
             UxSpec.template(
             i: 20001,
@@ -171,7 +171,7 @@ class AIWorkSpecs {
               summaryText: 'app=$appName, owner=$owner, status=$status',
             ).toJson(),
             s: const <String, dynamic>{},
-            children: <String, List<UxSpec>>{
+            uxzones: <String, List<UxSpec>>{
               UxZone.header: <UxSpec>[
                 UxSpec.uwidget(i: 1, n: 'toolbar', t: 4),
                 UxSpec.uwidget(i: 2, n: 'toolbar', t: 4),

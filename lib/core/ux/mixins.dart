@@ -308,6 +308,8 @@ mixin Ux {
   String get path => '$n.$i';
 }
 
+// mixin reverted
+
 class UxPaperHost extends StatefulWidget {
   // Paper-scoped runtime host. Keep this with the paper layer so lifecycle ownership is
   // obvious at the page layer.

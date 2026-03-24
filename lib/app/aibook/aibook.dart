@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:genrp/app/aibook/aibook_specs.dart';
 import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/agent/copilot_route.dart';
+import 'package:genrp/core/gen/app_runtime_flow.dart';
+import 'package:genrp/core/gen/genux.dart';
+import 'package:genrp/core/gen/uschema_compiled.dart';
 import 'package:genrp/core/model/uschema/ux_specs.dart';
 import 'package:genrp/core/theme/theme.dart';
-import 'package:genrp/core/gen/genux.dart';
 import 'package:genrp/meta.dart';
 
 class AIBookApp extends StatelessWidget {
@@ -43,28 +45,39 @@ enum _AIBookStage { login, loading, ready }
 
 class _AIBookHomeState extends State<AIBookHome> {
   late final Autopilot _pilot;
+  late final AppRuntimeFlow _runtimeFlow;
   late final TextEditingController _usernameController;
   late final TextEditingController _passwordController;
 
   _AIBookStage _stage = _AIBookStage.login;
   String? _errorMessage;
-  List<UxRouteSpec> _presets = const <UxRouteSpec>[];
-  String? _routePath;
 
   CopilotRoute get _route =>
-      _pilot.currentRoute ??
-      AIBookSpecs.initialRoute(
+      _runtimeFlow.route(
+        initialRoute: AIBookSpecs.initialRoute,
         explicitPath: widget.initialRoutePath,
         currentUri: Uri.base,
-        presets: _presets,
       );
 
-  UxRouteSpec get _spec => AIBookSpecs.resolve(_route, presets: _presets);
+  UxRouteSpec get _spec => _runtimeFlow.spec(
+    resolve: AIBookSpecs.resolve,
+    initialRoute: AIBookSpecs.initialRoute,
+    explicitPath: widget.initialRoutePath,
+    currentUri: Uri.base,
+  );
+
+  UschemaCompiled get _compiledSpec => _runtimeFlow.compiled(
+    resolve: AIBookSpecs.resolve,
+    initialRoute: AIBookSpecs.initialRoute,
+    explicitPath: widget.initialRoutePath,
+    currentUri: Uri.base,
+  );
 
   @override
   void initState() {
     super.initState();
     _pilot = Autopilot(v: '${AppMeta.v}', f: '${AppMeta.f}', c: '1');
+    _runtimeFlow = AppRuntimeFlow(autopilot: _pilot);
     _usernameController = TextEditingController(text: Autopilot.mockUsername);
     _passwordController = TextEditingController(text: Autopilot.mockPassword);
     if (widget.autoSignIn) {
@@ -128,30 +141,31 @@ class _AIBookHomeState extends State<AIBookHome> {
     }
 
     await Future<void>.delayed(Duration.zero);
-    final presets = AIBookSpecs.presets();
-    final routePath = AIBookSpecs.initialPath(
+    _runtimeFlow.bootstrap(
+      presets: AIBookSpecs.presets(),
+      initialRoute: AIBookSpecs.initialRoute,
+      resolve: AIBookSpecs.resolve,
       explicitPath: widget.initialRoutePath,
       currentUri: Uri.base,
-      presets: presets,
     );
-    _pilot.navigate(routePath, notify: false);
 
     if (!mounted) return true;
     setState(() {
-      _presets = presets;
-      _routePath = routePath;
       _stage = _AIBookStage.ready;
     });
     return true;
   }
 
   void _openRoute(String route) {
-    if (_stage != _AIBookStage.ready || _routePath == route) {
+    if (_stage != _AIBookStage.ready) {
       return;
     }
-    _pilot.navigate(route, notify: false);
+    final changed = _runtimeFlow.openRoute(
+      route,
+      resolve: AIBookSpecs.resolve,
+    );
+    if (!changed) return;
     setState(() {
-      _routePath = route;
     });
   }
 
@@ -231,7 +245,7 @@ class _AIBookHomeState extends State<AIBookHome> {
   Widget _buildReady(BuildContext context) {
     final route = _route;
     final spec = _spec;
-    final presets = _presets;
+    final presets = _runtimeFlow.presets;
     final selectedIndex = presets.indexWhere(
       (UxRouteSpec preset) => preset.path == route.path,
     );
@@ -293,7 +307,7 @@ class _AIBookHomeState extends State<AIBookHome> {
                   const SizedBox(height: 16),
                   Expanded(
                     child: GenUx.build(
-                      spec: spec.spec,
+                      compiled: _compiledSpec,
                       autopilot: _pilot,
                       optionalId: spec.optionalId,
                     ),

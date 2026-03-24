@@ -17,6 +17,7 @@ direction:
 - `GenUx` is the spec renderer used by the spec-driven apps (`AIWork` and `AIBook`).
 - `core/ux` holds the shared UI contracts and primitives through `mixins.dart`, `paper/`, `template/`, and `uwidget/`.
 - `AIStudio` and `AICodex` no longer imply a second runtime; they delegate to a shared `AdminHome` shell that reuses the same UX primitives.
+- **Action handling** is now centralized with 15 system actions for lifecycle, state, modals, and data sync.
 
 Historical references in older docs to things like extra session wrappers,
 body-router pipelines, `AutopilotGo`, or generator-heavy runtime layers should
@@ -94,6 +95,8 @@ All docs live in `docs/`. Start with:
 - `docs/lib_app_readme.md` — architecture, transport contract, vocabulary
 - `docs/bschema_uschema_reshape_plan.md` — forward plan for spec-first schema documents
 - `docs/toexperiment_after_v2_launched.md` — post-v2 experiment ideas
+- `docs/action_handling_architecture.md` — action handling architecture design and patterns
+- `docs/action_handling_usage.md` — usage guide with examples for all 15 system actions
 
 ## Key Architecture Rules
 

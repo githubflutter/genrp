@@ -203,6 +203,15 @@ That means:
 - route-specific UX schema/spec is fetched
 - only then does route rendering begin
 
+TODO for real HTTP client:
+
+- standardize request metadata for bootstrap/spec sync calls
+- carry version markers such as `fv`, `cv`, and `uv` in header or body
+- `fv` mismatch should tell user to update the app
+- `cv` mismatch should tell user foundation / DB schema changed and app restart is needed
+- `uv` mismatch should tell user UX schema changed and app restart / recompile sync is needed
+- keep this contract in one shared client/request layer, not duplicated per app
+
 ### Dedicated Login Rule
 
 Login should stay explicit and dedicated.
@@ -226,6 +235,133 @@ Recommended loading tasks:
 - permission / navigation map resolution
 - startup route resolution
 - route-specific UX schema/spec fetch for that route
+
+## Current Runtime Objects And Lifecycle Roles
+
+This section describes the current active runtime objects and what each one
+owns in the app lifecycle.
+
+### App Shell Layer
+
+- `<AppName>App`
+  - top-level Flutter app entry
+  - owns theme, app title, and root home widget selection
+
+- `<AppName>Home`
+  - stateful app shell for login -> loading -> ready lifecycle
+  - owns route path selection for the current app surface
+  - coordinates startup/bootstrap and passes resolved runtime objects into rendering
+
+- `AppRuntimeFlow`
+  - shared route/bootstrap orchestration helper in `core/gen`
+  - owns preset retention, route resolution, bootstrap route activation, and compiled spec access for client apps
+  - keeps repeated route/spec runtime flow out of app-owned home widgets
+
+### Bootstrap And Runtime Context
+
+- `Autopilot`
+  - shared runtime/controller object
+  - owns readonly global context such as `v`, `f`, `c`, `usr`, and `user`
+  - owns current route mount and current paper/template scopes
+  - owns action registration and execution through `ActionSet`
+  - owns mutable runtime state through `StateSet`
+  - owns mutable business/runtime data through `DataSet`
+  - can be viewed as the parent runtime object for `CopilotRoute`, `CopilotData`, and `CopilotUX`
+  - lives across the active app session, not just one widget build
+
+- `CopilotRoute`
+  - parsed route identity
+  - describes current app name, page spec id, and optional id
+  - used as the route-level key before spec rendering begins
+
+- `CopilotData`
+  - small facade over `Autopilot.dataSet`
+  - used when code should read/write runtime data through a focused data-facing object
+  - not the source of truth itself; `Autopilot` still owns lifecycle and notification
+
+- `CopilotUX`
+  - small facade over `Autopilot.stateSet`
+  - used when code should read/write runtime UX state through a focused UX-facing object
+  - not the source of truth itself; `Autopilot` still owns lifecycle and notification
+
+- `ActionSet`
+  - registry of runtime action handlers
+  - maps action ids to callable handlers
+  - lives with `Autopilot` for the active app session
+
+- `StateSet`
+  - mutable UX/runtime state storage
+  - currently split into chrome, paper, and template scopes
+  - owns the live mutable state that widgets and runtime flows patch over time
+
+- `DataSet`
+  - mutable runtime/business data storage
+  - key/value oriented
+  - used for runtime data values outside the scoped UX state maps
+
+### Schema Truth Layer
+
+- `UxRouteSpec`
+  - thin route wrapper around a root `UxSpec`
+  - carries route metadata such as title/subtitle plus route/app identity
+  - still exists because route concerns are not purely structural UX tree data
+
+- `UxSpec`
+  - canonical raw UX schema truth
+  - serializable and persistable
+  - owns `i, a, d, e, n, t, l, m, s`
+  - owns recursive `uxzones`
+  - is the authored/persisted object graph, not the final runtime speed form
+
+- `UxWorkspaceMeta`
+  - typed metadata view for workspace/template configuration stored in `UxSpec.m`
+  - keeps stable template configuration out of widget constructor scatter
+
+### Compile And Cache Layer
+
+- `UschemaCodec`
+  - converts raw `UxSpec` into normalized runtime form
+  - compile here means casting, object creation, normalization, and indexing
+
+- `UschemaCompiled`
+  - compiled runtime object graph
+  - keeps resolved layer/type information and prebuilt compiled child zones
+  - used as the render-time object rather than raw `UxSpec`
+
+- `UschemaCache`
+  - compiled tree cache
+  - stores freshness-aware entries using `i + d`
+  - current rule: cache lookup is by `i`, reuse only when incoming `d` matches cached `editedAt`
+
+- `UschemaRuntime`
+  - practical runtime helper in `core/gen`
+  - owns compile-on-demand, refresh, cache lookup, and resolved-route refresh behavior
+  - keeps compile/cache logic out of app widgets
+
+### Render Layer
+
+- `GenUx`
+  - renders compiled schema only
+  - current active contract is `GenUx.build(...)`
+  - dispatches by compiled layer/type and produces paper/template/widget runtime widgets
+
+- `Tworkspace`, `Pone`, `Pzero`, `Uw*`
+  - concrete runtime widgets
+  - consume already-compiled/runtime-ready inputs
+  - should not become the authoring truth
+
+### Active Lifecycle Sequence
+
+1. `<AppName>Home` signs user in and enters loading state
+2. `Autopilot` receives global context such as `usr` and `user`
+3. app resolves a `CopilotRoute`
+4. app resolves `UxRouteSpec`
+5. `AppRuntimeFlow` passes root `UxSpec` into `UschemaRuntime`
+6. `UschemaRuntime` checks `UschemaCache`
+7. on miss or freshness mismatch, `UschemaCodec` recompiles into `UschemaCompiled`
+8. app renders through `GenUx.build(...)`
+9. `Autopilot` continues owning mutable runtime state while widgets remain mounted
+10. `StateSet` holds live UX state, `DataSet` holds runtime data, and `ActionSet` handles runtime actions during the mounted session
 
 ## Core Rule
 

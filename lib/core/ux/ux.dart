@@ -1,5 +1,3 @@
-export '../gen/genux.dart';
-export '../model/uschema/ux_template_action_spec.dart';
 export 'mixins.dart';
 
 export 'paper/pfour.dart';

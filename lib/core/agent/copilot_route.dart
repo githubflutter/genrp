@@ -5,6 +5,14 @@ class CopilotRoute {
     this.optionalId,
   });
 
+  factory CopilotRoute.fromJson(Map<String, dynamic> json) {
+    return CopilotRoute(
+      appName: json['appName'] as String? ?? '',
+      pageSpecId: (json['pageSpecId'] as num?)?.toInt() ?? 0,
+      optionalId: json['optionalId'] as String?,
+    );
+  }
+
   factory CopilotRoute.parse(String raw) {
     final uri = Uri.parse(raw.startsWith('/') ? raw : '/$raw');
     final segments = uri.pathSegments;
@@ -37,6 +45,12 @@ class CopilotRoute {
 
   String get scopeKey =>
       '$appName.$pageSpecId${optionalId == null ? '' : '.$optionalId'}';
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+    'appName': appName,
+    'pageSpecId': pageSpecId,
+    'optionalId': optionalId,
+  };
 
   @override
   String toString() => path;

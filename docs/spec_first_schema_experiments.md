@@ -21,9 +21,9 @@ Keep these concrete — they are engine/runtime infrastructure:
 
 - `lib/core/base/x.dart` (transport hierarchy)
 - `lib/core/base/converter.dart` (type conversions)
-- `lib/core/base/data_type.dart` (DataType + TypeMapper)
+- `lib/core/base/data_type.dart` (DataType + DataTypeRegister)
 - DB/client/admin helpers (`lib/core/db/`)
-- Runtime helpers, `Autopilot`, `GenUx`
+- Runtime helpers, `Autopilot`, `GenUx`, `UschemaRuntime`
 
 ---
 
@@ -89,8 +89,12 @@ This keeps indexing predictable, DB shape compact, and schema evolution driven b
 
 `uschema` should remain spec-first too.
 
-Keep the existing direction:
-- route spec, paper spec, template spec, widget/view spec, field/action/meta bindings
+Current forward direction:
+- `UxSpec` is the unified serializable UX schema record
+- `UxRouteSpec` remains a thin route wrapper around a root `UxSpec`
+- stable template config lives in typed metadata such as `UxWorkspaceMeta`
+- child structure lives in recursive `uxzones`
+- compiled runtime form lives beside raw truth, not instead of it
 
 But keep them as:
 - serializable documents, transportable specs, cacheable compile targets
@@ -114,7 +118,11 @@ lib/
     │   ├── explorer_state.dart
     │   ├── adminhome.dart
     │   ├── uexplorer.dart
-    │   └── genux.dart
+    │   ├── genux.dart
+    │   ├── uschema_compiled.dart
+    │   ├── uschema_cache.dart
+    │   ├── uschema_codec.dart
+    │   └── uschema_runtime.dart
     └── model/
         ├── bschema/
         │   ├── bschema_spec.dart
@@ -123,15 +131,15 @@ lib/
         │   ├── bschema_index.dart
         │   └── bschema_codec.dart
         └── uschema/
-            ├── ux_specs.dart
+            ├── ux_spec.dart
             ├── ux_route_spec.dart
-            ├── ux_paper_spec.dart
-            ├── ux_field_spec.dart
-            ├── uxm_template_spec.dart
-            ├── uschema_compiled.dart
-            ├── uschema_cache.dart
-            └── uschema_codec.dart
+            ├── ux_specs.dart
+            └── ux_field_spec.dart
 ```
+
+Current code note:
+- the old per-layer structural files like `ux_paper_spec.dart` and `ux_template_spec.dart` are no longer the forward target
+- unified `UxSpec` plus compiled/cache helpers is the active direction
 
 ---
 
@@ -239,6 +247,53 @@ class BSchemaCodec {
 
 Do not keep concrete schema models just for speed. Use: specs as truth → parser/compiler as adapter → cached runtime form for speed.
 
+### What "Compile" Means Here
+
+In this experiment, **compile** does not mean code generation or machine-code compilation.
+
+It means:
+
+- cast raw values into stronger runtime shapes
+- create normalized runtime objects
+- resolve ids into typed/runtime meanings
+- pre-index recursive child structures
+- precompute metadata-derived helpers such as slots
+
+So for `uschema`, compile is best read as:
+
+- raw spec document -> runtime-ready object graph
+
+Examples:
+
+- raw `l` -> resolved `UxLayer`
+- raw `m` -> typed metadata like `UxWorkspaceMeta`
+- raw child `uxzones` -> compiled recursive tree
+- repeated child scanning -> precomputed slot resolution
+- persisted document -> cached runtime form
+
+### Current UX Runtime Shape
+
+The active `uschema` runtime now follows this pattern:
+
+- `UxSpec` = raw editable/persisted truth
+- `UschemaCodec` = compile step
+- `UschemaCompiled` = normalized runtime form
+- `UschemaCache` = speed layer with freshness-aware entries
+- `UschemaRuntime` = practical compile/cache helper for app/runtime surfaces, including resolved-route refresh
+- `GenUx.build(...)` = compiled render path
+
+Current cache validity rule:
+
+- cache lookup is by `spec.i`
+- cache reuse is valid only when incoming `spec.d` matches cached `editedAt`
+- if `i` matches but `d` changed, runtime recompiles and refreshes cache
+
+Current prototype:
+
+- `AIBook` already renders through the compiled path
+- `AIWork` already renders through the compiled path
+- both client apps now use shared compile/cache runtime behavior from `core/gen/uschema_runtime.dart`
+
 ---
 
 ## 8. App Impact
@@ -269,7 +324,12 @@ Do not keep concrete schema models just for speed. Use: specs as truth → parse
 7. Add `bschema_cache.dart`
 8. Wire `AICodex` explorer/editor to those specs
 9. Keep `uschema` spec-first and serializable
-10. Add `uschema_compiled.dart` + `uschema_cache.dart` + `uschema_codec.dart` if runtime speed demands it
+10. Keep `UxSpec` as the unified raw truth for `uschema`
+11. Keep `core/gen/uschema_compiled.dart` + `core/gen/uschema_cache.dart` + `core/gen/uschema_codec.dart` as the speed layer
+12. Use `core/gen/uschema_runtime.dart` as the practical runtime helper
+13. Keep route-resolution refresh logic in the shared runtime helper, not duplicated in each app
+14. Keep cache validity tied to `i + d`, not only `i`
+15. Expand compiled rendering from the current `AIBook` / `AIWork` client path once the flow is stable
 
 ---
 

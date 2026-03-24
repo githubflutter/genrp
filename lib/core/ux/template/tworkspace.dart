@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:genrp/core/agent/autopilot.dart';
-import 'package:genrp/core/model/uschema/ux_action_holder_spec.dart';
-import 'package:genrp/core/model/uschema/ux_template_action_spec.dart';
+import 'package:genrp/core/model/uschema/ux_spec.dart';
 import 'package:genrp/core/theme/theme.dart';
 import 'package:genrp/core/ux/mixins.dart';
-import 'package:genrp/core/ux/draggable_fab.dart';
+// FAB removed
 import 'package:genrp/core/ux/uwidget/uwalert.dart';
 import 'package:genrp/core/ux/uwidget/uwcollection.dart';
 import 'package:genrp/core/ux/uwidget/uwempty.dart';
@@ -13,45 +12,16 @@ import 'package:genrp/core/ux/uwidget/uwplist.dart';
 import 'package:genrp/core/ux/uwidget/uwtoolbar.dart';
 
 class Tworkspace extends StatelessWidget with Ux {
-  // Migration note:
-  // These individual constructor parameters are transitional. The long-term
-  // direction is for workspace configuration to come from unified template
-  // metadata (`m`) rather than per-parameter plumbing.
   const Tworkspace({
     required this.i,
     required this.autopilot,
+    required this.meta,
+    required this.slots,
     this.s = 0,
     this.oid = '',
-    this.summaryText = '',
-    this.collectionTitle = 'Collection',
-    this.collectionRows = const <List<Object?>>[],
-    this.collectionColumns = const <String>[],
     this.collectionChildren = const <Widget>[],
-    this.collectionViewModes = const <int>[3],
-    this.properties = const <String, Object?>{},
-    this.actions = const <UxTemplateActionSpec>[],
-    this.actionHolders = const <UxActionHolderSpec>[],
     this.formChildren = const <Widget>[],
     this.formFooter,
-    this.emptyTitle = 'No selection',
-    this.emptyMessage = 'Choose an item from the collection to inspect it.',
-    this.defaultAlertMessage = 'Something needs your attention.',
-    this.collectionFlex = 7,
-    this.detailFlex = 5,
-    this.topToolbarI,
-    this.topToolbarStyle,
-    this.bottomToolbarI,
-    this.bottomToolbarStyle,
-    this.collectionI,
-    this.collectionStyle,
-    this.plistI,
-    this.plistStyle,
-    this.formI,
-    this.formStyle,
-    this.emptyI,
-    this.emptyStyle,
-    this.alertI,
-    this.alertStyle,
     super.key,
   });
 
@@ -62,40 +32,41 @@ class Tworkspace extends StatelessWidget with Ux {
   final int i;
 
   final Autopilot autopilot;
+  final UxWorkspaceMeta meta;
+  final UxWorkspaceSlots slots;
   final String oid;
-  final String summaryText;
-  final String collectionTitle;
-  final List<List<Object?>> collectionRows;
-  final List<String> collectionColumns;
   final List<Widget> collectionChildren;
-  final List<int> collectionViewModes;
-  final Map<String, Object?> properties;
-  final List<UxTemplateActionSpec> actions;
-  final List<UxActionHolderSpec> actionHolders;
   final List<Widget> formChildren;
   final Widget? formFooter;
-  final String emptyTitle;
-  final String emptyMessage;
-  final String defaultAlertMessage;
-  final int collectionFlex;
-  final int detailFlex;
-  final int? topToolbarI;
-  final int? topToolbarStyle;
-  final int? bottomToolbarI;
-  final int? bottomToolbarStyle;
-  final int? collectionI;
-  final int? collectionStyle;
-  final int? plistI;
-  final int? plistStyle;
-  final int? formI;
-  final int? formStyle;
-  final int? emptyI;
-  final int? emptyStyle;
-  final int? alertI;
-  final int? alertStyle;
 
   @override
   final String n = 'tworkspace';
+
+  String get summaryText => meta.summaryText;
+  String get collectionTitle => meta.collectionTitle;
+  List<List<Object?>> get collectionRows => meta.collectionRows;
+  List<String> get collectionColumns => meta.collectionColumns;
+  List<int> get collectionViewModes => meta.collectionViewModes;
+  Map<String, Object?> get properties => meta.properties;
+  String get emptyTitle => meta.emptyTitle;
+  String get emptyMessage => meta.emptyMessage;
+  String get defaultAlertMessage => meta.defaultAlertMessage;
+  int get collectionFlex => meta.collectionFlex;
+  int get detailFlex => meta.detailFlex;
+  int? get topToolbarI => slots.topToolbar.i;
+  int get topToolbarStyle => slots.topToolbar.style;
+  int? get bottomToolbarI => slots.bottomToolbar.i;
+  int get bottomToolbarStyle => slots.bottomToolbar.style;
+  int? get collectionI => slots.collection.i;
+  int get collectionStyle => slots.collection.style;
+  int? get plistI => slots.plist.i;
+  int get plistStyle => slots.plist.style;
+  int? get formI => slots.form.i;
+  int get formStyle => slots.form.style;
+  int? get emptyI => slots.empty.i;
+  int get emptyStyle => slots.empty.style;
+  int? get alertI => slots.alert.i;
+  int get alertStyle => slots.alert.style;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +100,7 @@ class Tworkspace extends StatelessWidget with Ux {
             final collection = UwCollection(
               i: collectionI ?? i * 100 + 10,
               autopilot: autopilot,
-              s: collectionStyle ?? viewMode,
+              s: collectionI == null ? viewMode : collectionStyle,
               p: collectionTitle,
               columns: collectionColumns,
               rows: collectionRows,
@@ -169,10 +140,7 @@ class Tworkspace extends StatelessWidget with Ux {
                   activeLabel: activeLabel,
                   selectedCount: selectedIds.length,
                 );
-                final floatingHolder = _holderFor(
-                  UxActionHolderPosition.floating,
-                  UxActionHolderPresentation.floatingIsland,
-                );
+                // FAB removed
                 final bodyColumn = Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
@@ -188,16 +156,7 @@ class Tworkspace extends StatelessWidget with Ux {
                   ],
                 );
 
-                return Stack(
-                  children: <Widget>[
-                    bodyColumn,
-                    if (floatingHolder != null)
-                      DraggableFAB(
-                        actions: _actionsForHolder(floatingHolder),
-                        onAction: _handleTemplateAction,
-                      ),
-                  ],
-                );
+                return bodyColumn;
               },
             );
           },
@@ -208,18 +167,18 @@ class Tworkspace extends StatelessWidget with Ux {
 
   Widget _buildDetail({required String mode, required Object? activeId, required int? activeIndex, required Map<String, Object?> properties, required String? errorMessage}) {
     if (errorMessage != null && errorMessage.isNotEmpty) {
-      return UwAlert(i: alertI ?? i * 100 + 14, autopilot: autopilot, s: alertStyle ?? 4, title: 'Error', message: errorMessage.isNotEmpty ? errorMessage : defaultAlertMessage);
+      return UwAlert(i: alertI ?? i * 100 + 14, autopilot: autopilot, s: alertI == null ? 4 : alertStyle, title: 'Error', message: errorMessage.isNotEmpty ? errorMessage : defaultAlertMessage);
     }
 
     if (mode == 'create' || mode == 'edit') {
-      return UwForm(i: formI ?? i * 100 + 13, autopilot: autopilot, s: formStyle ?? 0, p: mode == 'create' ? 'Create' : 'Edit${activeId == null ? '' : ' $activeId'}', footer: formFooter, children: formChildren);
+      return UwForm(i: formI ?? i * 100 + 13, autopilot: autopilot, s: formStyle, p: mode == 'create' ? 'Create' : 'Edit${activeId == null ? '' : ' $activeId'}', footer: formFooter, children: formChildren);
     }
 
     if (mode == 'inspect' && (activeIndex != null || activeId != null)) {
-      return UwPList(i: plistI ?? i * 100 + 12, autopilot: autopilot, s: plistStyle ?? 0, p: 'Properties', properties: properties);
+      return UwPList(i: plistI ?? i * 100 + 12, autopilot: autopilot, s: plistStyle, p: 'Properties', properties: properties);
     }
 
-    return UwEmpty(i: emptyI ?? i * 100 + 11, autopilot: autopilot, s: emptyStyle ?? 0, title: emptyTitle, message: emptyMessage);
+    return UwEmpty(i: emptyI ?? i * 100 + 11, autopilot: autopilot, s: emptyStyle, title: emptyTitle, message: emptyMessage);
   }
 
   Widget? _buildTopToolbar({
@@ -233,15 +192,10 @@ class Tworkspace extends StatelessWidget with Ux {
     required Object? resolvedId,
     required int? resolvedIndex,
   }) {
-    final holder = _holderFor(
-      UxActionHolderPosition.top,
-      UxActionHolderPresentation.toolbar,
-    );
-    if (holder == null || !holder.visible) return null;
     return UwToolbar(
       i: topToolbarI ?? i * 100 + 1,
       autopilot: autopilot,
-      s: topToolbarStyle ?? 2,
+      s: topToolbarI == null ? 2 : topToolbarStyle,
       leftChildren: <Widget>[
         ..._buildLeadControl(
           mode: mode,
@@ -292,15 +246,10 @@ class Tworkspace extends StatelessWidget with Ux {
     required String? activeLabel,
     required int selectedCount,
   }) {
-    final holder = _holderFor(
-      UxActionHolderPosition.bottom,
-      UxActionHolderPresentation.toolbar,
-    );
-    if (holder == null || !holder.visible) return null;
     return UwToolbar(
       i: bottomToolbarI ?? i * 100 + 3,
       autopilot: autopilot,
-      s: bottomToolbarStyle ?? 2,
+      s: bottomToolbarI == null ? 2 : bottomToolbarStyle,
       leftChildren: <Widget>[
         Text('Results: $totalCount'),
         if (activeLabel != null && activeLabel.isNotEmpty) Text('Active: $activeLabel'),
@@ -343,51 +292,7 @@ class Tworkspace extends StatelessWidget with Ux {
     ];
   }
 
-  UxActionHolderSpec? _holderFor(
-    UxActionHolderPosition position,
-    UxActionHolderPresentation presentation,
-  ) {
-    for (final UxActionHolderSpec holder in actionHolders) {
-      if (holder.position == position && holder.presentation == presentation) {
-        return holder;
-      }
-    }
-    return null;
-  }
-
-  List<UxTemplateActionSpec> _actionsForHolder(UxActionHolderSpec holder) {
-    if (holder.actionKinds.isEmpty) return const <UxTemplateActionSpec>[];
-    final Map<UxTemplateAction, UxTemplateActionSpec> byAction =
-        <UxTemplateAction, UxTemplateActionSpec>{
-      for (final UxTemplateActionSpec action in actions) action.action: action,
-    };
-    final List<UxTemplateActionSpec> resolved = <UxTemplateActionSpec>[];
-    for (final UxTemplateAction kind in holder.actionKinds) {
-      final UxTemplateActionSpec? action = byAction[kind];
-      if (action != null && action.visible) {
-        resolved.add(action);
-      }
-    }
-    return resolved;
-  }
-
-  void _handleTemplateAction(
-    UxTemplateAction action,
-    Map<String, Object?> payload,
-  ) {
-    switch (action) {
-      case UxTemplateAction.commit:
-        callbacksNoop();
-      case UxTemplateAction.refetch:
-        callbacksNoop();
-      case UxTemplateAction.cancel:
-        callbacksNoop();
-      case UxTemplateAction.share:
-        callbacksNoop();
-    }
-  }
-
-  void callbacksNoop() {}
+  // Actions logic removed
 
   String _viewLabelFor(int mode) => switch (mode) {
     1 => 'List',
