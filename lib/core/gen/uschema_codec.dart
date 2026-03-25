@@ -7,41 +7,8 @@ class UschemaCodec {
   const UschemaCodec();
 
   UschemaCompiled compile(UxSpec spec) {
-    if (UxLayer.fromCode(spec.l) == UxLayer.paper) {
-      spec = _normalizeLegacyPaper(spec);
-    }
     final rootLayer = UxLayer.fromCode(spec.l);
     return _compile(spec, isRouteRoot: rootLayer == UxLayer.template);
-  }
-
-  UxSpec _normalizeLegacyPaper(UxSpec spec) {
-    if (spec.t == 2 || spec.t == 3 || spec.t == 4) {
-      throw UnsupportedError('Unsupported legacy paper type: p${spec.t}');
-    }
-
-    final templateChild = spec.uxzones[UxZone.content]?.firstOrNull;
-    if (templateChild == null) {
-      throw StateError('Legacy paper missing template child in content zone');
-    }
-
-    String scroll;
-    if (spec.t == 0) {
-      scroll = 'none';
-    } else if (spec.t == 1 && spec.style == 1) {
-      scroll = 'horizontal';
-    } else {
-      scroll = 'vertical';
-    }
-
-    return UxSpec.rootTemplate(
-      i: spec.i,
-      n: templateChild.n,
-      t: templateChild.t,
-      m: templateChild.m,
-      s: templateChild.s,
-      uxzones: templateChild.uxzones,
-      frame: UxFrameMeta(scroll: scroll),
-    );
   }
 
   UschemaCompiled _compile(UxSpec spec, {required bool isRouteRoot}) {
@@ -67,8 +34,6 @@ class UschemaCodec {
     switch (layer) {
       case UxLayer.app:
         return UxRegister.apps[spec.i] ?? spec.n;
-      case UxLayer.paper:
-        return UxRegister.papers[spec.t] ?? spec.n;
       case UxLayer.template:
         return UxRegister.templates[spec.t] ?? spec.n;
       case UxLayer.uwidget:

@@ -154,7 +154,7 @@ class UxWorkspaceSlots {
 /// Unified UX schema record.
 ///
 /// This is the canonical structural model for authored UX content.
-/// The migration target is for app, route, paper, template, and uwidget
+/// The migration target is for app, route, template, and uwidget
 /// rendering to operate from this shape and its recursive `uxzones`.
 ///
 /// Doctrine fields:
@@ -204,25 +204,6 @@ class UxSpec {
                     .toList(growable: false),
               ),
             ),
-    );
-  }
-
-  factory UxSpec.paper({
-    required int i,
-    required int t,
-    required String n,
-    Map<String, dynamic> m = const <String, dynamic>{},
-    Map<String, dynamic> s = const <String, dynamic>{},
-    Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{},
-  }) {
-    return UxSpec(
-      i: i,
-      n: n,
-      t: t,
-      l: UxLayer.paper.code,
-      m: m,
-      s: s,
-      uxzones: uxzones,
     );
   }
 

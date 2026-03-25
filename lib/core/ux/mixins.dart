@@ -4,10 +4,9 @@ import 'package:genrp/core/agent/autopilot.dart';
 enum UxLayer {
   app(0),
   route(1),
-  paper(2),
-  template(3),
-  uwidget(4),
-  field(5);
+  template(2),
+  uwidget(3),
+  field(4);
 
   const UxLayer(this.code);
 
@@ -37,7 +36,7 @@ class UxRegister {
   UxRegister._();
 
   static const int _tierBase = 1000;
-  static const int _paperScale = _tierBase * _tierBase;
+  static const int _rootScale = _tierBase * _tierBase;
 
   static const Map<int, String> apps = <int, String>{
     0: 'aicodex',
@@ -51,8 +50,6 @@ class UxRegister {
     2: 'appshellLandscape',
     3: 'appshellPortrait',
   };
-
-  static const Map<int, String> papers = <int, String>{0: 'paperzero', 1: 'paperone', 2: 'papertwo', 3: 'paperthree', 4: 'paperfour'};
 
   static const Map<int, String> templates = <int, String>{1: 'tworkspace', 2: 'tsheet', 3: 'treport', 4: 'tdboard', 5: 'twizard', 6: 'tform'};
 
@@ -73,10 +70,6 @@ class UxRegister {
     14: 'field',
   };
 
-  static final Map<String, int> _papersByName = <String, int>{
-    for (final entry in papers.entries) entry.value: entry.key,
-  };
-
   static final Map<String, int> _templatesByName = <String, int>{
     for (final entry in templates.entries) entry.value: entry.key,
   };
@@ -85,40 +78,26 @@ class UxRegister {
     for (final entry in uwidgets.entries) entry.value: entry.key,
   };
 
-  static String paperId(int pid) => '$pid';
-
   static String templateId({required int pid, required int tid}) => '$pid.$tid';
 
   static String uwidgetId({required int pid, required int tid, required int uwid}) => '$pid.$tid.$uwid';
 
   // Packed structural code rule:
   // pid, tid, and uwid each use 3 digits.
-  // paper    -> pid * 1,000,000
-  // template -> pid * 1,000,000 + tid * 1,000
-  // uwidget    -> pid * 1,000,000 + tid * 1,000 + uwid
-  static int paperCode(int pid) {
-    _validateTier('pid', pid);
-    return pid * _paperScale;
-  }
-
   static int templateCode({required int pid, required int tid}) {
     _validateTier('pid', pid);
     _validateTier('tid', tid);
-    return pid * _paperScale + tid * _tierBase;
+    return pid * _rootScale + tid * _tierBase;
   }
 
   static int uwidgetCode({required int pid, required int tid, required int uwid}) {
     _validateTier('pid', pid);
     _validateTier('tid', tid);
     _validateTier('uwid', uwid);
-    return pid * _paperScale + tid * _tierBase + uwid;
+    return pid * _rootScale + tid * _tierBase + uwid;
   }
 
-  static int localNodeCode(String name) {
-    final pid = _papersByName[name];
-    if (pid != null) return paperCode(pid);
-
-    final tid = _templatesByName[name];
+  static int localNodeCode(String name) {    final tid = _templatesByName[name];
     if (tid != null) return templateCode(pid: 0, tid: tid);
 
     final uwid = _uwidgetsByName[name];
@@ -131,8 +110,8 @@ class UxRegister {
     if (code < 0) {
       throw RangeError.value(code, 'code', 'UX code must be non-negative');
     }
-    final pid = code ~/ _paperScale;
-    final remainder = code % _paperScale;
+    final pid = code ~/ _rootScale;
+    final remainder = code % _rootScale;
     final tid = remainder ~/ _tierBase;
     final uwid = remainder % _tierBase;
     return (pid: pid, tid: tid, uwid: uwid);
@@ -227,7 +206,7 @@ enum UwFieldMode {
 
 enum FilterOp { contains, startsWith, endsWith, except }
 
-enum UwStateSource { chrome, data, paper, template }
+enum UwStateSource { chrome, data, template }
 
 class UwStateBindingSpec {
   const UwStateBindingSpec({required this.key, this.source = UwStateSource.chrome, this.uwidget});
@@ -244,7 +223,6 @@ class UwStateBindingSpec {
       key: key,
       source: switch (sourceCode) {
         1 => UwStateSource.data,
-        2 => UwStateSource.paper,
         3 => UwStateSource.template,
         _ => UwStateSource.chrome,
       },
@@ -262,8 +240,6 @@ extension UwStateAccess on Autopilot {
         return stateSet.chrome<dynamic>(binding.key);
       case UwStateSource.data:
         return data[binding.key];
-      case UwStateSource.paper:
-        return binding.uwidget == null ? null : stateSet.getPaper<dynamic>(binding.uwidget!, binding.key);
       case UwStateSource.template:
         return binding.uwidget == null ? null : stateSet.getTemplate<dynamic>(binding.uwidget!, binding.key);
     }
@@ -275,10 +251,6 @@ extension UwStateAccess on Autopilot {
         setChrome(binding.key, value, notify: notify);
       case UwStateSource.data:
         data.set(binding.key, value, notify: notify);
-      case UwStateSource.paper:
-        if (binding.uwidget != null) {
-          state.setPaperState(binding.uwidget!, binding.key, value, notify: notify);
-        }
       case UwStateSource.template:
         if (binding.uwidget != null) {
           state.setTemplateState(binding.uwidget!, binding.key, value, notify: notify);
@@ -309,57 +281,6 @@ mixin Ux {
 }
 
 // mixin reverted
-
-@Deprecated('Use UxRootTemplateHost for new app routes. This remains for compatibility with legacy paper routes during migration.')
-class UxPaperHost extends StatefulWidget {
-  // Paper-scoped runtime host. Keep this with the paper layer so lifecycle ownership is
-  // obvious at the page layer.
-  const UxPaperHost({required this.i, required this.autopilot, required this.child, this.initialState = const <String, dynamic>{}, super.key});
-
-  final int i;
-  final Autopilot autopilot;
-  final Widget child;
-  final Map<String, dynamic> initialState;
-
-  @override
-  State<UxPaperHost> createState() => _UxPaperHostState();
-}
-
-class _UxPaperHostState extends State<UxPaperHost> {
-  late String _scope;
-  String? _routeScope;
-
-  void _mount() {
-    _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    _scope = widget.autopilot.state.mountPaper(paperI: widget.i, initialState: widget.initialState, notify: false);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _mount();
-  }
-
-  @override
-  void didUpdateWidget(covariant UxPaperHost oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
-    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
-    if (!needsRemount) return;
-
-    oldWidget.autopilot.state.clearPaperScope(_scope, notify: false);
-    _mount();
-  }
-
-  @override
-  void dispose() {
-    widget.autopilot.state.clearPaperScope(_scope, notify: false);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.child;
-}
 
 class UxRootTemplateHost extends StatefulWidget {
   const UxRootTemplateHost({required this.i, required this.autopilot, required this.child, this.initialState = const <String, dynamic>{}, super.key});
@@ -426,11 +347,9 @@ class UxTemplateHost extends StatefulWidget {
 class _UxTemplateHostState extends State<UxTemplateHost> {
   late String _scope;
   String? _routeScope;
-  int? _paperI;
 
   void _mount() {
     _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    _paperI = widget.autopilot.state.currentPaperI;
     _scope = widget.autopilot.state.mountCurrentTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
   }
 
@@ -444,8 +363,7 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
   void didUpdateWidget(covariant UxTemplateHost oldWidget) {
     super.didUpdateWidget(oldWidget);
     final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
-    final nextPaperI = widget.autopilot.state.currentPaperI;
-    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope || nextPaperI != _paperI;
+    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
     if (!needsRemount) return;
 
     oldWidget.autopilot.state.clearTemplateScope(_scope, notify: false);
