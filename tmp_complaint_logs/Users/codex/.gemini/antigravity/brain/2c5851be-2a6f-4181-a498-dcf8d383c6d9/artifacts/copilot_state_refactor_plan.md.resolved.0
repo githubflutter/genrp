@@ -1,0 +1,39 @@
+# CopilotState Refactoring Plan
+
+## Vision and Objective
+Your vision is to create a perfectly symmetrical interface architecture for the [Autopilot](file:///Users/Shared/dev/git/genrp/lib/core/agent/autopilot.dart#9-339) orchestrator:
+*   **CopilotData**: Handles business data reading/writing recursively over [DataSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/data_set.dart#2-34).
+*   **CopilotState**: Replaces [CopilotUX](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart#4-25). It specifically manages transient UI state (chrome, screens, components) by proxying all operations to [StateSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#1-117).
+
+Both [DataSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/data_set.dart#2-34) and [StateSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#1-117) belong to [Autopilot](file:///Users/Shared/dev/git/genrp/lib/core/agent/autopilot.dart#9-339). The [Copilot](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart#4-25) classes are merely specialized facades you instantiate to interact cleanly with them.
+
+---
+
+## Step-by-Step Execution
+
+### Step 1: File and Class Renaming
+*   Rename [lib/core/agent/copilot_ux.dart](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart) to `lib/core/agent/copilot_state.dart`.
+*   Inside the new file, rename the class [CopilotUX](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart#4-25) to `CopilotState`.
+
+### Step 2: Expand `CopilotState` API
+The current [CopilotUX](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart#4-25) only exposes simple [getValue](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_data.dart#8-9) and [setValue](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart#10-14), which misses the 3-tier capability embedded in [StateSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#1-117). 
+I will expand `CopilotState` to explicitly provide operations for all three state granularities:
+1.  **Chrome**: `getChrome(key)`, [setChrome(key, value)](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#13-20), [clearChrome()](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#91-94)
+2.  **Paper**: [getPaper(scope, key)](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#35-40), [setPaper(scope, key, value)](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#41-52), [clearPaper(scope)](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#83-86)
+3.  **Template**: [getTemplate(scope, key)](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#59-64), [setTemplate(scope, key, value)](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#65-76), [clearTemplate(scope)](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#87-90)
+
+### Step 3: Verify and Align [CopilotData](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_data.dart#4-25)
+*   Open [lib/core/agent/copilot_data.dart](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_data.dart).
+*   Ensure it cleanly handles array/object mapping over [DataSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/data_set.dart#2-34). 
+*   Confirm it uses `autopilot.publishChange()` correctly.
+
+### Step 4: Documentation Update
+*   Update [docs/project_deep_analysis.md](file:///Users/Shared/dev/git/genrp/docs/project_deep_analysis.md) to change all references of [CopilotUX](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart#4-25) / [copilot_ux.dart](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart) to `CopilotState` / `copilot_state.dart`. 
+*   Adjust architectural diagrams to reflect the symmetry between [CopilotData](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_data.dart#4-25) -> [DataSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/data_set.dart#2-34) and `CopilotState` -> [StateSet](file:///Users/Shared/dev/git/genrp/lib/core/agent/state_set.dart#1-117).
+
+---
+
+## Why this is safe
+Currently, [CopilotUX](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_ux.dart#4-25) and [CopilotData](file:///Users/Shared/dev/git/genrp/lib/core/agent/copilot_data.dart#4-25) act as standalone definition classes in our `lib` directory and are not strongly coupled or instantiated deep within the widget tree. Therefore, this rename and structural expansion carries **zero risk** of breaking the active runtime.
+
+Is this plan aligned with your expectations? I am ready to execute the steps when you approve.

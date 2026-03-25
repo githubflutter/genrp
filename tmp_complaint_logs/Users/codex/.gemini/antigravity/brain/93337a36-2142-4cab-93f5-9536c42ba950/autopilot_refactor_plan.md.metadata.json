@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Refactoring plan for the Autopilot agent layer. Identifies three drift problems: (1) CopilotData is a passthrough — should own DataSet, (2) CopilotState is a passthrough — should own StateSet + all scoping logic, (3) CopilotRoute is a dumb model — should own navigation lifecycle. Provides before/after code sketches, estimated line counts, execution order, and forward-looking rules to prevent re-drift.",
+  "updatedAt": "2026-03-24T22:54:41.158096Z"
+}

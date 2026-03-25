@@ -1,5 +1,24 @@
 # What We Did
 
+## 2026-03-25 — Final Architectural Consolidation and Documentation Update
+
+Completed the final purge of the "Action Trio" experiment and synchronized all project documentation with the latest consolidated architecture.
+
+### Key Changes
+- **Action Trio Purged**: Successfully removed the experimental `ActionPerform`, `ActionCommand`, and `ActionListener` layers. The system now relies on direct state/data binding and system-level functions, significantly reducing complexity and runtime overhead.
+- **Orchestration Refined**: `Autopilot` is confirmed as a **thin coordinator**, delegating specialized business data synchronization to `CopilotData` and transient UI state scoping to `CopilotUX`.
+- **Unified Runtime Flow**: Integrated `AppRuntimeFlow` and `UschemaRuntime` as the standard path for spec-driven applications.
+- **Documentation Overhaul**: 
+    - Updated `README.md` to reflect the latest codebase stats and architectural rules.
+    - Updated `docs/project_deep_analysis.md` as the definitive Source of Truth.
+    - Updated `docs/lib_app_readme.md` for current app roles and transport contracts.
+    - Rewrote all app handover docs (`aibook`, `aicodex`, `aistudio`) to focus on the active `UschemaRuntime` path and upcoming remote transport/authoring tasks.
+- **Convergent Admin Shell**: Standardized `AIStudio` and `AICodex` around the `AdminHome` shell, using app-specific explorer nodes while sharing layout and theme logic.
+- **UwField System**: Confirmed the implementation of the advanced multimode input system with 21 field types.
+
+---
+
+
 ## README / Project Docs Overview
 
 # Project docs
@@ -901,8 +920,10 @@ Filter mode turns `UwField` into a **search/filter input** where the user types 
 | `lib/core/ux/mixins.dart` | **Edit** — add `14: 'field'` to `UxRegister.views` |
 | `lib/core/gen/genux.dart` | **Edit** — update `_buildFormFields` to use `UwField` |
 | `lib/core/model/uschema/ux_field_spec.dart` | **Edit** — add optional `dataTypeId` and `fieldMode` |
-| `docs/project_deep_analysis.md` | **Edit** — update uwidget count (13 → 14+), update file reference |
-| `README.md` | No change needed |
+| `docs/project_deep_analysis.md` | **Update** — full architectural synchronization (Source of Truth) |
+| `README.md` | **Update** — main entry point documentation |
+| `docs/lib_app_readme.md` | **Update** — app roles and transport contract |
+| `docs/*_handover.md` | **Update** — app-specific step synchronization |
 
 ---
 

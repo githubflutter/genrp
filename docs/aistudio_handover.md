@@ -1,242 +1,35 @@
-# AIStudio Handover
+# AIStudio Handover (2026-03-25)
 
-Progressive step-by-step plan to build the AIStudio UX/spec editing surface.
+AIStudio is the UX/spec authoring surface of GenRP.
 
-**Current status:** Post-refactor checkpoint. The live app now uses `lib/app/aistudio/aistudio.dart` with mock sign-in, direct `CopilotRoute` support, app-owned hard-coded surfaces, a dedicated hybrid authoring shell, shared `UxTheme`, and shared UX widgets such as `UwTab`, `UwCollection`, `UwPList`, and `UwFrom`. `flutter analyze lib test` passes in the current snapshot, and the active AIStudio app has already been manually tested.
+## 1. Current Status ✅
 
-**Current next step:** Continue the AIStudio feature plan inside the dedicated hard-coded shell while reusing shared UX components. Surface metadata is now app-owned inside `aistudio.dart`, not split into a separate specs file.
+- **Operational Shell**: Uses the convergent **AdminHome** shell in `lib/core/gen/adminhome.dart`.
+- **Explorer**: Left-side **UExplorer** is seeded with UX-spec nodes (Host, Body, Template, Type, Widget, FieldBinding, Route).
+- **Architecture**: AIStudio is now narrowed to UX/Spec CRUD. Sensitive Data-model CRUD belongs to **AICodex**.
+- **Entry Points**: 
+  - `lib/main_aistudio.dart` (dedicated entry with auto-sign-in)
+  - `lib/app/aistudio/aistudio.dart` (app shell + explorer nodes)
 
-**Scope rule:** Sensitive data-model CRUD now belongs to `AICodex`. AIStudio is now narrowed to UX/spec CRUD and should stay on that path.
+## 2. Recent Architectural Cleanup
 
-**Boundary reminder:** `AIWork` and `AIBook` are client apps, not designer apps. AIStudio should not move UX/spec authoring work into those client surfaces.
+- **Convergent Shell**: Shared layout (minor/major) with AICodex.
+- **Action Trio Purged**: Legacy action terminology and logic (performed, listener) removed in favor of direct binding and system function calls.
+- **Spec Unified**: AIStudio manages `UxSpec` (Paper, Template, View) and `UxRouteSpec` (Header + Spec + Meta).
 
-**Special rule:** `System` and `Usr` are base-side models under `lib/core/model/base/`, not normal `i/a/d/e/t/n/s` rows. `SystemModel` is structural metadata (`sid`, `n`, `fv`, `cv`, `ld`, `lds`, `ldu`, `ctm`, `uxm`, `m1`, `m2`) and belongs to the sensitive data-model side owned by `AICodex`.
+## 3. Immediate Next Steps ⚠️
 
-**UX integer rule:** For `uschema`, `i` and `e` stay `int4`. New drafts should start with `i = 0`, and save/edit decides insert vs update: `i = 0` allocates `max(i) + 1`, while `i > 0` updates in place. `d` stays the last date/time integer, usually UTC epoch milliseconds, and should remain web-safe `int^53`. UX rows should not become real database foreign-key owners of the data-model layer.
+### Task 1: Spec Preview Engine
+- **Goal**: In `preview` mode, render a real-time preview of the selected UX Spec.
+- **Mechanism**: Bind the selected `UxSpec` to a local **GenUx** instance inside the Major area of the `AdminHome` shell.
 
-**Convergent UI rule:** AIStudio should use the same hybrid shell as AICodex:
-- left side = **minor panel**
-- right side = **major panel**
-- minor panel has **two tabs**
-- major panel has **three tabs**
-- major tab 1 = single mid panel only
-- major tab 2 = larger mid + smaller right
-- major tab 3 = equal mid + right
-- current shell width baseline = `20%` minor + `80%` major
-- current dual-mode working split = `20 / 60 / 20`
-- the shared shell contract is layout/tab/chrome only
-- AIStudio still owns its own left explorer/list mechanism inside that shell
-- functional UX/spec work should now continue inside that shared shell
+### Task 2: uschema CRUD Wiring
+- **Goal**: Enable editing of `UxPaperSpec`, `UxTemplateSpec`, etc. using the **UwField** system.
+- **Mechanism**: When a row is selected (e.g., a Template), provide an editor panel in the Major area (symmetric dual-pane mode is recommended for editing and preview side-by-side).
 
-> [!NOTE]
-> The detailed step list below was written for a pre-`core/ux` snapshot where AIStudio owned more of the shell/list/editor wiring directly. The current runtime entry points are `lib/app/aistudio/aistudio.dart`, `lib/core/gen/genux.dart`, `lib/core/ux/ux.dart`, `lib/core/model/uschema/ux_specs.dart`, and `lib/core/theme/theme.dart`. Treat the older step sections as historical implementation notes unless they are rewritten to target the current shared runtime.
+## 4. Key Constraints
 
-> [!IMPORTANT]
-> Stage note from `new_experiment.md`: AIStudio is currently in the hard-coded/demo authoring-shell phase. If older sections below describe SQLite-backed row editing as the current path, treat that as archived or deferred work rather than the live app behavior.
-
----
-
-## How to use this document
-
-1. Find your current step (the first `[ ] Step` heading).
-2. Read only that step's section.
-3. Complete the step, run the quality gate, check the box.
-4. Move to the next step.
-
-**Quality gate** (run after every step):
-```bash
-flutter analyze lib test
-```
-
-Current snapshot note: checked-in Dart test files have been deleted in this working tree, so `flutter analyze lib test` is currently the analyzer-only quality gate.
-Manual app testing has already been completed for the active snapshot.
-
----
-
-## Historical Step 3 — SQLite-backed UX/spec row list
-
-**Status:** Archived from the older SQLite-backed path; not the live app stage in the current snapshot.
-
-**Goal:** The middle panel shows rows from `SqliteStore` for the selected UX/spec catalog, with search and a draft-first add/new action.
-
-**Files to change:**
-- `lib/app/aistudio/aistudio.dart`
-- possibly `lib/core/db/sqlite_store.dart` (if minor changes needed)
-
-**What to do:**
-1. Initialize `SqliteStore` when AIStudio loads (use `SqliteStore.instance`).
-2. When `_selectedCatalog` changes, call `SqliteStore.listRows(catalogName)`.
-3. Display rows as a `ListView` showing `n` (name) and `i` (id).
-4. Add a search `TextField` at the top — filter displayed rows by `n`.
-5. Add a "New" `IconButton` in the header for UX/spec catalogs — create a local draft row with `i = 0` instead of inserting immediately.
-6. Add an `onTap` to each row item that sets `_selectedRowId`.
-7. Place the collection UI inside the active major-tab content after the hybrid shell is in place.
-
-**Done when:**
-- Middle panel shows rows from SQLite for the selected catalog.
-- Search filters by name.
-- Add/New opens a draft row with `i = 0`.
-- Tapping a row selects it (for the future right panel).
-- `flutter analyze` passes.
-- `flutter test` passes.
-
-**Historical notes:**
-- This section belongs to the older SQLite-backed authoring path.
-- The live AIStudio app currently uses app-owned seeded/demo rows inside the hard-coded shell instead.
-
----
-
-## [ ] Step 4 — Right panel generic editor for UX/spec rows
-
-**Goal:** The right-side workspace inside the active major tab shows a form editor for the selected UX/spec row and saves changes back to SQLite.
-
-**Files to change:**
-- `lib/app/aistudio/aistudio.dart`
-
-**What to do:**
-1. When `_selectedRowId` is set, load the row via `SqliteStore.getRow(catalog, id)` for persisted rows, but use the local draft row directly when `i = 0`.
-2. Show `TextField` widgets for each common field: `n` (readable name), `s` (system name, prefer lower snake_case).
-3. Show `Switch` or `Checkbox` for `a` (active).
-4. Show read-only display for `i`, `d`, `e`, `t`.
-5. Add a "Save" button that calls `SqliteStore.upsertRow` with updated data.
-6. Add a "Delete" button that calls `SqliteStore.deleteRow`.
-7. After save or delete, refresh the middle panel list.
-8. If a sensitive data-model catalog is selected, show a note that editing for that catalog belongs in AICodex instead of AIStudio.
-9. Keep the editor inside the active major-tab workspace area of the hybrid shell.
-10. Follow the same draft-first rule as AICodex: if the current row has `i = 0`, Save allocates `max(i) + 1`; if `i > 0`, Save updates in place.
-
-**Done when:**
-- Selecting a row in the middle panel loads it in the right panel editor.
-- Editing `n`, `s`, `a` and pressing Save persists the changes.
-- Delete removes the row and refreshes the list.
-- `flutter analyze` passes.
-- `flutter test` passes.
-
-**Copy-paste prompt:**
-```text
-Continue in `/Users/Shared/dev/git/genrp`.
-You are working on AIStudio Step 4: Right panel generic editor.
-
-Current state:
-- This step belongs to the older SQLite-backed path, not the current live shell.
-- The live AIStudio app currently uses app-owned seeded/demo rows and inspector views inside the hard-coded authoring shell.
-
-Task:
-- Load the selected row via SqliteStore.getRow.
-- Show editor fields: n (text), s (text), a (checkbox).
-- Show read-only: i, d, e, t.
-- Add Save button → upsertRow.
-- Add Delete button → deleteRow.
-- Refresh middle panel after save/delete.
-
-Constraints:
-- Start with the common shape for UX/spec catalogs only.
-- Keep it direct — no complex form framework.
-- Keep analyzer and tests green.
-```
-
----
-
-## [ ] Step 5 — Catalog-specific UX/spec field editing (payload)
-
-**Goal:** Add catalog-specific editing for UX/spec rows that don't fit the common `i/a/d/e/t/n/s` shape.
-
-**Files to change:**
-- `lib/app/aistudio/aistudio.dart`
-
-**What to do:**
-1. Add catalog-specific editor handling for UX/spec catalogs that need more than the common fields.
-2. Add a collapsible "Payload" section for catalogs that still need free-form JSON.
-3. Validate that any edited payload is valid JSON before saving.
-4. Save catalog-specific data through the `payload` field of `SqliteCatalogRow` until dedicated storage is introduced.
-
-**Done when:**
-- The right panel shows payload editing below the common fields for other catalogs.
-- Invalid JSON shows a validation error.
-- Valid payload saves correctly.
-- `flutter analyze` passes.
-- `flutter test` passes.
-
-**Copy-paste prompt:**
-```text
-Continue in `/Users/Shared/dev/git/genrp`.
-You are working on AIStudio Step 5: Catalog-specific UX/spec field editing.
-
-Current state:
-- Step 4 handles the common row shape for most catalogs.
-- Sensitive data-model CRUD belongs to AICodex.
-
-Task:
-- Add catalog-specific editor handling for UX/spec rows that need more than the common fields.
-- Keep payload editing for other catalogs that still need free-form JSON.
-- Validate payload JSON before save.
-
-Constraints:
-- Do not move sensitive data-model CRUD back into AIStudio.
-- Keep setState/local editing simple for now.
-- Keep analyzer and tests green.
-```
-
----
-
-## [ ] Step 6 — AIStudio test coverage
-
-**Goal:** Extend the existing AIStudio widget coverage to include full editor save/delete behavior and deeper SQLite CRUD flow.
-
-**Files to change:**
-- `test/aistudio_app_test.dart`
-
-**What to do:**
-1. Test: selecting a UX/spec catalog updates the middle-panel header.
-2. Test: selecting a catalog loads rows from SQLite.
-3. Test: adding a draft row keeps `i = 0` locally, and saving it creates the persisted SQLite row.
-4. Test: editing a row and saving persists the change.
-5. Test: deleting a row removes it from SQLite and the list.
-
-**Done when:**
-- All five test scenarios pass.
-- `flutter analyze` passes.
-- `flutter test` passes.
-
----
-
-## [ ] Step 7 — Remote transport (after local is solid)
-
-**Goal:** Add remote load/save transport for AIStudio UX/spec rows, using the same backend contract as AIBook.
-
-**What to do:**
-1. Reuse the `Transport` class from AIBook Step 4 (or create a shared one).
-2. Add load-from-server for selected catalog rows.
-3. Add save-to-server when a row is saved locally.
-4. Keep local SQLite as the primary store — remote is sync, not replacement.
-5. Handle transport failures gracefully (show error, keep local data).
-
-**Done when:**
-- AIStudio can sync rows with a remote server.
-- Local SQLite remains the source of truth.
-- Transport failures don't lose local data.
-- `flutter analyze` passes.
-- `flutter test` passes.
-
----
-
-## Architecture constraints (apply to all steps)
-
-- Do not redesign AIBook or AICodex.
-- Do not add route navigation.
-- Keep one `Scaffold`, everything in `Scaffold.body`.
-- AIStudio is the **UX/spec editing surface**.
-- Sensitive data-model CRUD belongs to AICodex, not AIStudio.
-- AIBook is the **runtime consumer** — it uses those definitions.
-- Prefer row-level save units, not one giant JSON blob.
-- Keep implementation direct and incremental.
-- Keep analyzer and tests green after every step.
-
-## Vocabulary quick reference
-
-| Term | Meaning |
-|---|---|
-| `catalog` | A model type category (e.g., "Host", "Body", "Template") |
-| `i/a/d/e/t/n/s` | id, active, last date, editor, type, readable name, system name |
-| `payload` | JSON blob for catalog-specific fields beyond the common shape |
-| `SqliteCatalogRow` | The generic persisted row shape in SQLite |
+1. **UX Spec Only**: Do not cross-pollinate with data-model authoring (that's AICodex's domain).
+2. **Preview Parity**: The preview in AIStudio should exactly match how it renders in AIBook/AIWork.
+3. **Numeric Identity**: All newly authored `UxSpec` IDs must be integers; `i = 0` for drafts.
+4. **Analyzer Clean**: `flutter analyze lib` must pass after every change.

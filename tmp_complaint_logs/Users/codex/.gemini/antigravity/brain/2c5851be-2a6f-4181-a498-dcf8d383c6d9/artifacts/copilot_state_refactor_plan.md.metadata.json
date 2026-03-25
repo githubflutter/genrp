@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Refactor plan to rename CopilotUX to CopilotState and optimize its integration with StateSet, creating a perfect symmetry with CopilotData and DataSet.",
+  "updatedAt": "2026-03-24T22:28:00.061582Z"
+}
