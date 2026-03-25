@@ -12,11 +12,14 @@ class UschemaCompiled {
     required this.layer,
     required this.typeName,
     required this.uxzones,
+    required this.isRouteRoot,
     this.workspace,
     this.workspaceSlots,
   });
 
   final UxSpec spec;
+  final bool isRouteRoot;
+  UxFrameMeta? get frame => spec.hasFrame ? spec.frame : null;
   final UxLayer layer;
   final String typeName;
   final Map<String, List<UschemaCompiled>> uxzones;

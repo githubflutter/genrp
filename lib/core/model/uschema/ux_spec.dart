@@ -119,6 +119,18 @@ class UxWidgetSlot {
   }
 }
 
+class UxFrameMeta {
+  const UxFrameMeta({this.scroll = 'none'});
+
+  final String scroll;
+
+  Map<String, dynamic> toJson() => <String, dynamic>{'scroll': scroll};
+
+  factory UxFrameMeta.fromJson(Map<String, dynamic> json) {
+    return UxFrameMeta(scroll: json['scroll'] as String? ?? 'none');
+  }
+}
+
 class UxWorkspaceSlots {
   const UxWorkspaceSlots({
     this.topToolbar = const UxWidgetSlot(),
@@ -214,6 +226,26 @@ class UxSpec {
     );
   }
 
+  factory UxSpec.rootTemplate({
+    required int i,
+    required int t,
+    required String n,
+    UxFrameMeta frame = const UxFrameMeta(),
+    Map<String, dynamic> m = const <String, dynamic>{},
+    Map<String, dynamic> s = const <String, dynamic>{},
+    Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{},
+  }) {
+    return UxSpec(
+      i: i,
+      n: n,
+      t: t,
+      l: UxLayer.template.code,
+      m: <String, dynamic>{...m, 'frame': frame.toJson()},
+      s: s,
+      uxzones: uxzones,
+    );
+  }
+
   factory UxSpec.template({
     required int i,
     required int t,
@@ -262,6 +294,11 @@ class UxSpec {
   final Map<String, dynamic> m;
   final Map<String, dynamic> s;
   final Map<String, List<UxSpec>> uxzones;
+
+  bool get hasFrame => m.containsKey('frame');
+  UxFrameMeta get frame => hasFrame
+      ? UxFrameMeta.fromJson(m['frame'] as Map<String, dynamic>)
+      : const UxFrameMeta();
 
   Map<String, dynamic> toJson() => <String, dynamic>{
     'i': i,

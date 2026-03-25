@@ -19,52 +19,45 @@ class GenUx {
     String? optionalId,
   }) {
     return switch (compiled.layer) {
-      UxLayer.paper =>
-        _buildCompiledPaper(compiled: compiled, autopilot: autopilot, optionalId: optionalId),
-      UxLayer.template => _buildCompiledTemplate(
-        compiled: compiled,
-        autopilot: autopilot,
-        optionalId: optionalId,
-      ),
+      UxLayer.template => compiled.isRouteRoot
+          ? _buildCompiledRootTemplate(
+              compiled: compiled, autopilot: autopilot, optionalId: optionalId)
+          : _buildCompiledTemplate(
+              compiled: compiled,
+              autopilot: autopilot,
+              optionalId: optionalId,
+            ),
       _ => const SizedBox.shrink(),
     };
   }
 
-  static Widget _buildCompiledPaper({
+  static Widget _buildCompiledRootTemplate({
     required UschemaCompiled compiled,
     required Autopilot autopilot,
     String? optionalId,
   }) {
-    final templateSpec = compiled.firstOfLayer(UxLayer.template, uxzone: UxZone.content);
-    final StatelessWidget template = templateSpec == null
-        ? Container()
-        : _buildCompiledTemplate(
-            compiled: templateSpec,
-            autopilot: autopilot,
-            optionalId: optionalId,
-          );
-
-    return switch (compiled.t) {
-      0 => Pzero(i: compiled.i, autopilot: autopilot, s: compiled.spec.style, child: template),
-      1 => Pone(i: compiled.i, autopilot: autopilot, s: compiled.spec.style, child: template),
-      2 => Ptwo(
-        i: compiled.i,
-        autopilot: autopilot,
-        s: compiled.spec.style,
-        left: template,
-        right: template,
-      ),
-      3 => Pthree(
-        i: compiled.i,
-        autopilot: autopilot,
-        s: compiled.spec.style,
-        first: template,
-        middle: template,
-        last: template,
-      ),
-      4 => Pfour(i: compiled.i, autopilot: autopilot, s: compiled.spec.style),
-      _ => Pzero(i: compiled.i, autopilot: autopilot, s: compiled.spec.style, child: template),
+    final template = _buildCompiledTemplate(
+      compiled: compiled,
+      autopilot: autopilot,
+      optionalId: optionalId,
+    );
+    final scroll = compiled.frame?.scroll ?? 'none';
+    final inner = switch (scroll) {
+      'vertical' => SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: Column(children: <Widget>[template]),
+        ),
+      'horizontal' => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: <Widget>[template]),
+        ),
+      _ => Container(child: template),
     };
+    return UxRootTemplateHost(
+      i: compiled.i,
+      autopilot: autopilot,
+      child: inner,
+    );
   }
 
   static StatelessWidget _buildCompiledTemplate({
