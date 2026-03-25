@@ -7,15 +7,54 @@ class UschemaCodec {
   const UschemaCodec();
 
   UschemaCompiled compile(UxSpec spec) {
+    if (UxLayer.fromCode(spec.l) == UxLayer.paper) {
+      spec = _normalizeLegacyPaper(spec);
+    }
+    final rootLayer = UxLayer.fromCode(spec.l);
+    return _compile(spec, isRouteRoot: rootLayer == UxLayer.template);
+  }
+
+  UxSpec _normalizeLegacyPaper(UxSpec spec) {
+    if (spec.t == 2 || spec.t == 3 || spec.t == 4) {
+      throw UnsupportedError('Unsupported legacy paper type: p${spec.t}');
+    }
+
+    final templateChild = spec.uxzones[UxZone.content]?.firstOrNull;
+    if (templateChild == null) {
+      throw StateError('Legacy paper missing template child in content zone');
+    }
+
+    String scroll;
+    if (spec.t == 0) {
+      scroll = 'none';
+    } else if (spec.t == 1 && spec.style == 1) {
+      scroll = 'horizontal';
+    } else {
+      scroll = 'vertical';
+    }
+
+    return UxSpec.rootTemplate(
+      i: spec.i,
+      n: templateChild.n,
+      t: templateChild.t,
+      m: templateChild.m,
+      s: templateChild.s,
+      uxzones: templateChild.uxzones,
+      frame: UxFrameMeta(scroll: scroll),
+    );
+  }
+
+  UschemaCompiled _compile(UxSpec spec, {required bool isRouteRoot}) {
     final layer = UxLayer.fromCode(spec.l);
     return UschemaCompiled(
       spec: spec,
       layer: layer,
       typeName: _typeName(spec, layer),
+      isRouteRoot: isRouteRoot,
       uxzones: spec.uxzones.map(
         (key, value) => MapEntry(
           key,
-          value.map(compile).toList(growable: false),
+          value.map((child) => _compile(child, isRouteRoot: false)).toList(growable: false),
         ),
       ),
       workspace: layer == UxLayer.template && spec.t == 1 ? spec.workspace : null,

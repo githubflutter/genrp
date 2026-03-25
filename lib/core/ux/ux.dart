@@ -1,11 +1,5 @@
 export 'mixins.dart';
 
-export 'paper/pfour.dart';
-export 'paper/pone.dart';
-export 'paper/pthree.dart';
-export 'paper/ptwo.dart';
-export 'paper/pzero.dart';
-
 export 'template/tworkspace.dart';
 export 'template/tworkspacefooter.dart';
 export 'template/tworkspaceheader.dart';

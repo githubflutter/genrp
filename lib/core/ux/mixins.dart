@@ -310,6 +310,7 @@ mixin Ux {
 
 // mixin reverted
 
+@Deprecated('Use UxRootTemplateHost for new app routes. This remains for compatibility with legacy paper routes during migration.')
 class UxPaperHost extends StatefulWidget {
   // Paper-scoped runtime host. Keep this with the paper layer so lifecycle ownership is
   // obvious at the page layer.
@@ -353,6 +354,54 @@ class _UxPaperHostState extends State<UxPaperHost> {
   @override
   void dispose() {
     widget.autopilot.state.clearPaperScope(_scope, notify: false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
+}
+
+class UxRootTemplateHost extends StatefulWidget {
+  const UxRootTemplateHost({required this.i, required this.autopilot, required this.child, this.initialState = const <String, dynamic>{}, super.key});
+
+  final int i;
+  final Autopilot autopilot;
+  final Widget child;
+  final Map<String, dynamic> initialState;
+
+  @override
+  State<UxRootTemplateHost> createState() => _UxRootTemplateHostState();
+}
+
+class _UxRootTemplateHostState extends State<UxRootTemplateHost> {
+  late String _scope;
+  String? _routeScope;
+
+  void _mount() {
+    _routeScope = widget.autopilot.currentRoute?.scopeKey;
+    _scope = widget.autopilot.state.mountRootTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _mount();
+  }
+
+  @override
+  void didUpdateWidget(covariant UxRootTemplateHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
+    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
+    if (!needsRemount) return;
+
+    oldWidget.autopilot.state.clearRootTemplate(_scope, notify: false);
+    _mount();
+  }
+
+  @override
+  void dispose() {
+    widget.autopilot.state.clearRootTemplate(_scope, notify: false);
     super.dispose();
   }
 
