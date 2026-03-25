@@ -35,7 +35,6 @@ class UxZone {
 class UxRegister {
   UxRegister._();
 
-  static const int _tierBase = 1000;
 
   static const Map<int, String> apps = <int, String>{
     0: 'aicodex',
@@ -138,11 +137,6 @@ class UxRegister {
   static final Map<String, int> _templatesByName = <String, int>{};
   static final Map<String, int> _uwidgetsByName = <String, int>{};
 
-  static void _validateTier(String name, int value, int max) {
-    if (value < 0 || value >= max) {
-      throw RangeError.value(value, name, 'UX tier values must be between 0 and ${max - 1}');
-    }
-  }
 }
 
 enum UwFieldMode {
