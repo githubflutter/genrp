@@ -43,13 +43,15 @@ class UxWorkspaceMeta {
     'collectionViewModes': collectionViewModes,
     'properties': properties,
     'formFields': formFields
-        .map((field) => <String, dynamic>{
-              'label': field.label,
-              'hint': field.hint,
-              'width': field.width,
-              'dataTypeId': field.dataTypeId,
-              'fieldMode': field.fieldMode?.name,
-            })
+        .map(
+          (field) => <String, dynamic>{
+            'label': field.label,
+            'hint': field.hint,
+            'width': field.width,
+            'dataTypeId': field.dataTypeId,
+            'fieldMode': field.fieldMode?.name,
+          },
+        )
         .toList(growable: false),
     'summaryText': summaryText,
     'emptyTitle': emptyTitle,
@@ -62,22 +64,28 @@ class UxWorkspaceMeta {
   factory UxWorkspaceMeta.fromJson(Map<String, dynamic> json) {
     return UxWorkspaceMeta(
       collectionTitle: json['collectionTitle'] as String? ?? 'Collection',
-      collectionColumns: (json['collectionColumns'] as List<dynamic>?)
+      collectionColumns:
+          (json['collectionColumns'] as List<dynamic>?)
               ?.map((item) => item.toString())
               .toList(growable: false) ??
           const <String>[],
-      collectionRows: (json['collectionRows'] as List<dynamic>?)
+      collectionRows:
+          (json['collectionRows'] as List<dynamic>?)
               ?.map((row) => (row as List).cast<Object?>())
               .toList(growable: false) ??
           const <List<Object?>>[],
-      collectionViewModes: (json['collectionViewModes'] as List<dynamic>?)
+      collectionViewModes:
+          (json['collectionViewModes'] as List<dynamic>?)
               ?.map((item) => (item as num).toInt())
               .toList(growable: false) ??
           const <int>[3],
-      properties: (json['properties'] as Map<dynamic, dynamic>?)
-              ?.map((key, value) => MapEntry(key.toString(), value)) ??
+      properties:
+          (json['properties'] as Map<dynamic, dynamic>?)?.map(
+            (key, value) => MapEntry(key.toString(), value),
+          ) ??
           const <String, Object?>{},
-      formFields: (json['formFields'] as List<dynamic>?)
+      formFields:
+          (json['formFields'] as List<dynamic>?)
               ?.whereType<Map>()
               .map(
                 (field) => UxFieldSpec(
@@ -92,9 +100,11 @@ class UxWorkspaceMeta {
           const <UxFieldSpec>[],
       summaryText: json['summaryText'] as String? ?? '',
       emptyTitle: json['emptyTitle'] as String? ?? 'No selection',
-      emptyMessage: json['emptyMessage'] as String? ??
+      emptyMessage:
+          json['emptyMessage'] as String? ??
           'Choose an item from the collection to inspect it.',
-      defaultAlertMessage: json['defaultAlertMessage'] as String? ??
+      defaultAlertMessage:
+          json['defaultAlertMessage'] as String? ??
           'Something needs your attention.',
       collectionFlex: (json['collectionFlex'] as num?)?.toInt() ?? 7,
       detailFlex: (json['detailFlex'] as num?)?.toInt() ?? 5,
@@ -103,19 +113,13 @@ class UxWorkspaceMeta {
 }
 
 class UxWidgetSlot {
-  const UxWidgetSlot({
-    this.i,
-    this.style = 0,
-  });
+  const UxWidgetSlot({this.i, this.style = 0});
 
   final int? i;
   final int style;
 
   factory UxWidgetSlot.fromSpec(UxSpec? spec) {
-    return UxWidgetSlot(
-      i: spec?.i,
-      style: spec?.style ?? 0,
-    );
+    return UxWidgetSlot(i: spec?.i, style: spec?.style ?? 0);
   }
 }
 
@@ -324,13 +328,17 @@ class UxSpec {
   List<List<Object?>> metaRows(String key) {
     final value = m[key];
     if (value is! List) return const <List<Object?>>[];
-    return value.map((row) => (row as List).cast<Object?>()).toList(growable: false);
+    return value
+        .map((row) => (row as List).cast<Object?>())
+        .toList(growable: false);
   }
 
   Map<String, Object?> metaObjectMap(String key) {
     final value = m[key];
     if (value is! Map) return const <String, Object?>{};
-    return value.map((mapKey, mapValue) => MapEntry(mapKey.toString(), mapValue));
+    return value.map(
+      (mapKey, mapValue) => MapEntry(mapKey.toString(), mapValue),
+    );
   }
 
   List<UxFieldSpec> metaFieldSpecs(String key) {
@@ -352,7 +360,8 @@ class UxSpec {
 
   UxWorkspaceMeta get workspace => UxWorkspaceMeta.fromJson(m);
 
-  List<UxSpec> uxzoneChildren(String uxzone) => uxzones[uxzone] ?? const <UxSpec>[];
+  List<UxSpec> uxzoneChildren(String uxzone) =>
+      uxzones[uxzone] ?? const <UxSpec>[];
 
   UxSpec? firstInUxZone(String uxzone) {
     final items = uxzoneChildren(uxzone);
@@ -360,7 +369,9 @@ class UxSpec {
   }
 
   UxSpec? firstOfLayer(UxLayer layer, {String? uxzone}) {
-    final groups = uxzone == null ? uxzones.values : <List<UxSpec>>[uxzoneChildren(uxzone)];
+    final groups = uxzone == null
+        ? uxzones.values
+        : <List<UxSpec>>[uxzoneChildren(uxzone)];
     for (final group in groups) {
       for (final child in group) {
         if (child.l == layer.code) return child;
@@ -369,8 +380,14 @@ class UxSpec {
     return null;
   }
 
-  UxSpec? firstOfType(int type, {UxLayer layer = UxLayer.uwidget, String? uxzone}) {
-    final groups = uxzone == null ? uxzones.values : <List<UxSpec>>[uxzoneChildren(uxzone)];
+  UxSpec? firstOfType(
+    int type, {
+    UxLayer layer = UxLayer.uwidget,
+    String? uxzone,
+  }) {
+    final groups = uxzone == null
+        ? uxzones.values
+        : <List<UxSpec>>[uxzoneChildren(uxzone)];
     for (final group in groups) {
       for (final child in group) {
         if (child.l == layer.code && child.t == type) return child;
@@ -381,7 +398,9 @@ class UxSpec {
 
   List<UxSpec> ofLayer(UxLayer layer, {String? uxzone}) {
     final matches = <UxSpec>[];
-    final groups = uxzone == null ? uxzones.values : <List<UxSpec>>[uxzoneChildren(uxzone)];
+    final groups = uxzone == null
+        ? uxzones.values
+        : <List<UxSpec>>[uxzoneChildren(uxzone)];
     for (final group in groups) {
       for (final child in group) {
         if (child.l == layer.code) {
@@ -399,7 +418,9 @@ class UxSpec {
   UxWorkspaceSlots get workspaceSlots => UxWorkspaceSlots(
     topToolbar: UxWidgetSlot.fromSpec(firstOfType(4, uxzone: UxZone.header)),
     bottomToolbar: UxWidgetSlot.fromSpec(firstOfType(4, uxzone: UxZone.footer)),
-    collection: UxWidgetSlot.fromSpec(firstOfType(12, uxzone: UxZone.collection)),
+    collection: UxWidgetSlot.fromSpec(
+      firstOfType(12, uxzone: UxZone.collection),
+    ),
     plist: UxWidgetSlot.fromSpec(firstOfType(6, uxzone: UxZone.detail)),
     form: UxWidgetSlot.fromSpec(firstOfType(5, uxzone: UxZone.detail)),
     empty: UxWidgetSlot.fromSpec(firstOfType(9, uxzone: UxZone.feedback)),
@@ -414,7 +435,9 @@ Map<String, dynamic> _stringDynamicMap(Map raw) {
 }
 
 extension UxAppSpecAdapter on UxAppSpec {
-  UxSpec toUxSpec({Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{}}) {
+  UxSpec toUxSpec({
+    Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{},
+  }) {
     return UxSpec(
       i: i,
       a: a,
@@ -433,9 +456,9 @@ extension UxAppSpecAdapter on UxAppSpec {
 extension UxRouteSpecAdapter on UxRouteSpec {
   UxSpec toUxSpec() {
     return UxSpec(
-      i: pageSpecId,
+      i: id,
       n: appName,
-      t: pageSpecId,
+      t: id,
       l: l,
       m: <String, dynamic>{
         ...meta.toJson(),

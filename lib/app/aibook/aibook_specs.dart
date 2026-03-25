@@ -17,20 +17,23 @@ class AIBookSpecs {
     buildRouteSpec(
       const UxRouteHeaderSpec(
         appName: appName,
-        pageSpecId: routeZeroSpecId,
+        id: routeZeroSpecId,
         optionalId: '42',
       ),
     ),
     buildRouteSpec(
       const UxRouteHeaderSpec(
         appName: appName,
-        pageSpecId: routeOneSpecId,
+        id: routeOneSpecId,
         optionalId: '42',
       ),
     ),
   ];
 
-  static UxRouteHeaderSpec? directRoute({String? explicitPath, Uri? currentUri}) {
+  static UxRouteHeaderSpec? directRoute({
+    String? explicitPath,
+    Uri? currentUri,
+  }) {
     final candidates = <String?>[
       explicitPath,
       currentUri?.path,
@@ -72,7 +75,7 @@ class AIBookSpecs {
     }
     return const UxRouteHeaderSpec(
       appName: appName,
-      pageSpecId: routeZeroSpecId,
+      id: routeZeroSpecId,
       optionalId: '42',
     );
   }
@@ -101,27 +104,29 @@ class AIBookSpecs {
     return buildRouteSpec(route);
   }
 
-  static UxRouteSpec buildRouteSpec(UxRouteHeaderSpec route) {
-    final seed = int.tryParse(route.optionalId ?? '42') ?? 42;
-    final isRouteZero = route.pageSpecId == routeZeroSpecId;
+  static UxRouteSpec buildRouteSpec(UxRouteHeaderSpec header) {
+    final seed = int.tryParse(header.optionalId ?? '42') ?? 42;
+    final isRouteZero = header.id == routeZeroSpecId;
     final name = 'Atlas Volume $seed';
     final owner = seed.isEven ? 'Mia' : 'Ethan';
     final status = seed.isEven ? 'Open' : 'Closed';
 
     return UxRouteSpec(
       app: appSpec,
-      route: route,
+      route: header,
       meta: UxRouteMeta(
-        title: 'Workspace / ${route.optionalId ?? '-'}',
+        title: 'Workspace / ${header.optionalId ?? '-'}',
         subtitle: isRouteZero
             ? 'Root template host for AIBook'
             : 'Scrollable root template host for AIBook',
       ),
       spec: UxSpec.rootTemplate(
-        i: route.pageSpecId,
+        i: header.id,
         n: 'tworkspace',
         t: 1,
-        frame: isRouteZero ? const UxFrameMeta(scroll: 'none') : const UxFrameMeta(scroll: 'vertical'),
+        frame: isRouteZero
+            ? const UxFrameMeta(scroll: 'none')
+            : const UxFrameMeta(scroll: 'vertical'),
         m: UxWorkspaceMeta(
           collectionTitle: 'Books',
           collectionColumns: const <String>['ID', 'Name', 'Status'],
@@ -136,7 +141,7 @@ class AIBookSpecs {
             'name': name,
             'status': status,
             'owner': owner,
-            'route': route.path,
+            'route': header.path,
             'app': title,
           },
           formFields: <UxFieldSpec>[
@@ -163,9 +168,7 @@ class AIBookSpecs {
             UxSpec.uwidget(i: 11, n: 'empty', t: 9),
             UxSpec.uwidget(i: 14, n: 'alert', t: 11),
           ],
-          UxZone.footer: <UxSpec>[
-            UxSpec.uwidget(i: 3, n: 'toolbar', t: 4),
-          ],
+          UxZone.footer: <UxSpec>[UxSpec.uwidget(i: 3, n: 'toolbar', t: 4)],
         },
       ),
     );

@@ -1,42 +1,60 @@
 import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/ux/mixins.dart';
 
 class CopilotUx {
   CopilotUx(this.autopilot);
 
   final Autopilot autopilot;
 
-  String? _currentRootTemplateScope;
+  int? _currentAppId;
+  int? _currentRouteId;
+  String? _currentOptionalId;
   int? _currentRootTemplateI;
-  final Set<String> _templateScopes = <String>{};
 
-  String? get currentRootTemplateScope => _currentRootTemplateScope;
+  int? get currentAppId => _currentAppId;
+  int? get currentRouteId => _currentRouteId;
+  String? get currentOptionalId => _currentOptionalId;
   int? get currentRootTemplateI => _currentRootTemplateI;
-  Set<String> get currentTemplateScopes =>
-      Set<String>.unmodifiable(_templateScopes);
 
-  String mountRootTemplate({
+  void mountRootTemplate({
     required int templateI,
     Map<String, dynamic> initialState = const <String, dynamic>{},
     bool notify = true,
   }) {
-    final scope = rootTemplateScopeFor(templateI);
-    _currentRootTemplateScope = scope;
+    final route = autopilot.currentRoute;
+    if (route == null) return;
+
+    _currentAppId = route.app.i;
+    _currentRouteId = route.id;
+    _currentOptionalId = route.optionalId;
     _currentRootTemplateI = templateI;
-    _templateScopes.add(scope);
+
     if (initialState.isNotEmpty) {
-      autopilot.stateSet.patchTemplate(scope, initialState);
+      final code = UxRegister.templateCode(
+        appId: _currentAppId!,
+        routeId: _currentRouteId!,
+        templateId: templateI,
+        optionalId: _currentOptionalId,
+      );
+      autopilot.stateSet.patchTemplate(code, initialState);
     }
     if (notify) {
       autopilot.publishChange();
     }
-    return scope;
   }
 
-  void clearRootTemplate(String scope, {bool notify = true}) {
-    autopilot.stateSet.clearTemplate(scope);
-    _templateScopes.remove(scope);
-    if (_currentRootTemplateScope == scope) {
-      _currentRootTemplateScope = null;
+  void clearRootTemplate(int appId, int routeId, int templateI, {String? optionalId, bool notify = true}) {
+    final code = UxRegister.templateCode(
+      appId: appId,
+      routeId: routeId,
+      templateId: templateI,
+      optionalId: optionalId,
+    );
+    autopilot.stateSet.clearTemplate(code);
+    if (_currentAppId == appId && _currentRouteId == routeId && _currentRootTemplateI == templateI && _currentOptionalId == optionalId) {
+      _currentAppId = null;
+      _currentRouteId = null;
+      _currentOptionalId = null;
       _currentRootTemplateI = null;
     }
     if (notify) {
@@ -44,89 +62,135 @@ class CopilotUx {
     }
   }
 
-  String mountCurrentTemplate({
-    required int templateI,
+  void mountTemplate({
+    required int templateId,
     Map<String, dynamic> initialState = const <String, dynamic>{},
     bool notify = true,
   }) {
-    final rootTemplateI = _currentRootTemplateI;
-    if (rootTemplateI != null) {
-      if (templateI == rootTemplateI) {
-        final scope = _currentRootTemplateScope!;
-        if (initialState.isNotEmpty) {
-          autopilot.stateSet.patchTemplate(scope, initialState);
-        }
-        if (notify) {
-          autopilot.publishChange();
-        }
-        return scope;
-      } else {
-        final scope = routeNestedTemplateScopeFor(rootTemplateI: rootTemplateI, templateI: templateI);
-        _templateScopes.add(scope);
-        if (initialState.isNotEmpty) {
-          autopilot.stateSet.patchTemplate(scope, initialState);
-        }
-        if (notify) {
-          autopilot.publishChange();
-        }
-        return scope;
-      }
-    }
+    final route = autopilot.currentRoute;
+    if (route == null) return;
 
-    throw StateError(
-      'Cannot mount template $templateI without an active route root template',
+    final code = UxRegister.templateCode(
+      appId: route.app.i,
+      routeId: route.id,
+      templateId: templateId,
+      optionalId: route.optionalId,
     );
+    if (initialState.isNotEmpty) {
+      autopilot.stateSet.patchTemplate(code, initialState);
+    }
+    if (notify) {
+      autopilot.publishChange();
+    }
   }
 
-  String rootTemplateScopeFor(int templateI) {
-    final routeScope = autopilot.currentRoute?.scopeKey ?? 'default';
-    return 'template.route.$routeScope.$templateI';
+  void mountUWidget({
+    required int templateId,
+    required int uwidgetId,
+    Map<String, dynamic> initialState = const <String, dynamic>{},
+    bool notify = true,
+  }) {
+    final route = autopilot.currentRoute;
+    if (route == null) return;
+
+    final code = UxRegister.uwidgetCode(
+      appId: route.app.i,
+      routeId: route.id,
+      templateId: templateId,
+      uwidgetId: uwidgetId,
+      optionalId: route.optionalId,
+    );
+    if (initialState.isNotEmpty) {
+      autopilot.stateSet.patchUWidget(code, initialState);
+    }
+    if (notify) {
+      autopilot.publishChange();
+    }
   }
 
-  String routeNestedTemplateScopeFor({required int rootTemplateI, required int templateI}) {
-    final routeScope = autopilot.currentRoute?.scopeKey ?? 'default';
-    return 'template.route.$routeScope.$rootTemplateI.$templateI';
-  }
+  T? templateState<T>(Object templateId, String key) {
+    final route = autopilot.currentRoute;
+    if (route == null) return null;
 
-  T? templateState<T>(String scope, String key) =>
-      autopilot.stateSet.getTemplate<T>(scope, key);
+    final tid = templateId is int ? templateId : int.tryParse(templateId.toString()) ?? 0;
+    final code = UxRegister.templateCode(
+      appId: route.app.i,
+      routeId: route.id,
+      templateId: tid,
+      optionalId: route.optionalId,
+    );
+    return autopilot.stateSet.getTemplate<T>(code, key);
+  }
 
   void setTemplateState(
-    String scope,
+    Object templateId,
     String key,
     dynamic value, {
     bool notify = true,
   }) {
-    autopilot.stateSet.setTemplate(scope, key, value);
+    final route = autopilot.currentRoute;
+    if (route == null) return;
+
+    final tid = templateId is int ? templateId : int.tryParse(templateId.toString()) ?? 0;
+    final code = UxRegister.templateCode(
+      appId: route.app.i,
+      routeId: route.id,
+      templateId: tid,
+      optionalId: route.optionalId,
+    );
+    autopilot.stateSet.setTemplate(code, key, value);
     if (notify) {
       autopilot.publishChange();
     }
   }
 
   void patchTemplateState(
-    String scope,
+    Object templateId,
     Map<String, dynamic> values, {
     bool notify = true,
   }) {
-    autopilot.stateSet.patchTemplate(scope, values);
+    final route = autopilot.currentRoute;
+    if (route == null) return;
+
+    final tid = templateId is int ? templateId : int.tryParse(templateId.toString()) ?? 0;
+    final code = UxRegister.templateCode(
+      appId: route.app.i,
+      routeId: route.id,
+      templateId: tid,
+      optionalId: route.optionalId,
+    );
+    autopilot.stateSet.patchTemplate(code, values);
     if (notify) {
       autopilot.publishChange();
     }
   }
 
-  void clearTemplateScope(String scope, {bool notify = true}) {
-    autopilot.stateSet.clearTemplate(scope);
-    _templateScopes.remove(scope);
+  void clearTemplateState(Object templateId, {bool notify = true}) {
+    final route = autopilot.currentRoute;
+    if (route == null) return;
+
+    final tid = templateId is int ? templateId : int.tryParse(templateId.toString()) ?? 0;
+    final code = UxRegister.templateCode(
+      appId: route.app.i,
+      routeId: route.id,
+      templateId: tid,
+      optionalId: route.optionalId,
+    );
+    autopilot.stateSet.clearTemplate(code);
     if (notify) {
       autopilot.publishChange();
     }
   }
 
-  void clearRoute({bool notify = true}) {    for (final scope in _templateScopes.toList(growable: false)) {
-      autopilot.stateSet.clearTemplate(scope);
+  void clearRoute({bool notify = true}) {
+    final route = autopilot.currentRoute;
+    if (route != null) {
+      final code = UxRegister.routeCode(route.app.i, route.id, optionalId: route.optionalId);
+      autopilot.stateSet.clearRoute(code);
     }
-    _templateScopes.clear();
-    _currentRootTemplateScope = null;
+    _currentAppId = null;
+    _currentRouteId = null;
+    _currentOptionalId = null;
     _currentRootTemplateI = null;
 
     if (notify) {

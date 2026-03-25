@@ -33,7 +33,7 @@ class Autopilot extends ChangeNotifier {
       'route.path': route.path,
       'route.scope': route.scopeKey,
       'route.app': route.appName,
-      'route.pageSpecId': route.pageSpecId,
+      'route.id': route.id,
       'route.optionalId': route.optionalId,
     });
     if (notify) {
@@ -47,7 +47,7 @@ class Autopilot extends ChangeNotifier {
       'route.path': null,
       'route.scope': null,
       'route.app': null,
-      'route.pageSpecId': null,
+      'route.id': null,
       'route.optionalId': null,
     });
     _currentRoute = null;

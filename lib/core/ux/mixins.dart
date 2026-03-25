@@ -36,7 +36,6 @@ class UxRegister {
   UxRegister._();
 
   static const int _tierBase = 1000;
-  static const int _rootScale = _tierBase * _tierBase;
 
   static const Map<int, String> apps = <int, String>{
     0: 'aicodex',
@@ -70,56 +69,78 @@ class UxRegister {
     14: 'field',
   };
 
-  static final Map<String, int> _templatesByName = <String, int>{
-    for (final entry in templates.entries) entry.value: entry.key,
-  };
-
-  static final Map<String, int> _uwidgetsByName = <String, int>{
-    for (final entry in uwidgets.entries) entry.value: entry.key,
-  };
-
   static String templateId({required int pid, required int tid}) => '$pid.$tid';
 
   static String uwidgetId({required int pid, required int tid, required int uwid}) => '$pid.$tid.$uwid';
 
-  // Packed structural code rule:
-  // pid, tid, and uwid each use 3 digits.
-  static int templateCode({required int pid, required int tid}) {
-    _validateTier('pid', pid);
-    _validateTier('tid', tid);
-    return pid * _rootScale + tid * _tierBase;
+  static const int _optionalScale = 1000 * 1000 * 1000;
+  static const int _routeScale = _optionalScale * 1000;
+  static const int _appScale = _routeScale * 100000;
+
+  static int appCode(int appId) => appId * _appScale;
+
+  static int routeCode(int appId, int routeId, {String? optionalId}) {
+    final oid = _parseOid(optionalId);
+    return appCode(appId) + (routeId * _optionalScale) + oid;
   }
 
-  static int uwidgetCode({required int pid, required int tid, required int uwid}) {
-    _validateTier('pid', pid);
-    _validateTier('tid', tid);
-    _validateTier('uwid', uwid);
-    return pid * _rootScale + tid * _tierBase + uwid;
+  static int templateCode({
+    required int appId,
+    required int routeId,
+    required int templateId,
+    String? optionalId,
+  }) {
+    return routeCode(appId, routeId, optionalId: optionalId) + (templateId * 1000);
   }
 
-  static int localNodeCode(String name) {    final tid = _templatesByName[name];
-    if (tid != null) return templateCode(pid: 0, tid: tid);
+  static int uwidgetCode({
+    required int appId,
+    required int routeId,
+    required int templateId,
+    required int uwidgetId,
+    String? optionalId,
+  }) {
+    return templateCode(
+          appId: appId,
+          routeId: routeId,
+          templateId: templateId,
+          optionalId: optionalId,
+        ) +
+        uwidgetId;
+  }
 
+  static int _parseOid(String? optionalId) {
+    if (optionalId == null) return 0;
+    final parsed = int.tryParse(optionalId);
+    if (parsed != null) return parsed % 1000;
+    return optionalId.hashCode % 1000;
+  }
+
+  static int localNodeCode(String name) {
+    _initByName();
+    final tid = _templatesByName[name];
+    if (tid != null) return tid * 1000;
     final uwid = _uwidgetsByName[name];
-    if (uwid != null) return uwidgetCode(pid: 0, tid: 0, uwid: uwid);
-
+    if (uwid != null) return uwid;
     throw ArgumentError.value(name, 'name', 'Unknown UX node name');
   }
 
-  static ({int pid, int tid, int uwid}) decodeCode(int code) {
-    if (code < 0) {
-      throw RangeError.value(code, 'code', 'UX code must be non-negative');
+  static void _initByName() {
+    if (_templatesByName.isNotEmpty) return;
+    for (final entry in templates.entries) {
+      _templatesByName[entry.value] = entry.key;
     }
-    final pid = code ~/ _rootScale;
-    final remainder = code % _rootScale;
-    final tid = remainder ~/ _tierBase;
-    final uwid = remainder % _tierBase;
-    return (pid: pid, tid: tid, uwid: uwid);
+    for (final entry in uwidgets.entries) {
+      _uwidgetsByName[entry.value] = entry.key;
+    }
   }
 
-  static void _validateTier(String name, int value) {
-    if (value < 0 || value >= _tierBase) {
-      throw RangeError.value(value, name, 'UX tier values must be between 0 and 999');
+  static final Map<String, int> _templatesByName = <String, int>{};
+  static final Map<String, int> _uwidgetsByName = <String, int>{};
+
+  static void _validateTier(String name, int value, int max) {
+    if (value < 0 || value >= max) {
+      throw RangeError.value(value, name, 'UX tier values must be between 0 and ${max - 1}');
     }
   }
 }
@@ -241,7 +262,18 @@ extension UwStateAccess on Autopilot {
       case UwStateSource.data:
         return data[binding.key];
       case UwStateSource.template:
-        return binding.uwidget == null ? null : stateSet.getTemplate<dynamic>(binding.uwidget!, binding.key);
+        final route = currentRoute;
+        if (route != null && binding.uwidget != null) {
+          final tid = int.tryParse(binding.uwidget!) ?? 0;
+          final code = UxRegister.templateCode(
+            appId: route.app.i,
+            routeId: route.id,
+            templateId: tid,
+            optionalId: route.optionalId,
+          );
+          return stateSet.getTemplate<dynamic>(code, binding.key);
+        }
+        return null;
     }
   }
 
@@ -253,7 +285,8 @@ extension UwStateAccess on Autopilot {
         data.set(binding.key, value, notify: notify);
       case UwStateSource.template:
         if (binding.uwidget != null) {
-          state.setTemplateState(binding.uwidget!, binding.key, value, notify: notify);
+          final tid = int.tryParse(binding.uwidget!) ?? 0;
+          state.setTemplateState(tid, binding.key, value, notify: notify);
         }
     }
   }
@@ -267,20 +300,14 @@ mixin Ux {
   String get n;
   int get l => -1;
 
-  // Shared experimental metadata bag for UX nodes.
   Map<String, dynamic> get m => const <String, dynamic>{};
 
-  // Legacy numeric style/variant slot, now stored inside metadata.
   int get style => (m['style'] as num?)?.toInt() ?? 0;
 
-  // Numeric type identity.
   int get t => UxRegister.localNodeCode(n);
 
-  // Human-readable structural path for logging, debugging, and display.
   String get path => '$n.$i';
 }
-
-// mixin reverted
 
 class UxRootTemplateHost extends StatefulWidget {
   const UxRootTemplateHost({required this.i, required this.autopilot, required this.child, this.initialState = const <String, dynamic>{}, super.key});
@@ -295,12 +322,11 @@ class UxRootTemplateHost extends StatefulWidget {
 }
 
 class _UxRootTemplateHostState extends State<UxRootTemplateHost> {
-  late String _scope;
   String? _routeScope;
 
   void _mount() {
     _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    _scope = widget.autopilot.state.mountRootTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
+    widget.autopilot.state.mountRootTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
   }
 
   @override
@@ -316,13 +342,31 @@ class _UxRootTemplateHostState extends State<UxRootTemplateHost> {
     final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
     if (!needsRemount) return;
 
-    oldWidget.autopilot.state.clearRootTemplate(_scope, notify: false);
+    final route = oldWidget.autopilot.currentRoute;
+    if (route != null) {
+      oldWidget.autopilot.state.clearRootTemplate(
+        route.app.i,
+        route.id,
+        oldWidget.i,
+        optionalId: route.optionalId,
+        notify: false,
+      );
+    }
     _mount();
   }
 
   @override
   void dispose() {
-    widget.autopilot.state.clearRootTemplate(_scope, notify: false);
+    final route = widget.autopilot.currentRoute;
+    if (route != null) {
+      widget.autopilot.state.clearRootTemplate(
+        route.app.i,
+        route.id,
+        widget.i,
+        optionalId: route.optionalId,
+        notify: false,
+      );
+    }
     super.dispose();
   }
 
@@ -331,8 +375,6 @@ class _UxRootTemplateHostState extends State<UxRootTemplateHost> {
 }
 
 class UxTemplateHost extends StatefulWidget {
-  // Template-scoped runtime host. Keep this with the template layer so lifecycle
-  // ownership stays next to the consuming layer.
   const UxTemplateHost({required this.i, required this.autopilot, required this.builder, this.initialState = const <String, dynamic>{}, super.key});
 
   final int i;
@@ -345,37 +387,12 @@ class UxTemplateHost extends StatefulWidget {
 }
 
 class _UxTemplateHostState extends State<UxTemplateHost> {
-  late String _scope;
-  String? _routeScope;
-
-  void _mount() {
-    _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    _scope = widget.autopilot.state.mountCurrentTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
-  }
-
   @override
   void initState() {
     super.initState();
-    _mount();
+    widget.autopilot.state.mountTemplate(templateId: widget.i, initialState: widget.initialState, notify: false);
   }
 
   @override
-  void didUpdateWidget(covariant UxTemplateHost oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
-    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
-    if (!needsRemount) return;
-
-    oldWidget.autopilot.state.clearTemplateScope(_scope, notify: false);
-    _mount();
-  }
-
-  @override
-  void dispose() {
-    widget.autopilot.state.clearTemplateScope(_scope, notify: false);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => widget.builder(context, _scope);
+  Widget build(BuildContext context) => widget.builder(context, widget.i.toString());
 }

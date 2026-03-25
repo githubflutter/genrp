@@ -17,27 +17,30 @@ class AIWorkSpecs {
     buildRouteSpec(
       const UxRouteHeaderSpec(
         appName: appName,
-        pageSpecId: routeZeroSpecId,
+        id: routeZeroSpecId,
         optionalId: '42',
       ),
     ),
     buildRouteSpec(
       const UxRouteHeaderSpec(
         appName: appName,
-        pageSpecId: routeOneSpecId,
+        id: routeOneSpecId,
         optionalId: '42',
       ),
     ),
     buildRouteSpec(
       const UxRouteHeaderSpec(
         appName: appName,
-        pageSpecId: routeOneSpecId,
+        id: routeOneSpecId,
         optionalId: '84',
       ),
     ),
   ];
 
-  static UxRouteHeaderSpec? directRoute({String? explicitPath, Uri? currentUri}) {
+  static UxRouteHeaderSpec? directRoute({
+    String? explicitPath,
+    Uri? currentUri,
+  }) {
     final candidates = <String?>[
       explicitPath,
       currentUri?.path,
@@ -83,7 +86,7 @@ class AIWorkSpecs {
 
     return const UxRouteHeaderSpec(
       appName: appName,
-      pageSpecId: routeZeroSpecId,
+      id: routeZeroSpecId,
       optionalId: '42',
     );
   }
@@ -112,29 +115,31 @@ class AIWorkSpecs {
     return buildRouteSpec(route);
   }
 
-  static UxRouteSpec buildRouteSpec(UxRouteHeaderSpec route) {
-    final seed = int.tryParse(route.optionalId ?? '42') ?? 42;
-    final isRouteZero = route.pageSpecId == routeZeroSpecId;
+  static UxRouteSpec buildRouteSpec(UxRouteHeaderSpec header) {
+    final seed = int.tryParse(header.optionalId ?? '42') ?? 42;
+    final isRouteZero = header.id == routeZeroSpecId;
     final name = 'Orchid Supply $seed';
     final owner = seed.isEven ? 'Mia' : 'Ethan';
     final status = seed.isEven ? 'Open' : 'Closed';
 
     return UxRouteSpec(
       app: appSpec,
-      route: route,
+      route: header,
       meta: UxRouteMeta(
-        title: 'Workspace / ${route.optionalId ?? '-'}',
+        title: 'Workspace / ${header.optionalId ?? '-'}',
         subtitle: isRouteZero
             ? 'Root template host for AIWork'
-            : route.optionalId == '84'
+            : header.optionalId == '84'
             ? 'Replace-only route change for AIWork'
             : 'Scrollable root template with the same AIWork flow',
       ),
       spec: UxSpec.rootTemplate(
-        i: route.pageSpecId,
+        i: header.id,
         n: 'tworkspace',
         t: 1,
-        frame: isRouteZero ? const UxFrameMeta(scroll: 'none') : const UxFrameMeta(scroll: 'vertical'),
+        frame: isRouteZero
+            ? const UxFrameMeta(scroll: 'none')
+            : const UxFrameMeta(scroll: 'vertical'),
         m: UxWorkspaceMeta(
           collectionTitle: 'Accounts',
           collectionColumns: const <String>['ID', 'Name', 'Status'],
@@ -149,7 +154,7 @@ class AIWorkSpecs {
             'name': name,
             'status': status,
             'owner': owner,
-            'route': route.path,
+            'route': header.path,
             'app': title,
           },
           formFields: <UxFieldSpec>[
@@ -176,9 +181,7 @@ class AIWorkSpecs {
             UxSpec.uwidget(i: 11, n: 'empty', t: 9),
             UxSpec.uwidget(i: 14, n: 'alert', t: 11),
           ],
-          UxZone.footer: <UxSpec>[
-            UxSpec.uwidget(i: 3, n: 'toolbar', t: 4),
-          ],
+          UxZone.footer: <UxSpec>[UxSpec.uwidget(i: 3, n: 'toolbar', t: 4)],
         },
       ),
     );
