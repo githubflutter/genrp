@@ -43,15 +43,7 @@ class UxWorkspaceMeta {
     'collectionViewModes': collectionViewModes,
     'properties': properties,
     'formFields': formFields
-        .map(
-          (field) => <String, dynamic>{
-            'label': field.label,
-            'hint': field.hint,
-            'width': field.width,
-            'dataTypeId': field.dataTypeId,
-            'fieldMode': field.fieldMode?.name,
-          },
-        )
+        .map((field) => field.toJson())
         .toList(growable: false),
     'summaryText': summaryText,
     'emptyTitle': emptyTitle,
@@ -88,13 +80,8 @@ class UxWorkspaceMeta {
           (json['formFields'] as List<dynamic>?)
               ?.whereType<Map>()
               .map(
-                (field) => UxFieldSpec(
-                  label: field['label']?.toString() ?? '',
-                  hint: field['hint']?.toString() ?? '',
-                  width: (field['width'] as num?)?.toDouble() ?? 260,
-                  dataTypeId: (field['dataTypeId'] as num?)?.toInt(),
-                  fieldMode: UwFieldMode.fromJsonValue(field['fieldMode']),
-                ),
+                (field) =>
+                    UxFieldSpec.fromJson(Map<String, dynamic>.from(field)),
               )
               .toList(growable: false) ??
           const <UxFieldSpec>[],
@@ -200,9 +187,9 @@ class UxSpec {
       children: rawChildren == null
           ? const <UxSpec>[]
           : rawChildren
-              .whereType<Map>()
-              .map((item) => UxSpec.fromJson(_stringDynamicMap(item)))
-              .toList(growable: false),
+                .whereType<Map>()
+                .map((item) => UxSpec.fromJson(_stringDynamicMap(item)))
+                .toList(growable: false),
     );
   }
 
@@ -336,15 +323,7 @@ class UxSpec {
     if (raw is! List) return const <UxFieldSpec>[];
     return raw
         .whereType<Map>()
-        .map(
-          (field) => UxFieldSpec(
-            label: field['label']?.toString() ?? '',
-            hint: field['hint']?.toString() ?? '',
-            width: (field['width'] as num?)?.toDouble() ?? 260,
-            dataTypeId: (field['dataTypeId'] as num?)?.toInt(),
-            fieldMode: UwFieldMode.fromJsonValue(field['fieldMode']),
-          ),
-        )
+        .map((field) => UxFieldSpec.fromJson(Map<String, dynamic>.from(field)))
         .toList(growable: false);
   }
 
@@ -380,7 +359,9 @@ class UxSpec {
   /// from `meta + slots`.
   UxWorkspaceSlots get workspaceSlots => UxWorkspaceSlots(
     topToolbar: UxWidgetSlot.fromSpec(firstOfType(4)),
-    bottomToolbar: UxWidgetSlot.fromSpec(null), // Needs index or role to distinguish top/bottom
+    bottomToolbar: UxWidgetSlot.fromSpec(
+      null,
+    ), // Needs index or role to distinguish top/bottom
     collection: UxWidgetSlot.fromSpec(firstOfType(12)),
     plist: UxWidgetSlot.fromSpec(firstOfType(6)),
     form: UxWidgetSlot.fromSpec(firstOfType(5)),
@@ -396,9 +377,7 @@ Map<String, dynamic> _stringDynamicMap(Map raw) {
 }
 
 extension UxAppSpecAdapter on UxAppSpec {
-  UxSpec toUxSpec({
-    List<UxSpec> children = const <UxSpec>[],
-  }) {
+  UxSpec toUxSpec({List<UxSpec> children = const <UxSpec>[]}) {
     return UxSpec(
       i: i,
       a: a,
@@ -428,10 +407,7 @@ extension UxRouteSpecAdapter on UxRouteSpec {
         if (optionalId != null) 'optionalId': optionalId,
       },
       s: const <String, dynamic>{},
-      children: <UxSpec>[
-        app.toUxSpec(),
-        spec,
-      ],
+      children: <UxSpec>[app.toUxSpec(), spec],
     );
   }
 }

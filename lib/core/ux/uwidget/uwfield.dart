@@ -3,7 +3,7 @@ import 'package:genrp/core/agent/autopilot.dart';
 import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/core/ux/uwidget/uwfields/uwfields.dart';
 
-class UwFieldSpec {
+class UwFieldSpec with UwStateBindable {
   const UwFieldSpec({
     this.mode,
     this.dataTypeId,
@@ -39,7 +39,12 @@ class UwFieldSpec {
 
   factory UwFieldSpec.fromJson(Map<String, dynamic> json) {
     return UwFieldSpec(
-      mode: UwFieldMode.fromJsonValue(json['mode'], fallback: json['dataTypeId'] is int ? UwField.modeForDataType(json['dataTypeId'] as int) : UwFieldMode.text),
+      mode: UwFieldMode.fromJsonValue(
+        json['mode'],
+        fallback: json['dataTypeId'] is int
+            ? UwField.modeForDataType(json['dataTypeId'] as int)
+            : UwFieldMode.text,
+      ),
       dataTypeId: json['dataTypeId'] as int?,
       label: json['label'] as String?,
       hint: json['hint'] as String?,
@@ -63,7 +68,9 @@ class UwFieldSpec {
       colorFormat: _colorFormatFromJsonValue(json['colorFormat']),
       valueIsInt: json['valueIsInt'] as bool? ?? false,
       allowMultiple: json['allowMultiple'] as bool? ?? false,
-      allowedExtensions: (json['allowedExtensions'] as List<dynamic>?)?.map((dynamic e) => e.toString()).toList(growable: false),
+      allowedExtensions: (json['allowedExtensions'] as List<dynamic>?)
+          ?.map((dynamic e) => e.toString())
+          .toList(growable: false),
       maxFileSize: json['maxFileSize'] as int?,
       showValue: json['showValue'] as bool? ?? false,
     );
@@ -87,19 +94,12 @@ class UwFieldSpec {
   final bool showChips;
   final bool allowDuplicates;
 
+  @override
   final String? stateKey;
+  @override
   final int stateSrc;
+  @override
   final String? stateScope;
-
-  UwStateBindingSpec? get stateBinding {
-    final key = stateKey;
-    if (key == null || key.isEmpty) return null;
-    return UwStateBindingSpec.fromLegacy(
-      key: key,
-      sourceCode: stateSrc,
-      uwidget: stateScope,
-    );
-  }
 
   final FilterOp filterOp;
 
@@ -160,6 +160,41 @@ class UwFieldSpec {
       'showValue': showValue,
     };
   }
+
+  UwFieldSpec withValue(dynamic nextValue) {
+    return UwFieldSpec(
+      mode: mode,
+      dataTypeId: dataTypeId,
+      label: label,
+      hint: hint,
+      width: width,
+      value: nextValue,
+      readOnly: readOnly,
+      items: items,
+      itemLabelBuilder: itemLabelBuilder,
+      tags: tags,
+      tagDelimiter: tagDelimiter,
+      showChips: showChips,
+      allowDuplicates: allowDuplicates,
+      stateKey: stateKey,
+      stateSrc: stateSrc,
+      stateScope: stateScope,
+      filterOp: filterOp,
+      leftIcon: leftIcon,
+      leftTooltip: leftTooltip,
+      rightIcon: rightIcon,
+      rightTooltip: rightTooltip,
+      dateFormat: dateFormat,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      colorFormat: colorFormat,
+      valueIsInt: valueIsInt,
+      allowMultiple: allowMultiple,
+      allowedExtensions: allowedExtensions,
+      maxFileSize: maxFileSize,
+      showValue: showValue,
+    );
+  }
 }
 
 FilterOp _filterOpFromJsonValue(Object? raw) {
@@ -215,7 +250,14 @@ class UwFieldCallbacks {
 }
 
 class UwField extends StatelessWidget with Ux {
-  const UwField({required this.i, required this.autopilot, required this.spec, this.callbacks = const UwFieldCallbacks(), this.s = 0, super.key});
+  const UwField({
+    required this.i,
+    required this.autopilot,
+    required this.spec,
+    this.callbacks = const UwFieldCallbacks(),
+    this.s = 0,
+    super.key,
+  });
 
   final int uwid = 14;
   final int s;
@@ -238,10 +280,29 @@ class UwField extends StatelessWidget with Ux {
 
   @override
   Widget build(BuildContext context) {
-    return _buildDedicatedWidget(spec.effectiveMode);
+    final binding = spec.stateBinding;
+    if (binding == null || spec.effectiveMode == UwFieldMode.link) {
+      return _buildDedicatedWidget(spec.effectiveMode, spec, callbacks);
+    }
+    return _UwBindableFieldHost(
+      autopilot: autopilot,
+      spec: spec,
+      callbacks: callbacks,
+      builder: (UwFieldSpec resolvedSpec, UwFieldCallbacks resolvedCallbacks) {
+        return _buildDedicatedWidget(
+          resolvedSpec.effectiveMode,
+          resolvedSpec,
+          resolvedCallbacks,
+        );
+      },
+    );
   }
 
-  Widget _buildDedicatedWidget(UwFieldMode mode) {
+  Widget _buildDedicatedWidget(
+    UwFieldMode mode,
+    UwFieldSpec spec,
+    UwFieldCallbacks callbacks,
+  ) {
     switch (mode) {
       case UwFieldMode.text:
         return UwFieldText(
@@ -269,7 +330,9 @@ class UwField extends StatelessWidget with Ux {
             label: spec.label,
             hint: spec.hint,
             width: spec.width,
-            value: spec.value is num ? spec.value : num.tryParse(spec.value?.toString() ?? ''),
+            value: spec.value is num
+                ? spec.value
+                : num.tryParse(spec.value?.toString() ?? ''),
             readOnly: spec.readOnly,
             leftIcon: spec.leftIcon,
             leftTooltip: spec.leftTooltip,
@@ -322,7 +385,9 @@ class UwField extends StatelessWidget with Ux {
             label: spec.label,
             hint: spec.hint,
             width: spec.width,
-            value: spec.value is int ? spec.value : int.tryParse(spec.value?.toString() ?? ''),
+            value: spec.value is int
+                ? spec.value
+                : int.tryParse(spec.value?.toString() ?? ''),
             readOnly: spec.readOnly,
             firstDate: spec.firstDate,
             lastDate: spec.lastDate,
@@ -342,7 +407,9 @@ class UwField extends StatelessWidget with Ux {
             label: spec.label,
             hint: spec.hint,
             width: spec.width,
-            value: spec.value is int ? spec.value : int.tryParse(spec.value?.toString() ?? ''),
+            value: spec.value is int
+                ? spec.value
+                : int.tryParse(spec.value?.toString() ?? ''),
             readOnly: spec.readOnly,
             firstDate: spec.firstDate,
             lastDate: spec.lastDate,
@@ -588,5 +655,100 @@ class UwField extends StatelessWidget with Ux {
           s: s,
         );
     }
+  }
+}
+
+class _UwBindableFieldHost extends StatefulWidget {
+  const _UwBindableFieldHost({
+    required this.autopilot,
+    required this.spec,
+    required this.callbacks,
+    required this.builder,
+  });
+
+  final Autopilot autopilot;
+  final UwFieldSpec spec;
+  final UwFieldCallbacks callbacks;
+  final Widget Function(UwFieldSpec spec, UwFieldCallbacks callbacks) builder;
+
+  @override
+  State<_UwBindableFieldHost> createState() => _UwBindableFieldHostState();
+}
+
+class _UwBindableFieldHostState extends State<_UwBindableFieldHost> {
+  bool _seeded = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _seedInitialValueIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant _UwBindableFieldHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldBinding = oldWidget.spec.stateBinding?.toJson().toString();
+    final nextBinding = widget.spec.stateBinding?.toJson().toString();
+    if (oldBinding != nextBinding) {
+      _seeded = false;
+      _seedInitialValueIfNeeded();
+    }
+  }
+
+  void _seedInitialValueIfNeeded() {
+    if (_seeded) return;
+    _seeded = true;
+    final initialValue = widget.spec.value;
+    if (initialValue == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final currentValue = widget.autopilot.readBindable(
+        widget.spec,
+        context: context,
+      );
+      if (currentValue == null) {
+        widget.autopilot.writeBindable(
+          widget.spec,
+          initialValue,
+          context: context,
+          notify: true,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: widget.autopilot,
+      builder: (BuildContext context, Widget? child) {
+        final boundValue = widget.autopilot.readBindable(
+          widget.spec,
+          context: context,
+        );
+        final resolvedSpec = widget.spec.withValue(boundValue);
+        final resolvedCallbacks = UwFieldCallbacks(
+          onChanged: (dynamic value) {
+            widget.autopilot.writeBindable(
+              widget.spec,
+              value,
+              context: context,
+              notify: true,
+            );
+            widget.callbacks.onChanged?.call(value);
+          },
+          onRefresh: widget.callbacks.onRefresh,
+          onTagAdded: widget.callbacks.onTagAdded,
+          onTagRemoved: widget.callbacks.onTagRemoved,
+          onLink: widget.callbacks.onLink,
+          onPush: widget.callbacks.onPush,
+          onFilterApplied: widget.callbacks.onFilterApplied,
+          onFilterCleared: widget.callbacks.onFilterCleared,
+          onLeftPressed: widget.callbacks.onLeftPressed,
+          onRightPressed: widget.callbacks.onRightPressed,
+        );
+        return widget.builder(resolvedSpec, resolvedCallbacks);
+      },
+    );
   }
 }
