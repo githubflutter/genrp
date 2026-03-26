@@ -24,6 +24,7 @@ enum UxLayer {
 class UxRegister {
   UxRegister._();
 
+
   static const Map<int, String> apps = <int, String>{
     0: 'aicodex',
     1: 'aistudio',
@@ -37,14 +38,7 @@ class UxRegister {
     3: 'appshellPortrait',
   };
 
-  static const Map<int, String> templates = <int, String>{
-    1: 'tworkspace',
-    2: 'tsheet',
-    3: 'treport',
-    4: 'tdboard',
-    5: 'twizard',
-    6: 'tform',
-  };
+  static const Map<int, String> templates = <int, String>{1: 'tworkspace', 2: 'tsheet', 3: 'treport', 4: 'tdboard', 5: 'twizard', 6: 'tform'};
 
   static const Map<int, String> uwidgets = <int, String>{
     1: 'list',
@@ -65,11 +59,7 @@ class UxRegister {
 
   static String templateId({required int pid, required int tid}) => '$pid.$tid';
 
-  static String uwidgetId({
-    required int pid,
-    required int tid,
-    required int uwid,
-  }) => '$pid.$tid.$uwid';
+  static String uwidgetId({required int pid, required int tid, required int uwid}) => '$pid.$tid.$uwid';
 
   static int localNodeCode(String name) {
     _initByName();
@@ -92,6 +82,7 @@ class UxRegister {
 
   static final Map<String, int> _templatesByName = <String, int>{};
   static final Map<String, int> _uwidgetsByName = <String, int>{};
+
 }
 
 enum UwFieldMode {
@@ -161,17 +152,11 @@ enum UwFieldMode {
     'checklist': checklist,
   };
 
-  static UwFieldMode fromCode(
-    int? code, {
-    UwFieldMode fallback = UwFieldMode.text,
-  }) {
+  static UwFieldMode fromCode(int? code, {UwFieldMode fallback = UwFieldMode.text}) {
     return byCode[code] ?? fallback;
   }
 
-  static UwFieldMode fromJsonValue(
-    Object? raw, {
-    UwFieldMode fallback = UwFieldMode.text,
-  }) {
+  static UwFieldMode fromJsonValue(Object? raw, {UwFieldMode fallback = UwFieldMode.text}) {
     if (raw is int) return fromCode(raw, fallback: fallback);
     if (raw is String) {
       return _byName[raw.trim().toLowerCase()] ?? fallback;
@@ -185,21 +170,13 @@ enum FilterOp { contains, startsWith, endsWith, except }
 enum UwStateSource { chrome, data, template }
 
 class UwStateBindingSpec {
-  const UwStateBindingSpec({
-    required this.key,
-    this.source = UwStateSource.chrome,
-    this.uwidget,
-  });
+  const UwStateBindingSpec({required this.key, this.source = UwStateSource.chrome, this.uwidget});
 
   final String key;
   final UwStateSource source;
   final String? uwidget;
 
-  factory UwStateBindingSpec.fromLegacy({
-    required String? key,
-    required int sourceCode,
-    required String? uwidget,
-  }) {
+  factory UwStateBindingSpec.fromLegacy({required String? key, required int sourceCode, required String? uwidget}) {
     if (key == null || key.isEmpty) {
       throw ArgumentError.value(key, 'key', 'Binding key must not be empty');
     }
@@ -214,32 +191,7 @@ class UwStateBindingSpec {
     );
   }
 
-  Map<String, dynamic> toJson() => <String, dynamic>{
-    'key': key,
-    'source': source.name,
-    'uwidget': uwidget,
-  };
-}
-
-abstract interface class UwBindable {
-  UwStateBindingSpec? get stateBinding;
-}
-
-mixin UwStateBindable implements UwBindable {
-  String? get stateKey;
-  int get stateSrc;
-  String? get stateScope;
-
-  @override
-  UwStateBindingSpec? get stateBinding {
-    final key = stateKey;
-    if (key == null || key.isEmpty) return null;
-    return UwStateBindingSpec.fromLegacy(
-      key: key,
-      sourceCode: stateSrc,
-      uwidget: stateScope,
-    );
-  }
+  Map<String, dynamic> toJson() => <String, dynamic>{'key': key, 'source': source.name, 'uwidget': uwidget};
 }
 
 extension UwStateAccess on Autopilot {
@@ -260,12 +212,7 @@ extension UwStateAccess on Autopilot {
     }
   }
 
-  void writeUwState(
-    UwStateBindingSpec binding,
-    dynamic value, {
-    BuildContext? context,
-    bool notify = true,
-  }) {
+  void writeUwState(UwStateBindingSpec binding, dynamic value, {BuildContext? context, bool notify = true}) {
     switch (binding.source) {
       case UwStateSource.chrome:
         stateSet.setapp(binding.key, value);
@@ -280,23 +227,6 @@ extension UwStateAccess on Autopilot {
           }
         }
     }
-  }
-
-  dynamic readBindable(UwBindable bindable, {BuildContext? context}) {
-    final binding = bindable.stateBinding;
-    if (binding == null) return null;
-    return readUwState(binding, context: context);
-  }
-
-  void writeBindable(
-    UwBindable bindable,
-    dynamic value, {
-    BuildContext? context,
-    bool notify = true,
-  }) {
-    final binding = bindable.stateBinding;
-    if (binding == null) return;
-    writeUwState(binding, value, context: context, notify: notify);
   }
 }
 
@@ -318,13 +248,7 @@ mixin Ux {
 }
 
 class UxRootTemplateHost extends StatefulWidget {
-  const UxRootTemplateHost({
-    required this.i,
-    required this.autopilot,
-    required this.child,
-    this.initialState = const <String, dynamic>{},
-    super.key,
-  });
+  const UxRootTemplateHost({required this.i, required this.autopilot, required this.child, this.initialState = const <String, dynamic>{}, super.key});
 
   final int i;
   final Autopilot autopilot;
@@ -348,11 +272,7 @@ class _UxRootTemplateHostState extends State<UxRootTemplateHost> {
       specid: widget.i,
       spectype: 1, // root templates are typically tworkspace or similar
     );
-    _runtimeid = widget.autopilot.state.registerrt(
-      meta: meta,
-      initial: widget.initialState,
-      notify: false,
-    );
+    _runtimeid = widget.autopilot.state.registerrt(meta: meta, initial: widget.initialState, notify: false);
   }
 
   @override
@@ -375,9 +295,7 @@ class UxRuntimeContext extends InheritedWidget {
   final int runtimeid;
 
   static int? maybeOf(BuildContext context) {
-    return context
-        .dependOnInheritedWidgetOfExactType<UxRuntimeContext>()
-        ?.runtimeid;
+    return context.dependOnInheritedWidgetOfExactType<UxRuntimeContext>()?.runtimeid;
   }
 
   @override
@@ -387,13 +305,7 @@ class UxRuntimeContext extends InheritedWidget {
 }
 
 class UxTemplateHost extends StatefulWidget {
-  const UxTemplateHost({
-    required this.i,
-    required this.autopilot,
-    required this.builder,
-    this.initialState = const <String, dynamic>{},
-    super.key,
-  });
+  const UxTemplateHost({required this.i, required this.autopilot, required this.builder, this.initialState = const <String, dynamic>{}, super.key});
 
   final int i;
   final Autopilot autopilot;
@@ -417,11 +329,7 @@ class _UxTemplateHostState extends State<UxTemplateHost> {
       specid: widget.i,
       spectype: 0,
     );
-    _runtimeid = widget.autopilot.state.registerrt(
-      meta: meta,
-      initial: widget.initialState,
-      notify: false,
-    );
+    _runtimeid = widget.autopilot.state.registerrt(meta: meta, initial: widget.initialState, notify: false);
   }
 
   @override

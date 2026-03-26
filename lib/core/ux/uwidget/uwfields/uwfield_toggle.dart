@@ -48,7 +48,9 @@ class _UwFieldToggleState extends State<UwFieldToggle> {
   }
 
   void _syncFromAutopilot() {
-    final value = widget.autopilot.readBindable(widget.spec, context: context);
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
+    final value = widget.autopilot.readUwState(binding);
     final text = value?.toString() ?? '';
     if (widget.controller.text != text) {
       widget.controller.text = text;
@@ -59,13 +61,10 @@ class _UwFieldToggleState extends State<UwFieldToggle> {
   }
 
   void _pushToAutopilot() {
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
     final value = widget.controller.text;
-    widget.autopilot.writeBindable(
-      widget.spec,
-      value,
-      context: context,
-      notify: true,
-    );
+    widget.autopilot.writeUwState(binding, value, notify: true);
     widget.callbacks.onPush?.call(value);
   }
 
@@ -87,9 +86,7 @@ class _UwFieldToggleState extends State<UwFieldToggle> {
     return Container(
       decoration: _isLinked
           ? BoxDecoration(
-              border: Border.all(
-                color: UxTheme.colors(context).secondary.withValues(alpha: 0.5),
-              ),
+              border: Border.all(color: UxTheme.colors(context).secondary.withValues(alpha: 0.5)),
               borderRadius: BorderRadius.circular(4),
             )
           : null,
@@ -117,17 +114,11 @@ class _UwFieldToggleState extends State<UwFieldToggle> {
                   tooltip: _isLinked ? 'Refresh from state' : 'Push to state',
                   iconSize: 16,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   onPressed: _isLinked ? _syncFromAutopilot : _pushToAutopilot,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
               onChanged: widget.callbacks.onChanged,
             ),

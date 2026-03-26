@@ -62,7 +62,9 @@ class _UwFieldLinkerState extends State<UwFieldLinker> {
   }
 
   void _syncFromAutopilot() {
-    final value = widget.autopilot.readBindable(widget.spec, context: context);
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
+    final value = widget.autopilot.readUwState(binding);
     final text = value?.toString() ?? '';
     if (_controller.text != text) {
       _controller.text = text;
@@ -73,13 +75,10 @@ class _UwFieldLinkerState extends State<UwFieldLinker> {
   }
 
   void _pushToAutopilot() {
+    final binding = widget.spec.stateBinding;
+    if (binding == null) return;
     final value = _controller.text;
-    widget.autopilot.writeBindable(
-      widget.spec,
-      value,
-      context: context,
-      notify: true,
-    );
+    widget.autopilot.writeUwState(binding, value, notify: true);
     widget.callbacks.onPush?.call(value);
   }
 
@@ -101,9 +100,7 @@ class _UwFieldLinkerState extends State<UwFieldLinker> {
     Widget fieldBody = Container(
       decoration: _isLinked
           ? BoxDecoration(
-              border: Border.all(
-                color: UxTheme.colors(context).secondary.withValues(alpha: 0.5),
-              ),
+              border: Border.all(color: UxTheme.colors(context).secondary.withValues(alpha: 0.5)),
               borderRadius: BorderRadius.circular(4),
             )
           : null,
@@ -131,17 +128,11 @@ class _UwFieldLinkerState extends State<UwFieldLinker> {
                   tooltip: _isLinked ? 'Refresh from state' : 'Push to state',
                   iconSize: 16,
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 32,
-                    minHeight: 32,
-                  ),
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   onPressed: _isLinked ? _syncFromAutopilot : _pushToAutopilot,
                 ),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
               onChanged: widget.callbacks.onChanged,
             ),
@@ -158,7 +149,7 @@ class _UwFieldLinkerState extends State<UwFieldLinker> {
 }
 
 /// Spec for [UwFieldLinker] - state-bound link/unlink field.
-class UwFieldLinkerSpec with UwStateBindable {
+class UwFieldLinkerSpec {
   const UwFieldLinkerSpec({
     this.label,
     this.hint,
@@ -177,12 +168,19 @@ class UwFieldLinkerSpec with UwStateBindable {
   final double? width;
   final dynamic value;
   final bool readOnly;
-  @override
   final String? stateKey;
-  @override
-  final int stateSrc; // 0 = chrome, 1 = data, 3 = template
-  @override
+  final int stateSrc; // 0 = chrome, 1 = dataSet, 2 = scoped
   final String? stateScope;
   final String? leftTooltip;
   final String? rightTooltip;
+
+  UwStateBindingSpec? get stateBinding {
+    final key = stateKey;
+    if (key == null || key.isEmpty) return null;
+    return UwStateBindingSpec.fromLegacy(
+      key: key,
+      sourceCode: stateSrc,
+      uwidget: stateScope,
+    );
+  }
 }
