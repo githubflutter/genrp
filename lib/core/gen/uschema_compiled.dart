@@ -11,7 +11,7 @@ class UschemaCompiled {
     required this.spec,
     required this.layer,
     required this.typeName,
-    required this.uxzones,
+    required this.children,
     required this.isRouteRoot,
     this.workspace,
     this.workspaceSlots,
@@ -22,7 +22,7 @@ class UschemaCompiled {
   UxFrameMeta? get frame => spec.hasFrame ? spec.frame : null;
   final UxLayer layer;
   final String typeName;
-  final Map<String, List<UschemaCompiled>> uxzones;
+  final List<UschemaCompiled> children;
   final UxWorkspaceMeta? workspace;
   final UxWorkspaceSlots? workspaceSlots;
 
@@ -33,32 +33,16 @@ class UschemaCompiled {
   Map<String, dynamic> get m => spec.m;
   Map<String, dynamic> get s => spec.s;
 
-  List<UschemaCompiled> uxzoneChildren(String uxzone) =>
-      uxzones[uxzone] ?? const <UschemaCompiled>[];
-
-  UschemaCompiled? firstInUxZone(String uxzone) {
-    final items = uxzoneChildren(uxzone);
-    return items.isEmpty ? null : items.first;
-  }
-
-  UschemaCompiled? firstOfLayer(UxLayer layer, {String? uxzone}) {
-    final groups =
-        uxzone == null ? uxzones.values : <List<UschemaCompiled>>[uxzoneChildren(uxzone)];
-    for (final group in groups) {
-      for (final child in group) {
-        if (child.layer == layer) return child;
-      }
+  UschemaCompiled? firstOfLayer(UxLayer layer) {
+    for (final child in children) {
+      if (child.layer == layer) return child;
     }
     return null;
   }
 
-  UschemaCompiled? firstOfType(int type, {UxLayer layer = UxLayer.uwidget, String? uxzone}) {
-    final groups =
-        uxzone == null ? uxzones.values : <List<UschemaCompiled>>[uxzoneChildren(uxzone)];
-    for (final group in groups) {
-      for (final child in group) {
-        if (child.layer == layer && child.t == type) return child;
-      }
+  UschemaCompiled? firstOfType(int type, {UxLayer layer = UxLayer.uwidget}) {
+    for (final child in children) {
+      if (child.layer == layer && child.t == type) return child;
     }
     return null;
   }

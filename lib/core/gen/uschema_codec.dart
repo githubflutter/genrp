@@ -18,12 +18,7 @@ class UschemaCodec {
       layer: layer,
       typeName: _typeName(spec, layer),
       isRouteRoot: isRouteRoot,
-      uxzones: spec.uxzones.map(
-        (key, value) => MapEntry(
-          key,
-          value.map((child) => _compile(child, isRouteRoot: false)).toList(growable: false),
-        ),
-      ),
+      children: spec.children.map((child) => _compile(child, isRouteRoot: false)).toList(growable: false),
       workspace: layer == UxLayer.template && spec.t == 1 ? spec.workspace : null,
       workspaceSlots:
           layer == UxLayer.template && spec.t == 1 ? spec.workspaceSlots : null,
