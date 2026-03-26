@@ -2,340 +2,193 @@
 
 > **Project:** `genrp` — Generative Resource Planner  
 > **Platform:** Flutter (macOS, Linux, Windows, Android, iOS)  
-> **SDK:** Dart ≥3.11.0  
-> **Analysis Date:** 2026-03-25  
+> **SDK:** Dart `>=3.11.3`  
+> **Analysis Date:** 2026-03-26  
 
 ---
 
 ## 1. Executive Summary
 
-GenRP is a **Flutter monolith** containing **four distinct applications** inside a single codebase, unified by a shared `core` library:
+GenRP is a Flutter monolith with four app shells sharing one `core` runtime:
 
-| App | Role | Maturity |
+| App | Role | Current posture |
 |---|---|---|
-| **AIWork** | Client/workflow CRUD surface | Ready to run from spec data |
-| **AIBook** | Client/runtime reader surface | Ready to run from spec data |
-| **AIStudio** | UX/spec authoring surface | Shared `AdminHome` shell, halfway restored |
-| **AICodex** | Sensitive data-model authoring + schema-application surface | Shared `AdminHome` shell, halfway restored |
+| **AIWork** | Client/workflow CRUD surface | Spec-driven and runnable |
+| **AIBook** | Client/runtime reader surface | Spec-driven and runnable |
+| **AIStudio** | UX/spec authoring surface | Shared admin shell, partial restore |
+| **AICodex** | Schema/data authoring surface | Shared admin shell, partial restore |
 
-The apps share a common orchestration layer (`Autopilot`), route/spec metadata, shared UX primitives, and optional local DB scaffolding under `core/db`. `AIWork` and `AIBook` remain spec-driven through a schema-compiled runtime in `lib/core/gen/`, currently using local preset specs as the ready-state source. `AIStudio` and `AICodex` now use dedicated hard-coded authoring shells seeded from app-owned section data and shared `Uw*` components from `lib/core/ux/uwidget/`. 
+The current runtime direction is consistent:
+- `Autopilot` is the central coordinator, split into `CopilotData` and `CopilotUx`.
+- `AppRuntimeFlow` owns bootstrap and route switching.
+- `UschemaRuntime` compiles and caches `UxSpec` trees on demand.
+- `GenUx` renders compiled schema into `template/` and `uwidget/` primitives.
+- `AIStudio` and `AICodex` share `AdminHome` instead of maintaining a second runtime stack.
 
-The architecture has recently undergone a major decoupling phase:
-- **Autopilot** is now a **thin coordinator**, delegating state and data to specialized copilots but owning the primary stores.
-- **Navigation** is handled by a unified **AppRuntimeFlow** using schema-driven `UxRouteSpec` (resolved) and `UxRouteHeaderSpec` (raw).
-- **The "Action Trio" architecture has been purged** in favor of direct state/data bindings and system-level functions, reducing runtime overhead and complexity.
-- **A new UX Runtime layer** (`UschemaRuntime`) provides on-demand compilation and caching of UX specs.
-
-### 1.1 Architecture Phase Change
-
-GenRP has moved from an experimental "everything-is-an-action" model to a more robust **schema-first binding model**.
-
-The current working tree is now highly consolidated:
-- **Autopilot** is the single orchestration layer.
-- **UschemaRuntime** + **GenUx** is the current spec-to-widget renderer for spec-driven apps.
-- **core/ux** owns the shared UI contracts and primitives through `mixins.dart`, `paper/`, `template/`, and `uwidget/` (including 21 specialized field types).
-- **AIWork** and **AIBook** stay on the spec-driven path.
-- **AIStudio** and **AICodex** use dedicated hard-coded authoring shells, but they reuse the same shared UX primitives instead of introducing a competing runtime.
-
-### 1.2 Dedicated Entry Points
-
-GenRP supports dedicated entry points for each application, allowing for auto-sign-in and specific bootstrap configurations:
-- `main_aicodex.dart`
-- `main_aistudio.dart`
-- `main_aibook.dart`
-- `main_aiwork.dart`
-
-By default, `main.dart` continues to boot **AICodex** for the current snapshot.
+This rerun also confirmed that the previous markdown snapshot had drifted:
+- the current tree has no `lib/core/ux/paper/` directory;
+- source and docs counts changed since the prior report;
+- the analyzer is still clean, but there are still no checked-in Dart tests.
 
 ---
 
-## 2. Architecture Overview
+## 2. Current Architecture Snapshot
+
+### 2.1 Runtime Path
 
 ```mermaid
 graph TB
-    subgraph "Entry Points"
-        MAIN["main.dart<br/>AICodex default"]
-        MAINSTUDIO["main_aistudio.dart"]
-        MAINCODEX["main_aicodex.dart"]
-        MAINBOOK["main_aibook.dart"]
-        MAINWORK["main_aiwork.dart"]
-    end
-
-    subgraph "Applications"
-        AIWORK["AIWork"]
-        AIBOOK["AIBook"]
-        AICODEX["AICodex"]
-        AISTUDIO["AIStudio"]
-    end
-
-    subgraph "Route Flow"
-        ARF["AppRuntimeFlow"]
-        UR["UschemaRuntime"]
-        UC["UschemaCache"]
-        UCO["UschemaCodec"]
-    end
-
-    subgraph "App Specs"
-        WSP["AIWorkSpecs"]
-        BSP["AIBookSpecs"]
-        URS["UxRouteSpec (Resolved)"]
-        URH["UxRouteHeaderSpec (Raw)"]
-    end
-
-    subgraph "Core Orchestration"
-        AP["Autopilot"]
-        CD["CopilotData"]
-        CX["CopilotUX"]
-        DS["DataSet"]
-        SS["StateSet"]
-    end
-
-    subgraph "Admin Shell"
-        AH["AdminHome<br/>core/gen/adminhome.dart"]
-        AST["AdminState<br/>core/gen/admin_state.dart"]
-        ES["ExplorerState<br/>core/gen/explorer_state.dart"]
-        UE["UExplorer<br/>core/gen/uexplorer.dart"]
-        GA["GenAuthoringPanels<br/>core/gen/genauthoring.dart"]
-    end
-
-    subgraph "UX Runtime"
-        GX["GenUx<br/>core/gen/genux.dart"]
-        PH["Paper + UxPaperHost"]
-        TH["Template + UxTemplateHost"]
-        VW["Uw* widgets"]
-        REG["mixins.dart<br/>UxRegister + Ux / Paper / Template / Uwidget"]
-    end
-
-    subgraph "Schema Models"
-        US["uschema specs"]
-        BS["bschema + base models"]
-    end
-
-    subgraph "Data / Transport"
-        X["X / Xi / Xia / Xiad / Xiade<br/>(Base Transport)"]
-        DTP["DataType / TypeMapper"]
-        CONV["Converter"]
-    end
-
-    subgraph "Persistence"
-        SQL["SqliteStore"]
-        DBC["DB Contract + Clients"]
-    end
-
-    MAIN --> AICODEX
-    MAINSTUDIO --> AISTUDIO
-    MAINCODEX --> AICODEX
-    MAINBOOK --> AIBOOK
-    MAINWORK --> AIWORK
-
-    AIWORK --> WSP
-    AIBOOK --> BSP
-    AICODEX --> AH
-    AISTUDIO --> AH
-
-    WSP --> URH
-    BSP --> URH
-
-    URH --> ARF
-    ARF --> URS
-    ARF --> UR
-    UR --> UC
-    UR --> UCO
-
-    URS --> GX
-    GX --> PH
-    GX --> TH
-    GX --> VW
-    REG --> GX
-
-    AIWORK --> AP
-    AIBOOK --> AP
-    AICODEX --> AP
-    AISTUDIO --> AP
-
-    AP --> CD
-    AP --> CX
-    AP --> DS
-    AP --> SS
-    AP --> PH
-    AP --> TH
-    AP --> VW
-    AP --> X
-
-    US --> URS
-    BS --> AICODEX
-
-    DBC --> SQL
+    MAIN["main*.dart"] --> APP["App Shell"]
+    APP --> FLOW["AppRuntimeFlow"]
+    FLOW --> AP["Autopilot"]
+    FLOW --> RT["UschemaRuntime"]
+    RT --> CODEC["UschemaCodec + UschemaCache"]
+    AP --> DATA["CopilotData + DataSet"]
+    AP --> UX["CopilotUx + StateSet"]
+    RT --> GX["GenUx"]
+    GX --> ROOT["UxRootTemplateHost"]
+    GX --> TEMPLATE["UxTemplateHost"]
+    GX --> UW["Uw* widgets"]
 ```
+
+### 2.2 Active Directory Model
+
+The repo currently resolves to this active UI/runtime shape:
+
+```text
+lib/
+├── app/                 # App shells for aiwork, aibook, aistudio, aicodex
+├── core/
+│   ├── agent/           # Autopilot, CopilotData, CopilotUx, DataSet, StateSet
+│   ├── base/            # X transport classes, converter, registries, bootstrap
+│   ├── db/              # SQLite + DB contract/client scaffolding
+│   ├── gen/             # AppRuntimeFlow, UschemaRuntime, GenUx, AdminHome
+│   ├── model/           # BSchema, USchema, base, bdata
+│   ├── theme/           # Shared Material theme helpers
+│   └── ux/
+│       ├── mixins.dart  # UxLayer, UxRegister, state access, host widgets
+│       ├── template/    # Tworkspace, Tsheet, Treport, Tdboard, Twizard, Tform
+│       └── uwidget/     # Shared widgets + specialized field widgets
+└── main*.dart           # Dedicated entry points
+```
+
+Notably, `paper/` is no longer part of the checked-in runtime tree.
 
 ---
 
-## 3. Codebase Statistics
+## 3. Current Metrics
+
+These numbers were re-measured from the current working tree on 2026-03-26.
 
 | Metric | Value |
 |---|---|
-| **Source files** (`lib/`) | 112 Dart files |
-| **Source LOC** (`lib/`) | ~13,779 lines |
-| **Test files** (`test/`) | 0 Dart files in the current working tree |
-| **Test LOC** (`test/`) | 0 |
-| **Asset JSON files** | 2 files |
-| **Asset data dir** | `assets/data/` (empty, reserved) |
-| **Doc files** (`docs/`) | 20+ markdown files |
-| **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
-| **Analyzer status** | `flutter analyze` passes clean on 2026-03-25 |
+| **Source files** (`lib/**/*.dart`) | 106 |
+| **Source LOC** (`lib/**/*.dart`) | 13,373 |
+| **Test files** (`test/**/*_test.dart`) | 0 |
+| **Test LOC** | 0 |
+| **Docs files** (`docs/**/*.md`) | 15 |
+| **Root docs files** (`docs/*.md`) | 13 |
+| **Asset JSON files** | 2 |
+| **Analyzer status** | `flutter analyze` passed clean |
+| **Test status** | `flutter test` reports no test files |
 
-### Per-Directory Breakdown (Approx.)
+### Per-Directory Breakdown
 
 | Directory | Files | LOC |
 |---|---|---|
-| `lib/app/` | 6 | ~1,000 |
-| `lib/core/agent/` | 6 | ~700 |
-| `lib/core/base/` | 7 | ~800 |
-| `lib/core/db/` | 8 | ~1,000 |
-| `lib/core/gen/` | 11 | ~2,500 |
-| `lib/core/model/` | 19 | ~2,500 |
-| `lib/core/theme/` | 1 | ~300 |
-| `lib/core/ux/` | 50 | ~5,000 |
-| Root entry files | 4 | ~100 |
+| `lib/app/` | 6 | 1,093 |
+| `lib/core/agent/` | 6 | 558 |
+| `lib/core/base/` | 7 | 728 |
+| `lib/core/db/` | 8 | 889 |
+| `lib/core/gen/` | 11 | 1,481 |
+| `lib/core/model/` | 16 | 1,892 |
+| `lib/core/theme/` | 1 | 297 |
+| `lib/core/ux/` | 45 | 6,316 |
+| `lib/` root entry files | 6 | 119 |
 
 ---
 
-## 4. Directory Structure
+## 4. Subsystem Notes
 
-```
-genrp/
-├── lib/
-│   ├── main.dart                         # Default app entry (boots AICodex)
-│   ├── main_aistudio.dart                # AIStudio dedicated entry
-│   ├── main_aicodex.dart                 # AICodex dedicated entry
-│   ├── main_aibook.dart                  # AIBook dedicated entry
-│   ├── main_aiwork.dart                  # AIWork dedicated entry
-│   ├── meta.dart                         # Static version flags
-│   ├── app/                              # Application-specific MaterialApp shells
-│   ├── core/
-│   │   ├── agent/                        # Autopilot + Copilots + Store (StateSet/DataSet)
-│   │   ├── base/                         # Transport (X), Converter, Bootstrap, TypeRegistry
-│   │   ├── db/                           # persistence (SQLite, PostgreSQL scaffold)
-│   │   ├── gen/                          # Runtime Flow, GenUx, Admin Shell, USchema Runtime
-│   │   ├── model/                        # BSchema, USchema, Base, and BData models
-│   │   ├── theme/                        # UxTheme (Material 3)
-│   │   └── ux/                           # Primitives: Paper, Template, Uwidget, UwFields (21 types)
-└── docs/                                 # Architecture, Handover, and User Guides
-```
+### 4.1 `core/agent/`
 
----
+- `autopilot.dart` is a thin `ChangeNotifier` coordinator.
+- `copilot_data.dart` wraps `DataSet` and publishes data changes.
+- `copilot_ux.dart` handles root-template, template, and uwidget scoping over `StateSet`.
+- `state_set.dart` now stores four buckets: `chrome`, `app`, `node`, and `child`.
 
-## 5. Core Subsystem Analysis
+### 4.2 `core/gen/`
 
-### 5.1 Orchestration Engine (`core/agent/`)
+- `app_runtime_flow.dart` centralizes route bootstrap and `openRoute()` behavior.
+- `uschema_runtime.dart` handles compile/cache refreshes around `UschemaCodec`.
+- `genux.dart` is template-root focused: current rendering branches only on `UxLayer.template`.
+- `adminhome.dart` remains the shared shell for AIStudio and AICodex.
 
-The **Autopilot** is the single orchestrator of the system. It has been refactored into a **thin coordinator** that maintains the global truth while delegating specific responsibilities to copilots:
+### 4.3 `core/model/uschema/`
 
-| Component | Purpose |
-|---|---|
-| [autopilot.dart](lib/core/agent/autopilot.dart) | **Thin Coordinator**: Owns `DataSet`, `StateSet`, and `currentRoute`. Manages cross-cutting mounting and publishing. |
-| [copilot_data.dart](lib/core/agent/copilot_data.dart) | **Data Copilot**: Manages remote/local business data synchronization. |
-| [copilot_ux.dart](lib/core/agent/copilot_ux.dart) | **UX Copilot**: Manages transient UI state hierarchical scoping (Chrome/Paper/Template). |
-| [data_set.dart](lib/core/agent/data_set.dart) | Slot-addressable key/value data store. |
-| [state_set.dart](lib/core/agent/state_set.dart) | Scoped state container. |
+- `UxRouteHeaderSpec` remains the lightweight navigation token.
+- `UxRouteSpec` wraps route metadata around a unified `UxSpec`.
+- `UxSpec` and `UxWorkspaceMeta` carry most of the runtime shape used by `GenUx`.
 
-**Key design decisions:**
-- **Purge of Action Trio**: The experimental `ActionPerform`, `ActionCommand`, and `ActionListener` layers have been removed. System behavior is now driven by direct state manipulation via `Autopilot.state` and `Autopilot.data` or via system-level functions seeded in `core/base/sysfunc.dart`.
-- **Decoupled Scoping**: `UxPaperHost` and `UxTemplateHost` manage the lifecycle of scoped state inside `Autopilot` automatically based on the current route.
+### 4.4 `core/ux/`
 
-### 5.2 Admin Shell + Gen/ (`core/gen/`)
-
-The `core/gen/` directory has absorbed the runtime flow and schema-authoring logic:
-
-| Component | Purpose |
-|---|---|
-| [app_runtime_flow.dart](lib/core/gen/app_runtime_flow.dart) | Centralizes `bootstrap()` and `openRoute()` logic for all apps. |
-| [uschema_runtime.dart](lib/core/gen/uschema_runtime.dart) | Owns the `UschemaCache`, `UschemaCodec`, and `UschemaCompiled` instances. |
-| [genux.dart](lib/core/gen/genux.dart) | Maps `UxSpec` (compiled) to concrete Flutter widgets. |
-| [adminhome.dart](lib/core/gen/adminhome.dart) | The shared anchor for AIStudio and AICodex authoring. |
-
-### 5.3 Transport Layer (`core/base/`)
-
-The transport layer remains focused on the **`X` hierarchy**:
-- `X` (v list) -> `Xi` (+i) -> `Xia` (+a) -> `Xiad` (+d) -> `Xiade` (+e).
-- Slot-addressable binding (`v[slot]`) is the primary way UI fields connect to data.
-- **TypeMapper** provides 53-bit safe integer mapping for cross-platform compatibility.
-
-### 5.4 USchema Models (`core/model/uschema/`)
-
-The UX specification model has been consolidated:
-- [ux_spec.dart](lib/core/model/uschema/ux_spec.dart): Now contains the core `UxSpec`, `UxPaperSpec`, and `UxTemplateSpec` definitions.
-- [ux_route_header_spec.dart](lib/core/model/uschema/ux_route_header_spec.dart): The raw, lightweight header for navigation.
-- [ux_route_spec.dart](lib/core/model/uschema/ux_route_spec.dart): The fully resolved route spec used by `Autopilot`.
+- `mixins.dart` now holds the key runtime registry utilities and both host widgets.
+- `UxRootTemplateHost` has explicit remount and dispose cleanup behavior.
+- `UxTemplateHost` is still a lightweight mount-only host.
+- `uwidget/uwfields/` remains the largest slice of the repo and the most behavior-dense UI area.
 
 ---
 
-## 6. Data Flow Diagram (Updated)
+## 5. Findings From This Rerun
 
-```mermaid
-sequenceDiagram
-    participant User
-    participant App
-    participant Flow as AppRuntimeFlow
-    participant Autopilot
-    participant Runtime as UschemaRuntime
-    participant GenUx
+### 5.1 Template Child Cleanup Is Currently Broken
 
-    User->>App: Launch
-    App->>Flow: bootstrap(presets)
-    Flow->>Flow: Resolve UxRouteHeaderSpec
-    Flow->>Autopilot: mountRoute(resolvedSpec)
-    Flow->>Runtime: compile/cache(resolvedSpec.spec)
-    Autopilot->>Autopilot: publishChange()
-    App->>GenUx: build(compiledSpec)
-    GenUx-->>User: Rendered Paper/Template
+In `state_set.dart`, `clearTemplate()` removes the template node and then calls `_removeChildrenForZone(templateKey)`. The descendant check is:
+
+```dart
+if (k ~/ 10000 == zone) toRemove.add(k);
 ```
 
----
+That arithmetic does not match the current `UxRegister` encoding:
+- `templateCode = routeCode + templateId * 1000`
+- `uwidgetCode = templateCode + uwidgetId`
 
-## 7. Current Status & Gap Analysis
+So a child key differs from its parent template key by less than `1000`, while the current cleanup divides the child by `10000` and compares it against the full template key. In practice, `clearTemplate()` removes the parent `_node` entry but leaves `_child` descendants behind.
 
-### What's Working ✅
+### 5.2 `UxTemplateHost` Does Not Tear Down Scoped State
 
-- **Four Dedicated Entry Points**: `main_aiwork`, `main_aibook`, `main_aistudio`, `main_aicodex` all operational.
-- **Clean Coordinator**: `Autopilot` is decoupled from routing and action-trio overhead.
-- **Schema-Driven Rendering**: `AIWork` and `AIBook` operate entirely from local spec sets.
-- **Converged Admin Shell**: `AIStudio` and `AICodex` share the `AdminHome` infrastructure.
-- **21 Specialized UwField Types**: Robust input system with specific handlers for dates, colors, files, and links.
-- **Clean Analyzer**: Codebase is lint-clean and architecture-consistent.
+`UxRootTemplateHost` has route-aware remount and dispose cleanup. `UxTemplateHost` only mounts once in `initState()` and has no matching `dispose()` or `didUpdateWidget()` path. That means nested or conditional template state can outlive the widget that created it until a full route clear happens.
 
-### Known Gaps ⚠️
+### 5.3 Provider Bootstrap No Longer Matches Real Ownership
 
-- **Real Transport Integration**: `WebClient` exists but is not yet wired as the primary data source.
-- **Auth Server Integration**: `mockauth.dart` is still the only active sign-in path.
-- **Production Persistence**: SQLite is used for foundation but not yet as a full offline-first cache for business data.
+Each `main*.dart` still wraps the app in `ChangeNotifierProvider<Autopilot>`, but no widget currently reads that provider. `AIWork` and `AIBook` each create a second internal `Autopilot` inside their home state objects, while `AIStudio` and `AICodex` do not appear to consume an `Autopilot` at all. This is harmless at runtime today, but it makes the ownership model harder to reason about and can mislead future refactors.
 
----
+### 5.4 Documentation Had Drifted From The Code
 
-## 8. Architectural Patterns
-
-1. **Numeric Identity**: Everything (Type, Source, Widget, Slot) uses integer IDs for performance.
-2. **Thin Coordinator**: `Autopilot` mediates but doesn't "know" the details of every sub-system.
-3. **Drafting with i=0**: New records follow the `i=0` convention before server-side ID allocation.
-4. **Paper/Template Scoping**: UX state is tiered to prevent collisions across different parts of the screen.
+The prior deep-analysis markdown and README still described a `paper/` layer and outdated codebase counts. That mismatch is now corrected in this rerun.
 
 ---
 
-## 9. Test Strategy
+## 6. Verification Snapshot
 
-Current verification relies on:
-1. `flutter analyze` for type and consistency checks.
-2. Manual application smoke-tests via dedicated entry points.
-3. Planned: Unit tests for `UschemaCodec` and `AppRuntimeFlow`.
+Commands run during this rerun:
+
+```bash
+flutter analyze
+flutter test
+```
+
+Results:
+- `flutter analyze` completed with `No issues found!`
+- `flutter test` exited because the repo currently has no `test/` directory or `_test.dart` files
+
+Manual smoke testing of the four entry points is still needed for behavioral confidence.
 
 ---
 
-## 10. File Reference (Partial)
+## 7. Recommended Next Steps
 
-| Category | Key Files |
-|---|---|
-| **Entry** | `main.dart`, `main_*.dart` |
-| **Agent** | `autopilot.dart`, `copilot_ux.dart`, `copilot_data.dart`, `state_set.dart` |
-| **UX Primitives** | `lib/core/ux/uwidget/uwfield.dart`, `lib/core/ux/uwidget/uwfields/` (21 types) |
-| **Runtime** | `lib/core/gen/app_runtime_flow.dart`, `lib/core/gen/uschema_runtime.dart`, `lib/core/gen/genux.dart` |
-| **Models** | `lib/core/model/bschema/`, `lib/core/model/uschema/` |
+1. Fix `StateSet.clearTemplate()` descendant matching so child uwidget state is actually reclaimed.
+2. Decide whether `UxTemplateHost` state is supposed to persist or be lifecycle-bound, then implement cleanup to match that rule.
+3. Either remove the unused top-level `Autopilot` providers or refactor the apps to consume the provided instance consistently.
+4. Add at least a small test surface around `UxRegister` key math, `StateSet` cleanup, and `AppRuntimeFlow`.

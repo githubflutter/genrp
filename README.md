@@ -12,7 +12,7 @@ The current repo is optimized around a single active runtime direction:
 - **AppRuntimeFlow** centralizes navigation and bootstrap using `UxRouteHeaderSpec` (raw) and `UxRouteSpec` (resolved).
 - **UschemaRuntime** provides on-demand compilation and caching of UX specs via `UschemaCodec` and `UschemaCache`.
 - **GenUx** is the spec-to-widget renderer used by the spec-driven apps (`AIWork` and `AIBook`).
-- **core/ux** holds the shared UI contracts and primitives through `mixins.dart`, `paper/`, `template/`, and `uwidget/` (including 21 specialized field types in `uwfields/`).
+- **core/ux** holds the shared UI contracts and primitives through `mixins.dart`, `template/`, and `uwidget/` (including 21 specialized field types in `uwfields/`).
 - **AIStudio** and **AICodex** share the **AdminHome** shell, reusing the same UX primitives without introducing a second runtime.
 - **The "Action Trio" (Command/Perform/Listener) system has been purged** in favor of direct state/data binding and system-level functions, significantly reducing architectural overhead.
 
@@ -44,10 +44,10 @@ flutter run -t lib/main_aiwork.dart
 
 | Metric | Value |
 |---|---|
-| **Source files** (`lib/`) | 112 Dart files |
-| **Source LOC** (`lib/`) | ~13,779 lines |
+| **Source files** (`lib/`) | 106 Dart files |
+| **Source LOC** (`lib/`) | 13,373 lines |
 | **Dependencies** | flutter, cupertino_icons, path, path_provider, provider, sqflite, sqflite_common_ffi |
-| **Analyzer** | `flutter analyze` passes clean |
+| **Analyzer** | `flutter analyze` passes clean on 2026-03-26 |
 
 ## Project Layout
 
@@ -64,7 +64,7 @@ lib/
     ├── gen/               # AdminHome shell, AppRuntimeFlow, UschemaRuntime, GenUx
     ├── model/             # base, bschema, bdata, uschema models
     ├── theme/             # Shared Material 3 theme + UX chrome helpers
-    └── ux/                # UX mixins, paper/template/uwidget primitives, uwfields
+    └── ux/                # UX mixins, template/uwidget primitives, uwfields
 ```
 
 ## Documentation

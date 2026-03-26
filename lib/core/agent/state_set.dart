@@ -1,9 +1,8 @@
 class StateSet {
   final Map<String, dynamic> _chrome = <String, dynamic>{};
-  final Map<int, Map<String, dynamic>> _apps = <int, Map<String, dynamic>>{};
-  final Map<int, Map<String, dynamic>> _routes = <int, Map<String, dynamic>>{};
-  final Map<int, Map<String, dynamic>> _templates = <int, Map<String, dynamic>>{};
-  final Map<int, Map<String, dynamic>> _uwidgets = <int, Map<String, dynamic>>{};
+  final Map<int, Map<String, dynamic>> _app = <int, Map<String, dynamic>>{};
+  final Map<int, Map<String, dynamic>> _node = <int, Map<String, dynamic>>{};
+  final Map<int, Map<String, dynamic>> _child = <int, Map<String, dynamic>>{};
 
   // --- Chrome (System/Shell) ---
 
@@ -58,49 +57,50 @@ class StateSet {
 
   // --- App State ---
 
-  T? getApp<T>(int appId, String key) => _getScoped(_apps, appId, key);
+  T? getApp<T>(int appId, String key) => _getScoped(_app, appId, key);
 
-  void setApp(int appId, String key, dynamic value) => _setScoped(_apps, appId, key, value);
+  void setApp(int appId, String key, dynamic value) => _setScoped(_app, appId, key, value);
 
-  void patchApp(int appId, Map<String, dynamic> values) => _patchScoped(_apps, appId, values);
+  void patchApp(int appId, Map<String, dynamic> values) => _patchScoped(_app, appId, values);
 
-  void clearApp(int appId) => _apps.remove(appId);
+  void clearApp(int appId) => _app.remove(appId);
 
   // --- Route State ---
 
-  T? getRoute<T>(int routeKey, String key) => _getScoped(_routes, routeKey, key);
+  T? getRoute<T>(int routeKey, String key) => _getScoped(_node, routeKey, key);
 
-  void setRoute(int routeKey, String key, dynamic value) => _setScoped(_routes, routeKey, key, value);
+  void setRoute(int routeKey, String key, dynamic value) => _setScoped(_node, routeKey, key, value);
 
-  void patchRoute(int routeKey, Map<String, dynamic> values) => _patchScoped(_routes, routeKey, values);
+  void patchRoute(int routeKey, Map<String, dynamic> values) => _patchScoped(_node, routeKey, values);
 
-  void clearRoute(int routeKey) => _routes.remove(routeKey);
+  void clearRoute(int routeKey) {
+    // On route change, clear node-level state and children for safety.
+    _node.clear();
+    _child.clear();
+  }
 
   // --- Template State ---
 
-  T? getTemplate<T>(int templateKey, String key) => 
-      _getScoped(_templates, templateKey, key);
+  T? getTemplate<T>(int templateKey, String key) => _getScoped(_node, templateKey, key);
 
-  void setTemplate(int templateKey, String key, dynamic value) => 
-      _setScoped(_templates, templateKey, key, value);
+  void setTemplate(int templateKey, String key, dynamic value) => _setScoped(_node, templateKey, key, value);
 
-  void patchTemplate(int templateKey, Map<String, dynamic> values) => 
-      _patchScoped(_templates, templateKey, values);
+  void patchTemplate(int templateKey, Map<String, dynamic> values) => _patchScoped(_node, templateKey, values);
 
-  void clearTemplate(int templateKey) => _templates.remove(templateKey);
+  void clearTemplate(int templateKey) {
+    _node.remove(templateKey);
+    _removeChildrenForZone(templateKey);
+  }
 
   // --- UWidget State ---
 
-  T? getUWidget<T>(int uwidgetKey, String key) => 
-      _getScoped(_uwidgets, uwidgetKey, key);
+  T? getUWidget<T>(int uwidgetKey, String key) => _getScoped(_child, uwidgetKey, key);
 
-  void setUWidget(int uwidgetKey, String key, dynamic value) => 
-      _setScoped(_uwidgets, uwidgetKey, key, value);
+  void setUWidget(int uwidgetKey, String key, dynamic value) => _setScoped(_child, uwidgetKey, key, value);
 
-  void patchUWidget(int uwidgetKey, Map<String, dynamic> values) => 
-      _patchScoped(_uwidgets, uwidgetKey, values);
+  void patchUWidget(int uwidgetKey, Map<String, dynamic> values) => _patchScoped(_child, uwidgetKey, values);
 
-  void clearUWidget(int uwidgetKey) => _uwidgets.remove(uwidgetKey);
+  void clearUWidget(int uwidgetKey) => _child.remove(uwidgetKey);
 
   // --- Lifecycle ---
 
@@ -108,28 +108,28 @@ class StateSet {
 
   void clear() {
     _chrome.clear();
-    _apps.clear();
-    _routes.clear();
-    _templates.clear();
-    _uwidgets.clear();
+    _app.clear();
+    _node.clear();
+    _child.clear();
   }
 
   Map<String, dynamic> snapshot() {
     Map<String, dynamic> deepSnapshot(Map<int, Map<String, dynamic>> store) {
-      return Map<String, dynamic>.unmodifiable(
-        store.map(
-          (int key, Map<String, dynamic> value) =>
-              MapEntry(key.toString(), Map<String, dynamic>.unmodifiable(value)),
-        ),
-      );
+      return Map<String, dynamic>.unmodifiable(store.map((int key, Map<String, dynamic> value) => MapEntry(key.toString(), Map<String, dynamic>.unmodifiable(value))));
     }
 
-    return <String, dynamic>{
-      'chrome': Map<String, dynamic>.unmodifiable(_chrome),
-      'apps': deepSnapshot(_apps),
-      'routes': deepSnapshot(_routes),
-      'templates': deepSnapshot(_templates),
-      'uwidgets': deepSnapshot(_uwidgets),
-    };
+    return <String, dynamic>{'chrome': Map<String, dynamic>.unmodifiable(_chrome), 'app': deepSnapshot(_app), 'node': deepSnapshot(_node), 'child': deepSnapshot(_child)};
+  }
+}
+
+extension on StateSet {
+  void _removeChildrenForZone(int zone) {
+    final toRemove = <int>[];
+    for (final k in _child.keys) {
+      if (k ~/ 10000 == zone) toRemove.add(k);
+    }
+    for (final k in toRemove) {
+      _child.remove(k);
+    }
   }
 }
