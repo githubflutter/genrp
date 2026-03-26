@@ -187,7 +187,7 @@ Current snapshot:
 - `flutter test` reports there are no checked-in `test/` files yet
 - manual app smoke testing is still needed for behavioral confidence
 
-## Recent Notes
+## Docs
 
-- 2026-03-26: docs were collapsed into this single README
-- 2026-03-25: runtime direction consolidated around `Autopilot`, `AppRuntimeFlow`, `UschemaRuntime`, and `GenUx`
+- `docs/project_deep_analysis.md` — current architecture snapshot and rerun findings
+- `docs/what_we_did.md` — short project changelog
