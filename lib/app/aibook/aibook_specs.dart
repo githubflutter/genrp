@@ -1,5 +1,4 @@
 import 'package:genrp/core/model/uschema/uschema.dart';
-import 'package:genrp/core/ux/mixins.dart';
 import 'package:genrp/meta.dart';
 
 class AIBookSpecs {
@@ -152,24 +151,16 @@ class AIBookSpecs {
           summaryText: 'app=$appName, owner=$owner, status=$status',
         ).toJson(),
         s: const <String, dynamic>{},
-        uxzones: <String, List<UxSpec>>{
-          UxZone.header: <UxSpec>[
-            UxSpec.uwidget(i: 1, n: 'toolbar', t: 4),
-            UxSpec.uwidget(i: 2, n: 'toolbar', t: 4),
-          ],
-          UxZone.collection: <UxSpec>[
-            UxSpec.uwidget(i: 10, n: 'collection', t: 12),
-          ],
-          UxZone.detail: <UxSpec>[
-            UxSpec.uwidget(i: 12, n: 'plist', t: 6),
-            UxSpec.uwidget(i: 13, n: 'form', t: 5),
-          ],
-          UxZone.feedback: <UxSpec>[
-            UxSpec.uwidget(i: 11, n: 'empty', t: 9),
-            UxSpec.uwidget(i: 14, n: 'alert', t: 11),
-          ],
-          UxZone.footer: <UxSpec>[UxSpec.uwidget(i: 3, n: 'toolbar', t: 4)],
-        },
+        children: <UxSpec>[
+          UxSpec.uwidget(i: 1, n: 'toolbar', t: 4),
+          UxSpec.uwidget(i: 2, n: 'toolbar', t: 4),
+          UxSpec.uwidget(i: 10, n: 'collection', t: 12),
+          UxSpec.uwidget(i: 12, n: 'plist', t: 6),
+          UxSpec.uwidget(i: 13, n: 'form', t: 5),
+          UxSpec.uwidget(i: 11, n: 'empty', t: 9),
+          UxSpec.uwidget(i: 14, n: 'alert', t: 11),
+          UxSpec.uwidget(i: 3, n: 'toolbar', t: 4),
+        ],
       ),
     );
   }

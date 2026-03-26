@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:genrp/core/agent/autopilot.dart';
+import 'package:genrp/core/agent/node_meta.dart';
 
 enum UxLayer {
   app(0),
@@ -18,18 +19,6 @@ enum UxLayer {
     }
     return fallback;
   }
-}
-
-class UxZone {
-  UxZone._();
-
-  static const String app = 'app';
-  static const String content = 'content';
-  static const String header = 'header';
-  static const String collection = 'collection';
-  static const String detail = 'detail';
-  static const String feedback = 'feedback';
-  static const String footer = 'footer';
 }
 
 class UxRegister {
@@ -71,49 +60,6 @@ class UxRegister {
   static String templateId({required int pid, required int tid}) => '$pid.$tid';
 
   static String uwidgetId({required int pid, required int tid, required int uwid}) => '$pid.$tid.$uwid';
-
-  static const int _optionalScale = 1000 * 1000 * 1000;
-  static const int _routeScale = _optionalScale * 1000;
-  static const int _appScale = _routeScale * 100000;
-
-  static int appCode(int appId) => appId * _appScale;
-
-  static int routeCode(int appId, int routeId, {String? optionalId}) {
-    final oid = _parseOid(optionalId);
-    return appCode(appId) + (routeId * _optionalScale) + oid;
-  }
-
-  static int templateCode({
-    required int appId,
-    required int routeId,
-    required int templateId,
-    String? optionalId,
-  }) {
-    return routeCode(appId, routeId, optionalId: optionalId) + (templateId * 1000);
-  }
-
-  static int uwidgetCode({
-    required int appId,
-    required int routeId,
-    required int templateId,
-    required int uwidgetId,
-    String? optionalId,
-  }) {
-    return templateCode(
-          appId: appId,
-          routeId: routeId,
-          templateId: templateId,
-          optionalId: optionalId,
-        ) +
-        uwidgetId;
-  }
-
-  static int _parseOid(String? optionalId) {
-    if (optionalId == null) return 0;
-    final parsed = int.tryParse(optionalId);
-    if (parsed != null) return parsed % 1000;
-    return optionalId.hashCode % 1000;
-  }
 
   static int localNodeCode(String name) {
     _initByName();
@@ -249,38 +195,36 @@ class UwStateBindingSpec {
 }
 
 extension UwStateAccess on Autopilot {
-  dynamic readUwState(UwStateBindingSpec binding) {
+  dynamic readUwState(UwStateBindingSpec binding, {BuildContext? context}) {
     switch (binding.source) {
       case UwStateSource.chrome:
-        return stateSet.chrome<dynamic>(binding.key);
+        return stateSet.app<dynamic>(binding.key);
       case UwStateSource.data:
         return data[binding.key];
       case UwStateSource.template:
-        final route = currentRoute;
-        if (route != null && binding.uwidget != null) {
-          final tid = int.tryParse(binding.uwidget!) ?? 0;
-          final code = UxRegister.templateCode(
-            appId: route.app.i,
-            routeId: route.id,
-            templateId: tid,
-            optionalId: route.optionalId,
-          );
-          return stateSet.getTemplate<dynamic>(code, binding.key);
+        if (context != null) {
+          final runtimeid = UxRuntimeContext.maybeOf(context);
+          if (runtimeid != null) {
+            return stateSet.rt<dynamic>(runtimeid, binding.key);
+          }
         }
         return null;
     }
   }
 
-  void writeUwState(UwStateBindingSpec binding, dynamic value, {bool notify = true}) {
+  void writeUwState(UwStateBindingSpec binding, dynamic value, {BuildContext? context, bool notify = true}) {
     switch (binding.source) {
       case UwStateSource.chrome:
-        setChrome(binding.key, value, notify: notify);
+        stateSet.setapp(binding.key, value);
+        if (notify) publishChange();
       case UwStateSource.data:
         data.set(binding.key, value, notify: notify);
       case UwStateSource.template:
-        if (binding.uwidget != null) {
-          final tid = int.tryParse(binding.uwidget!) ?? 0;
-          state.setTemplateState(tid, binding.key, value, notify: notify);
+        if (context != null) {
+          final runtimeid = UxRuntimeContext.maybeOf(context);
+          if (runtimeid != null) {
+            state.setrt(runtimeid, binding.key, value, notify: notify);
+          }
         }
     }
   }
@@ -316,51 +260,24 @@ class UxRootTemplateHost extends StatefulWidget {
 }
 
 class _UxRootTemplateHostState extends State<UxRootTemplateHost> {
-  String? _routeScope;
-
-  void _mount() {
-    _routeScope = widget.autopilot.currentRoute?.scopeKey;
-    widget.autopilot.state.mountRootTemplate(templateI: widget.i, initialState: widget.initialState, notify: false);
-  }
+  late int _runtimeid;
 
   @override
   void initState() {
     super.initState();
-    _mount();
-  }
-
-  @override
-  void didUpdateWidget(covariant UxRootTemplateHost oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final nextRouteScope = widget.autopilot.currentRoute?.scopeKey;
-    final needsRemount = oldWidget.autopilot != widget.autopilot || oldWidget.i != widget.i || nextRouteScope != _routeScope;
-    if (!needsRemount) return;
-
-    final route = oldWidget.autopilot.currentRoute;
-    if (route != null) {
-      oldWidget.autopilot.state.clearRootTemplate(
-        route.app.i,
-        route.id,
-        oldWidget.i,
-        optionalId: route.optionalId,
-        notify: false,
-      );
-    }
-    _mount();
+    final route = widget.autopilot.currentRoute;
+    final meta = NodeMeta(
+      routeid: route?.id ?? 0,
+      routetitle: route?.meta.title ?? 'Unknown Route',
+      specid: widget.i,
+      spectype: 1, // root templates are typically tworkspace or similar
+    );
+    _runtimeid = widget.autopilot.state.registerrt(meta: meta, initial: widget.initialState, notify: false);
   }
 
   @override
   void dispose() {
-    final route = widget.autopilot.currentRoute;
-    if (route != null) {
-      widget.autopilot.state.clearRootTemplate(
-        route.app.i,
-        route.id,
-        widget.i,
-        optionalId: route.optionalId,
-        notify: false,
-      );
-    }
+    widget.autopilot.state.clearrt(_runtimeid, notify: false);
     super.dispose();
   }
 
@@ -368,12 +285,31 @@ class _UxRootTemplateHostState extends State<UxRootTemplateHost> {
   Widget build(BuildContext context) => widget.child;
 }
 
+class UxRuntimeContext extends InheritedWidget {
+  const UxRuntimeContext({
+    required this.runtimeid,
+    required super.child,
+    super.key,
+  });
+
+  final int runtimeid;
+
+  static int? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<UxRuntimeContext>()?.runtimeid;
+  }
+
+  @override
+  bool updateShouldNotify(UxRuntimeContext oldWidget) {
+    return runtimeid != oldWidget.runtimeid;
+  }
+}
+
 class UxTemplateHost extends StatefulWidget {
   const UxTemplateHost({required this.i, required this.autopilot, required this.builder, this.initialState = const <String, dynamic>{}, super.key});
 
   final int i;
   final Autopilot autopilot;
-  final Widget Function(BuildContext context, String uwidget) builder;
+  final Widget Function(BuildContext context, int runtimeid) builder;
   final Map<String, dynamic> initialState;
 
   @override
@@ -381,12 +317,32 @@ class UxTemplateHost extends StatefulWidget {
 }
 
 class _UxTemplateHostState extends State<UxTemplateHost> {
+  late int _runtimeid;
+
   @override
   void initState() {
     super.initState();
-    widget.autopilot.state.mountTemplate(templateId: widget.i, initialState: widget.initialState, notify: false);
+    final route = widget.autopilot.currentRoute;
+    final meta = NodeMeta(
+      routeid: route?.id ?? 0,
+      routetitle: route?.meta.title ?? 'Unknown Route',
+      specid: widget.i,
+      spectype: 0,
+    );
+    _runtimeid = widget.autopilot.state.registerrt(meta: meta, initial: widget.initialState, notify: false);
   }
 
   @override
-  Widget build(BuildContext context) => widget.builder(context, widget.i.toString());
+  void dispose() {
+    widget.autopilot.state.clearrt(_runtimeid, notify: false);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return UxRuntimeContext(
+      runtimeid: _runtimeid,
+      child: widget.builder(context, _runtimeid),
+    );
+  }
 }

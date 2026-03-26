@@ -1,135 +1,144 @@
+import 'package:genrp/core/agent/node_meta.dart';
+
 class StateSet {
-  final Map<String, dynamic> _chrome = <String, dynamic>{};
-  final Map<int, Map<String, dynamic>> _app = <int, Map<String, dynamic>>{};
-  final Map<int, Map<String, dynamic>> _node = <int, Map<String, dynamic>>{};
-  final Map<int, Map<String, dynamic>> _child = <int, Map<String, dynamic>>{};
+  final Map<String, dynamic> _app = <String, dynamic>{};
+  final Map<int, Map<String, dynamic>> _rstate = <int, Map<String, dynamic>>{};
+  final Map<int, NodeMeta> _rtindex = <int, NodeMeta>{};
+  final Map<int, List<int>> _rtchildren = <int, List<int>>{};
 
-  // --- Chrome (System/Shell) ---
+  int _lastruntimeid = 0;
 
-  T? chrome<T>(String key) => _chrome.containsKey(key) ? _chrome[key] as T : null;
-
-  T? get<T>(String key) => chrome<T>(key);
-
-  void setChrome(String key, dynamic value) {
-    if (value == null) {
-      _chrome.remove(key);
-      return;
+  int newid() {
+    final now = DateTime.now().microsecondsSinceEpoch;
+    if (now > _lastruntimeid) {
+      _lastruntimeid = now;
+    } else {
+      _lastruntimeid++;
     }
-    _chrome[key] = value;
-  }
-
-  void set(String key, dynamic value) => setChrome(key, value);
-
-  void patchChrome(Map<String, dynamic> values) {
-    for (final entry in values.entries) {
-      setChrome(entry.key, entry.value);
-    }
-  }
-
-  void patch(Map<String, dynamic> values) => patchChrome(values);
-
-  // --- Scoped Accessors (Generic Core) ---
-
-  T? _getScoped<T>(Map<int, Map<String, dynamic>> store, int code, String key) {
-    final s = store[code];
-    if (s == null || !s.containsKey(key)) return null;
-    return s[key] as T;
-  }
-
-  void _setScoped(Map<int, Map<String, dynamic>> store, int code, String key, dynamic value) {
-    if (value == null) {
-      final s = store[code];
-      if (s != null) {
-        s.remove(key);
-        if (s.isEmpty) store.remove(code);
-      }
-      return;
-    }
-    final s = store.putIfAbsent(code, () => <String, dynamic>{});
-    s[key] = value;
-  }
-
-  void _patchScoped(Map<int, Map<String, dynamic>> store, int code, Map<String, dynamic> values) {
-    for (final entry in values.entries) {
-      _setScoped(store, code, entry.key, entry.value);
-    }
+    return _lastruntimeid;
   }
 
   // --- App State ---
 
-  T? getApp<T>(int appId, String key) => _getScoped(_app, appId, key);
-
-  void setApp(int appId, String key, dynamic value) => _setScoped(_app, appId, key, value);
-
-  void patchApp(int appId, Map<String, dynamic> values) => _patchScoped(_app, appId, values);
-
-  void clearApp(int appId) => _app.remove(appId);
-
-  // --- Route State ---
-
-  T? getRoute<T>(int routeKey, String key) => _getScoped(_node, routeKey, key);
-
-  void setRoute(int routeKey, String key, dynamic value) => _setScoped(_node, routeKey, key, value);
-
-  void patchRoute(int routeKey, Map<String, dynamic> values) => _patchScoped(_node, routeKey, values);
-
-  void clearRoute(int routeKey) {
-    // On route change, clear node-level state and children for safety.
-    _node.clear();
-    _child.clear();
+  T? app<T>(String key) {
+    if (!_app.containsKey(key)) return null;
+    return _app[key] as T;
   }
 
-  // --- Template State ---
-
-  T? getTemplate<T>(int templateKey, String key) => _getScoped(_node, templateKey, key);
-
-  void setTemplate(int templateKey, String key, dynamic value) => _setScoped(_node, templateKey, key, value);
-
-  void patchTemplate(int templateKey, Map<String, dynamic> values) => _patchScoped(_node, templateKey, values);
-
-  void clearTemplate(int templateKey) {
-    _node.remove(templateKey);
-    _removeChildrenForZone(templateKey);
+  void setapp(String key, dynamic value) {
+    if (value == null) {
+      _app.remove(key);
+    } else {
+      _app[key] = value;
+    }
   }
 
-  // --- UWidget State ---
+  void patchapp(Map<String, dynamic> values) {
+    for (final entry in values.entries) {
+      setapp(entry.key, entry.value);
+    }
+  }
 
-  T? getUWidget<T>(int uwidgetKey, String key) => _getScoped(_child, uwidgetKey, key);
+  // --- Chrome (System/Shell) ---
+  // Keeping chrome for backwards compatibility if needed, but routing it to app.
+  T? chrome<T>(String key) => app<T>(key);
+  T? get<T>(String key) => app<T>(key);
+  void setChrome(String key, dynamic value) => setapp(key, value);
+  void set(String key, dynamic value) => setapp(key, value);
+  void patchChrome(Map<String, dynamic> values) => patchapp(values);
+  void patch(Map<String, dynamic> values) => patchapp(values);
 
-  void setUWidget(int uwidgetKey, String key, dynamic value) => _setScoped(_child, uwidgetKey, key, value);
+  // --- Runtime State ---
 
-  void patchUWidget(int uwidgetKey, Map<String, dynamic> values) => _patchScoped(_child, uwidgetKey, values);
+  int registerrt({
+    int? parentruntimeid,
+    required NodeMeta meta,
+    Map<String, dynamic> initial = const <String, dynamic>{},
+  }) {
+    final rid = newid();
+    _rtindex[rid] = meta;
+    if (initial.isNotEmpty) {
+      _rstate[rid] = Map<String, dynamic>.from(initial);
+    }
 
-  void clearUWidget(int uwidgetKey) => _child.remove(uwidgetKey);
+    if (parentruntimeid != null) {
+      final children = _rtchildren.putIfAbsent(parentruntimeid, () => <int>[]);
+      children.add(rid);
+    }
+    return rid;
+  }
+
+  T? rt<T>(int runtimeid, String key) {
+    final state = _rstate[runtimeid];
+    if (state == null) return null;
+    return state[key] as T?;
+  }
+
+  void setrt(int runtimeid, String key, dynamic value) {
+    if (value == null) {
+      final state = _rstate[runtimeid];
+      if (state != null) {
+        state.remove(key);
+        if (state.isEmpty) {
+          _rstate.remove(runtimeid);
+        }
+      }
+    } else {
+      final state = _rstate.putIfAbsent(runtimeid, () => <String, dynamic>{});
+      state[key] = value;
+    }
+  }
+
+  void patchrt(int runtimeid, Map<String, dynamic> values) {
+    for (final entry in values.entries) {
+      setrt(runtimeid, entry.key, entry.value);
+    }
+  }
 
   // --- Lifecycle ---
 
-  void clearChrome() => _chrome.clear();
+  void clearrt(int runtimeid) {
+    final children = _rtchildren[runtimeid];
+    if (children != null) {
+      for (final childid in List<int>.from(children)) {
+        clearrt(childid);
+      }
+      _rtchildren.remove(runtimeid);
+    }
+    _rstate.remove(runtimeid);
+    _rtindex.remove(runtimeid);
 
-  void clear() {
-    _chrome.clear();
-    _app.clear();
-    _node.clear();
-    _child.clear();
+    // Remove self from parent's children list
+    for (final entry in _rtchildren.entries) {
+      if (entry.value.contains(runtimeid)) {
+        entry.value.remove(runtimeid);
+      }
+    }
   }
+
+  void clearallrt() {
+    _rstate.clear();
+    _rtindex.clear();
+    _rtchildren.clear();
+  }
+
+  void clearChrome() => _app.clear();
+
+  void clearall() {
+    _app.clear();
+    clearallrt();
+  }
+
+  void clear() => clearall();
 
   Map<String, dynamic> snapshot() {
     Map<String, dynamic> deepSnapshot(Map<int, Map<String, dynamic>> store) {
       return Map<String, dynamic>.unmodifiable(store.map((int key, Map<String, dynamic> value) => MapEntry(key.toString(), Map<String, dynamic>.unmodifiable(value))));
     }
 
-    return <String, dynamic>{'chrome': Map<String, dynamic>.unmodifiable(_chrome), 'app': deepSnapshot(_app), 'node': deepSnapshot(_node), 'child': deepSnapshot(_child)};
-  }
-}
-
-extension on StateSet {
-  void _removeChildrenForZone(int zone) {
-    final toRemove = <int>[];
-    for (final k in _child.keys) {
-      if (k ~/ 10000 == zone) toRemove.add(k);
-    }
-    for (final k in toRemove) {
-      _child.remove(k);
-    }
+    return <String, dynamic>{
+      'app': Map<String, dynamic>.unmodifiable(_app),
+      'rstate': deepSnapshot(_rstate),
+    };
   }
 }

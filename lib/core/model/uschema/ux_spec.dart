@@ -182,11 +182,11 @@ class UxSpec {
     required this.l,
     this.m = const <String, dynamic>{},
     this.s = const <String, dynamic>{},
-    this.uxzones = const <String, List<UxSpec>>{},
+    this.children = const <UxSpec>[],
   });
 
   factory UxSpec.fromJson(Map<String, dynamic> json) {
-    final rawUxZones = json['uxzones'] as Map<dynamic, dynamic>?;
+    final rawChildren = json['children'] as List<dynamic>?;
     return UxSpec(
       i: (json['i'] as num?)?.toInt() ?? 0,
       a: json['a'] as bool? ?? true,
@@ -197,17 +197,12 @@ class UxSpec {
       l: (json['l'] as num?)?.toInt() ?? 0,
       m: _stringDynamicMap(json['m'] as Map? ?? const <String, dynamic>{}),
       s: _stringDynamicMap(json['s'] as Map? ?? const <String, dynamic>{}),
-      uxzones: rawUxZones == null
-          ? const <String, List<UxSpec>>{}
-          : rawUxZones.map(
-              (key, value) => MapEntry(
-                key.toString(),
-                (value as List<dynamic>)
-                    .whereType<Map>()
-                    .map((item) => UxSpec.fromJson(_stringDynamicMap(item)))
-                    .toList(growable: false),
-              ),
-            ),
+      children: rawChildren == null
+          ? const <UxSpec>[]
+          : rawChildren
+              .whereType<Map>()
+              .map((item) => UxSpec.fromJson(_stringDynamicMap(item)))
+              .toList(growable: false),
     );
   }
 
@@ -218,7 +213,7 @@ class UxSpec {
     UxFrameMeta frame = const UxFrameMeta(),
     Map<String, dynamic> m = const <String, dynamic>{},
     Map<String, dynamic> s = const <String, dynamic>{},
-    Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{},
+    List<UxSpec> children = const <UxSpec>[],
   }) {
     return UxSpec(
       i: i,
@@ -227,7 +222,7 @@ class UxSpec {
       l: UxLayer.template.code,
       m: <String, dynamic>{...m, 'frame': frame.toJson()},
       s: s,
-      uxzones: uxzones,
+      children: children,
     );
   }
 
@@ -237,7 +232,7 @@ class UxSpec {
     required String n,
     Map<String, dynamic> m = const <String, dynamic>{},
     Map<String, dynamic> s = const <String, dynamic>{},
-    Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{},
+    List<UxSpec> children = const <UxSpec>[],
   }) {
     return UxSpec(
       i: i,
@@ -246,7 +241,7 @@ class UxSpec {
       l: UxLayer.template.code,
       m: m,
       s: s,
-      uxzones: uxzones,
+      children: children,
     );
   }
 
@@ -256,7 +251,7 @@ class UxSpec {
     required String n,
     Map<String, dynamic> m = const <String, dynamic>{},
     Map<String, dynamic> s = const <String, dynamic>{},
-    Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{},
+    List<UxSpec> children = const <UxSpec>[],
   }) {
     return UxSpec(
       i: i,
@@ -265,7 +260,7 @@ class UxSpec {
       l: UxLayer.uwidget.code,
       m: m,
       s: s,
-      uxzones: uxzones,
+      children: children,
     );
   }
 
@@ -278,7 +273,7 @@ class UxSpec {
   final int l;
   final Map<String, dynamic> m;
   final Map<String, dynamic> s;
-  final Map<String, List<UxSpec>> uxzones;
+  final List<UxSpec> children;
 
   bool get hasFrame => m.containsKey('frame');
   UxFrameMeta get frame => hasFrame
@@ -295,12 +290,7 @@ class UxSpec {
     'l': l,
     'm': m,
     's': s,
-    'uxzones': uxzones.map(
-      (key, value) => MapEntry(
-        key,
-        value.map((spec) => spec.toJson()).toList(growable: false),
-      ),
-    ),
+    'children': children.map((spec) => spec.toJson()).toList(growable: false),
   };
 
   String metaString(String key, {String fallback = ''}) {
@@ -360,71 +350,42 @@ class UxSpec {
 
   UxWorkspaceMeta get workspace => UxWorkspaceMeta.fromJson(m);
 
-  List<UxSpec> uxzoneChildren(String uxzone) =>
-      uxzones[uxzone] ?? const <UxSpec>[];
-
-  UxSpec? firstInUxZone(String uxzone) {
-    final items = uxzoneChildren(uxzone);
-    return items.isEmpty ? null : items.first;
-  }
-
-  UxSpec? firstOfLayer(UxLayer layer, {String? uxzone}) {
-    final groups = uxzone == null
-        ? uxzones.values
-        : <List<UxSpec>>[uxzoneChildren(uxzone)];
-    for (final group in groups) {
-      for (final child in group) {
-        if (child.l == layer.code) return child;
-      }
+  UxSpec? firstOfLayer(UxLayer layer) {
+    for (final child in children) {
+      if (child.l == layer.code) return child;
     }
     return null;
   }
 
-  UxSpec? firstOfType(
-    int type, {
-    UxLayer layer = UxLayer.uwidget,
-    String? uxzone,
-  }) {
-    final groups = uxzone == null
-        ? uxzones.values
-        : <List<UxSpec>>[uxzoneChildren(uxzone)];
-    for (final group in groups) {
-      for (final child in group) {
-        if (child.l == layer.code && child.t == type) return child;
-      }
+  UxSpec? firstOfType(int type, {UxLayer layer = UxLayer.uwidget}) {
+    for (final child in children) {
+      if (child.l == layer.code && child.t == type) return child;
     }
     return null;
   }
 
-  List<UxSpec> ofLayer(UxLayer layer, {String? uxzone}) {
+  List<UxSpec> ofLayer(UxLayer layer) {
     final matches = <UxSpec>[];
-    final groups = uxzone == null
-        ? uxzones.values
-        : <List<UxSpec>>[uxzoneChildren(uxzone)];
-    for (final group in groups) {
-      for (final child in group) {
-        if (child.l == layer.code) {
-          matches.add(child);
-        }
+    for (final child in children) {
+      if (child.l == layer.code) {
+        matches.add(child);
       }
     }
     return matches;
   }
 
-  /// Resolve well-known workspace slots from zoned child specs.
+  /// Resolve well-known workspace slots from child specs.
   ///
   /// This keeps slot discovery in the schema layer so `GenUx` can render
-  /// from `meta + slots` rather than scanning zone lists itself.
+  /// from `meta + slots`.
   UxWorkspaceSlots get workspaceSlots => UxWorkspaceSlots(
-    topToolbar: UxWidgetSlot.fromSpec(firstOfType(4, uxzone: UxZone.header)),
-    bottomToolbar: UxWidgetSlot.fromSpec(firstOfType(4, uxzone: UxZone.footer)),
-    collection: UxWidgetSlot.fromSpec(
-      firstOfType(12, uxzone: UxZone.collection),
-    ),
-    plist: UxWidgetSlot.fromSpec(firstOfType(6, uxzone: UxZone.detail)),
-    form: UxWidgetSlot.fromSpec(firstOfType(5, uxzone: UxZone.detail)),
-    empty: UxWidgetSlot.fromSpec(firstOfType(9, uxzone: UxZone.feedback)),
-    alert: UxWidgetSlot.fromSpec(firstOfType(11, uxzone: UxZone.feedback)),
+    topToolbar: UxWidgetSlot.fromSpec(firstOfType(4)),
+    bottomToolbar: UxWidgetSlot.fromSpec(null), // Needs index or role to distinguish top/bottom
+    collection: UxWidgetSlot.fromSpec(firstOfType(12)),
+    plist: UxWidgetSlot.fromSpec(firstOfType(6)),
+    form: UxWidgetSlot.fromSpec(firstOfType(5)),
+    empty: UxWidgetSlot.fromSpec(firstOfType(9)),
+    alert: UxWidgetSlot.fromSpec(firstOfType(11)),
   );
 
   int get style => metaInt('style');
@@ -436,7 +397,7 @@ Map<String, dynamic> _stringDynamicMap(Map raw) {
 
 extension UxAppSpecAdapter on UxAppSpec {
   UxSpec toUxSpec({
-    Map<String, List<UxSpec>> uxzones = const <String, List<UxSpec>>{},
+    List<UxSpec> children = const <UxSpec>[],
   }) {
     return UxSpec(
       i: i,
@@ -448,7 +409,7 @@ extension UxAppSpecAdapter on UxAppSpec {
       l: l,
       m: <String, dynamic>{...m, 'shellName': shellName},
       s: const <String, dynamic>{},
-      uxzones: uxzones,
+      children: children,
     );
   }
 }
@@ -467,10 +428,10 @@ extension UxRouteSpecAdapter on UxRouteSpec {
         if (optionalId != null) 'optionalId': optionalId,
       },
       s: const <String, dynamic>{},
-      uxzones: <String, List<UxSpec>>{
-        UxZone.app: <UxSpec>[app.toUxSpec()],
-        UxZone.content: <UxSpec>[spec],
-      },
+      children: <UxSpec>[
+        app.toUxSpec(),
+        spec,
+      ],
     );
   }
 }

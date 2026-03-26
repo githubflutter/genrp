@@ -77,18 +77,18 @@ class Tworkspace extends StatelessWidget with Ux {
     return UxTemplateHost(
       i: i,
       autopilot: autopilot,
-      initialState: <String, dynamic>{'mode': 'browse', 'viewMode': initialViewMode, 'selectionMode': 'single', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]},
-      builder: (BuildContext context, String scope) {
+      initialState: <String, dynamic>{'mode': 'browse', 'viewmode': initialViewMode, 'selectionmode': 'single', 'activeid': null, 'activeindex': null, 'selectedids': const <Object?>[]},
+      builder: (BuildContext context, int runtimeid) {
         return AnimatedBuilder(
           animation: autopilot,
           builder: (BuildContext context, Widget? child) {
-            final mode = autopilot.state.templateState<String>(scope, 'mode') ?? 'browse';
-            final viewMode = autopilot.state.templateState<int>(scope, 'viewMode') ?? 3;
-            final activeId = autopilot.state.templateState<Object?>(scope, 'activeId');
-            final activeIndex = autopilot.state.templateState<int>(scope, 'activeIndex');
-            final selectedIds = autopilot.state.templateState<List<dynamic>>(scope, 'selectedIds') ?? const <dynamic>[];
-            final totalCount = autopilot.state.templateState<int>(scope, 'totalCount') ?? collectionRows.length;
-            final errorMessage = autopilot.state.templateState<String>(scope, 'error');
+            final mode = autopilot.state.rt<String>(runtimeid, 'mode') ?? 'browse';
+            final viewMode = autopilot.state.rt<int>(runtimeid, 'viewmode') ?? 3;
+            final activeId = autopilot.state.rt<Object?>(runtimeid, 'activeid');
+            final activeIndex = autopilot.state.rt<int>(runtimeid, 'activeindex');
+            final selectedIds = autopilot.state.rt<List<dynamic>>(runtimeid, 'selectedids') ?? const <dynamic>[];
+            final totalCount = autopilot.state.rt<int>(runtimeid, 'totalcount') ?? collectionRows.length;
+            final errorMessage = autopilot.state.rt<String>(runtimeid, 'error');
             final activeLabel = _labelForIndex(activeIndex);
             final activeProperties = _propertiesForIndex(activeIndex);
             final canInspect = collectionRows.isNotEmpty;
@@ -105,7 +105,7 @@ class Tworkspace extends StatelessWidget with Ux {
               rows: collectionRows,
               selectedIndex: activeIndex,
               onSelectIndex: (int index) {
-                _selectIndex(scope, index);
+                _selectIndex(runtimeid, index);
               },
               children: collectionChildren,
             );
@@ -128,7 +128,7 @@ class Tworkspace extends StatelessWidget with Ux {
                   currentViewMode: viewMode,
                   availableViewModes: allowedViewModes,
                   canInspect: canInspect,
-                  scope: scope,
+                  runtimeid: runtimeid,
                   activeId: activeId,
                   activeIndex: activeIndex,
                   resolvedId: resolvedId,
@@ -184,7 +184,7 @@ class Tworkspace extends StatelessWidget with Ux {
     required int currentViewMode,
     required List<int> availableViewModes,
     required bool canInspect,
-    required String scope,
+    required int runtimeid,
     required Object? activeId,
     required int? activeIndex,
     required Object? resolvedId,
@@ -201,23 +201,23 @@ class Tworkspace extends StatelessWidget with Ux {
           availableViewModes: availableViewModes,
           onBack: () {
             if (mode == 'edit') {
-              _setInspect(scope, activeId: activeId, activeIndex: activeIndex);
+              _setInspect(runtimeid, activeId: activeId, activeIndex: activeIndex);
               return;
             }
-            _setBrowse(scope);
+            _setBrowse(runtimeid);
           },
           onViewModeChanged: (int nextMode) {
-            autopilot.state.setTemplateState(scope, 'viewMode', nextMode);
+            autopilot.state.setrt(runtimeid, 'viewmode', nextMode);
           },
         ),
         if (oid.isNotEmpty) Text('OID $oid'),
       ],
       rightChildren: <Widget>[
-        TextButton(onPressed: () => _setCreate(scope), child: const Text('New')),
+        TextButton(onPressed: () => _setCreate(runtimeid), child: const Text('New')),
         TextButton(
           onPressed: canInspect
               ? () => _setInspect(
-                    scope,
+                    runtimeid,
                     activeId: resolvedId,
                     activeIndex: resolvedIndex,
                   )
@@ -227,14 +227,14 @@ class Tworkspace extends StatelessWidget with Ux {
         TextButton(
           onPressed: canInspect
               ? () => _setEdit(
-                    scope,
+                    runtimeid,
                     activeId: resolvedId,
                     activeIndex: resolvedIndex,
                   )
               : null,
           child: const Text('Edit'),
         ),
-        TextButton(onPressed: () => _setBrowse(scope), child: const Text('Clear')),
+        TextButton(onPressed: () => _setBrowse(runtimeid), child: const Text('Clear')),
       ],
     );
   }
@@ -305,9 +305,9 @@ class Tworkspace extends StatelessWidget with Ux {
     _ => Icons.dashboard_outlined,
   };
 
-  void _selectIndex(String scope, int index) {
+  void _selectIndex(int runtimeid, int index) {
     final activeId = _idForIndex(index);
-    _setInspect(scope, activeId: activeId, activeIndex: index);
+    _setInspect(runtimeid, activeId: activeId, activeIndex: index);
   }
 
   Object? _idForIndex(int? index) {
@@ -363,29 +363,29 @@ class Tworkspace extends StatelessWidget with Ux {
     return modes;
   }
 
-  void _setBrowse(String scope) {
-    autopilot.state.patchTemplateState(scope, <String, dynamic>{'mode': 'browse', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
+  void _setBrowse(int runtimeid) {
+    autopilot.state.patchrt(runtimeid, <String, dynamic>{'mode': 'browse', 'activeid': null, 'activeindex': null, 'selectedids': const <Object?>[]});
   }
 
-  void _setCreate(String scope) {
-    autopilot.state.patchTemplateState(scope, <String, dynamic>{'mode': 'create', 'activeId': null, 'activeIndex': null, 'selectedIds': const <Object?>[]});
+  void _setCreate(int runtimeid) {
+    autopilot.state.patchrt(runtimeid, <String, dynamic>{'mode': 'create', 'activeid': null, 'activeindex': null, 'selectedids': const <Object?>[]});
   }
 
-  void _setInspect(String scope, {required Object? activeId, required int? activeIndex}) {
-    autopilot.state.patchTemplateState(scope, <String, dynamic>{
+  void _setInspect(int runtimeid, {required Object? activeId, required int? activeIndex}) {
+    autopilot.state.patchrt(runtimeid, <String, dynamic>{
       'mode': activeId == null && activeIndex == null ? 'browse' : 'inspect',
-      'activeId': activeId,
-      'activeIndex': activeIndex,
-      'selectedIds': activeId == null ? const <Object?>[] : <Object?>[activeId],
+      'activeid': activeId,
+      'activeindex': activeIndex,
+      'selectedids': activeId == null ? const <Object?>[] : <Object?>[activeId],
     });
   }
 
-  void _setEdit(String scope, {required Object? activeId, required int? activeIndex}) {
-    autopilot.state.patchTemplateState(scope, <String, dynamic>{
+  void _setEdit(int runtimeid, {required Object? activeId, required int? activeIndex}) {
+    autopilot.state.patchrt(runtimeid, <String, dynamic>{
       'mode': 'edit',
-      'activeId': activeId,
-      'activeIndex': activeIndex,
-      'selectedIds': activeId == null ? const <Object?>[] : <Object?>[activeId],
+      'activeid': activeId,
+      'activeindex': activeIndex,
+      'selectedids': activeId == null ? const <Object?>[] : <Object?>[activeId],
     });
   }
 }
